@@ -1,0 +1,187 @@
+import { storePos, restorePos } from "./../utils/posHelpers";
+import { Transporter } from "../Drones/Transporter";
+
+export function DataUpdate(): void {
+    try {
+        levelTimings();//only needed for benchmarking
+    }
+    catch (e) {
+        console.log("Failed levelTimings update with: ", e);
+    }
+    try {
+        initNewRooms();
+    }
+    catch (e) {
+        console.log("Failed initNewRooms update with: ", e);
+    }
+    try {
+        expand();
+    }
+    catch (e) {
+        console.log("Failed expand update with: ", e);
+    }
+    try {
+        updateEnergyDemandAndNrCreeps();
+    }
+    catch (e) {
+        console.log("Failed updateEnergyDemandAndNrCreeps update with: ", e);
+    }
+
+}
+
+
+//updates energy demand and also the nr of creeps
+function updateEnergyDemandAndNrCreeps() : void {
+
+    let transporters = _.filter(Game.creeps, function (creep) { return creep.memory.role == "transport" });
+    let builders = _.filter(Game.creeps, function (creep) { return creep.memory.role == "builder" });
+    if (transporters.length == 0)
+        transporters = transporters.concat(_.filter(Game.creeps, function (creep) { return creep.memory.role == "starter" }));
+
+    for (let roomName in Game.rooms) {
+        //********all rooms*************//////
+        let room = Game.rooms[roomName];
+        if (room.controller && room.controller.level > 0) {//no point going trhour rooms that cant create stuff
+            let locTransporters = _.filter(transporters, function (creep) {
+                return creep.memory.creationRoom == roomName;
+            });
+            let locBuilder = _.filter(builders, function (creep) {
+                return creep.memory.creationRoom == roomName;
+            });
+
+            //console.log(transporters.length);
+            //room.memory.nrTransporters = locTransporters.length;          
+            //room.memory.nrBuilder = locBuilder.length;
+
+
+            //****Energy demand
+            let tmpTowers: StructureTower[] = room.find(FIND_MY_STRUCTURES, { filter: {structureType: STRUCTURE_TOWER } }) as StructureTower[];
+            let towers = _.filter(tmpTowers, function (tower: StructureTower) { return tower.energyCapacity - tower.energy < tower.energyCapacity * 0.8; });
+            if (towers.length > 0)
+                console.log("found towers ", towers.length);
+            //if (room.memory.towers) {no towers yet
+            //    room.memory.towersEnergyNeed = new Array(room.memory.towers.length);
+            //    for (let iKey in room.memory.towers) {
+            //        let tower: StructureTower | null = Game.getObjectById(room.memory.towers[iKey]);
+            //        if (tower) {
+            //            room.memory.towersEnergyNeed[iKey] = tower.energyCapacity - tower.energy;
+            //            let del = _.filter(locTransporters, function (creep: Creep) {
+            //                return creep.memory.target == room.memory.towers[iKey] && creep.memory.deliver;
+            //            });
+            //            for (let creepNumber in del) {
+            //                room.memory.towersEnergyNeed[iKey] -= del[creepNumber].carry[RESOURCE_ENERGY];
+            //            }
+            //        }
+            //    }
+            //}
+            room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
+            let del = _.filter(locTransporters, function (obj) {
+                return obj.memory.deliver;
+            });
+            for (let creepName in del) {
+                room.memory.EnergyNeed -= del[creepName].carry[RESOURCE_ENERGY];
+            }
+
+            let structList = room.find(FIND_MY_STRUCTURES, {
+                filter: function (str) {
+                    return (str.structureType == STRUCTURE_EXTENSION ||
+                        str.structureType == STRUCTURE_SPAWN) &&
+                        str.energy < str.energyCapacity
+
+                }
+            });
+            let finalStruct = [];
+            //console.log("test of struct ", del.length);
+            for (let struct of structList) {
+               
+
+                let transportersTmp = _.filter(del, function (creep) {
+                    return creep.memory.currentTarget == struct.id;
+                })
+                //console.log("test of transportersTmp ", transportersTmp.length);
+                if (transportersTmp.length == 0)
+                    finalStruct.push(struct.id);
+            }
+            room.memory.EnergyNeedStruct = finalStruct;
+        }
+    }
+
+    //////update sources//////
+    //_.forEach(Memory.Sources, function (sMem, index, arr) {
+    
+    for (let [ID, sMem] of Object.entries(Memory.Sources)) {
+        const pos = restorePos(sMem.workPos);
+        const energys = pos.lookFor(LOOK_RESOURCES);
+        if (energys.length > 0)
+        {
+            sMem.AvailEnergy= energys[0].amount;
+        }
+        
+        const transportersTmp = _.filter(transporters, function (creep) {
+            return creep.memory.currentTarget == ID;
+        })
+        for (const [index, transp] of Object.entries(transportersTmp))
+        {
+            sMem.AvailEnergy -= Number(transp.carry);
+        }
+    }
+    
+}
+
+
+
+
+function addSources(room: Room, homeRoomPos: RoomPosition) {
+    const sources = room.find(FIND_SOURCES);
+    for (const source in sources) {
+        let pos = sources[source].pos;
+        let nrNeig = 0;
+        let res = room.lookForAtArea(LOOK_TERRAIN, pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true);
+        for (let [ind, spot] of Object.entries(res)) {
+            nrNeig += Number(spot.terrain != "wall");
+        }
+        let goal = { pos: pos, range: 1 };
+        let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later.
+        let newWorkPos = _.last(pathObj.path);
+        console.log(newWorkPos.x, newWorkPos.y, newWorkPos.roomName);
+        
+        Memory.Sources[sources[source].id] = {
+            pos: storePos(sources[source].pos),
+            usedByRoom: homeRoomPos.roomName,
+            maxUser: nrNeig,
+            workPos: newWorkPos,
+            container: null,
+            AvailEnergy: 0,
+            ClaimedEnergy: 0
+        };
+        room.memory.sourcesUsed.push(sources[source].id);
+    }
+}
+
+function expandRoom(homeRoom: Room) {
+    if (homeRoom.memory.sourcesUsed.length == 0 && homeRoom.memory.startSpawnPos) {
+        addSources(homeRoom, restorePos( homeRoom.memory.startSpawnPos));
+    }
+}
+
+function expand() {
+    for (let spawn in Game.spawns) {//always have same room sources
+        expandRoom(Game.spawns[spawn].room);
+    }
+}
+
+function initNewRooms() {
+    for (let room in Game.rooms) {
+        if (Game.rooms[room].memory.sourcesUsed == null) {
+            Game.rooms[room].memory.sourcesUsed = [];
+            Game.rooms[room].memory.starterque = [];
+        }
+    }
+}
+
+function levelTimings() {    
+    let highest = _.max(Game.rooms, function (room: Room) { if (room.controller) return room.controller.level; else return 0; });
+    if (highest.controller && Memory.LevelTick.length <= highest.controller.level)
+        Memory.LevelTick.push(Game.time - Memory.LevelTick[0]);
+
+}

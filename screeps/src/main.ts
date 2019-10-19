@@ -1,0 +1,85 @@
+import { ErrorMapper } from "utils/ErrorMapper";
+
+import { Transporter } from "Drones/Transporter";
+import { Upgrader } from "Drones/Upgrader";
+import { Spawner } from "Spawners/Spawner";
+import { ExtensionFlagPlacement } from "./Base/ExtensionFlagPlacement";
+import { DataUpdate } from "./utils/DataUpdate";
+import { Starter } from "./Drones/starter";
+
+function clearVec(vec: { [name: string]: any }) {
+    for (var i in vec) {
+        delete vec[i];
+    }
+}
+
+function reset() {
+    if (_.size(Game.rooms) == 1 && !Memory.respawncomplete) { // you only have one room and you haven't done the respawn.
+        var room = _.find(Game.rooms); // get the only room somehow
+        if (room && room.controller && room.controller.level == 1) { // RCL one on a single room means we've *just* respawned
+            clearVec(Memory.creeps);
+            clearVec(Memory.Sources);
+            clearVec(Memory.rooms);
+            clearVec(Memory.flags);
+            clearVec(Memory.spawns);
+            Memory.creepIndex = 0;
+            Memory.respawncomplete = true; // don't do respawn again
+            console.log("Reset Memory because of respawn")
+
+            // do all the once-off code here
+            Memory.Sources = {};
+            Memory.LevelTick = [];
+            Memory.LevelTick.push(Game.time);
+        }
+        else
+            Memory.respawncomplete = false; // because we are RCL 2+, we reset the respawn complete flag for next respawn. The code won't run again because we are already RCL+2
+    }
+}
+
+
+// When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
+// This utility uses source maps to get the line numbers and file names of the original, TS source code
+export const loop = ErrorMapper.wrapLoop(() => {
+    reset();
+    try {
+        DataUpdate();
+        ExtensionFlagPlacement();
+    }
+    catch (e) {
+        console.log("Failed Data update with: ", e);
+    }
+    try {
+        Spawner();
+    }
+    catch (e) {
+        console.log("Failed spawner update with: ",e);
+    }
+    //console.log(`Current game tick is ${Game.time}`);
+
+    for (let creepID in Game.creeps) {
+        try {
+            if (Game.creeps[creepID].memory.role == "starter") {
+                Starter(Game.creeps[creepID]);
+            }
+            if (Game.creeps[creepID].memory.role == "transport") {
+                Transporter(Game.creeps[creepID]);
+            }
+            if (Game.creeps[creepID].memory.role == "upgrader") {
+                Upgrader(Game.creeps[creepID]);
+            }
+            //if (Game.creeps[creepID].memory.role == "builder") {
+        //    roleBuilder(Game.creeps[creepID]);
+        //}
+        }
+        catch (e) {
+            console.log("Failed creep with: ",e);
+        }       
+    }
+
+  // Automatically delete memory of missing creeps
+  for (const name in Memory.creeps) {
+    if (!(name in Game.creeps)) {
+      delete Memory.creeps[name];
+    }
+  }
+});
