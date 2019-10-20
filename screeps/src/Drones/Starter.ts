@@ -56,13 +56,13 @@ export function Starter(creep: Creep) {
                 let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_EXTENSION || STRUCTURE_CONTAINER } });
                 //let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                 if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
-                    creep.memory.currentTarget = { ID: inQue[0].id, type: targetT.STRUCTURE, pos: inQue[0].pos, range: 3 };
+                    creep.memory.currentTarget = { ID: inQue[0].id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3 };
                     console.log("Build extension with tics left ", controller.ticksToDowngrade)
                 }
                 else {
                     let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
                     if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
-                        creep.memory.currentTarget = { ID: _.first(inQue).id, type: targetT.STRUCTURE, pos: inQue[0].pos, range: 3 };
+                        creep.memory.currentTarget = { ID: _.first(inQue).id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3 };
                         console.log("Build construction set with tics left ", controller.ticksToDowngrade)
                     }
                     else
