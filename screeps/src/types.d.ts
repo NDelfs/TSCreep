@@ -1,12 +1,49 @@
 // example declaration file - remove these and add your own custom typings
 // memory extension samples
+type TargetConstant =
+    | CONTROLLER
+    | STRUCTURE
+    | SOURCE
+    | DROPPED_ENERGY
+    | CONSTRUCTION;
+
+type TargetEnergy =
+    | SOURCE
+    | DROPPED_ENERGY;
+
+
+type CONTROLLER = 1;
+type STRUCTURE = 11;
+type SOURCE = 21;
+type DROPPED_ENERGY = 31;
+type CONSTRUCTION = 41;
+
+type CreepConstant =
+    | STARTER
+    | HARVESTER
+    | UPGRADER
+    | TRANSPORTER
+    | BUILDER;
+
+type STARTER = 1;
+type HARVESTER = 11;
+type UPGRADER = 21;
+type TRANSPORTER = 31;
+type BUILDER = 41;
+
+
+interface targetData {
+    ID: string;
+    type: TargetConstant;
+    pos: posData;
+    range: number;
+}
+
 interface CreepMemory {
-    type: creepT.CreepConstant;//found when used from creepType
+    type: CreepConstant;//found when used from creepType
     creationRoom: string;
     deliver: boolean;//to know when delivering, extra important for starter creep
-    working: boolean;
-    currentTarget: string | null;
-    targetType: string;
+    currentTarget: targetData|null;
     mainTarget: string; //used by i.e harvesters. creeps not using this has ""
 }
 
@@ -49,7 +86,7 @@ interface RoomMemory {
     sourcesUsed: string[];
     starterque: harvesterQueData[];
     startSpawnPos: posData | null;
-    EnergyNeedStruct: string[];
+    EnergyNeedStruct: targetData[];
     EnergyNeed: number;
     energyAvail: number;
 }

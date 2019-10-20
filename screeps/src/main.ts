@@ -3,12 +3,12 @@ import { ErrorMapper } from "utils/ErrorMapper";
 import { Transporter } from "Drones/Transporter";
 import { Upgrader } from "Drones/Upgrader";
 import { Spawner } from "Spawners/Spawner";
-import { ExtensionFlagPlacement } from "./Base/ExtensionFlagPlacement";
-import { DataUpdate } from "./utils/DataUpdate";
-import { Starter } from "./Drones/starter";
-import { Harvester } from "./Drones/Harvester";
-import { TowerOperation } from "./Base/TowerOperation";
-import * as creepT from "creepType";
+import { ExtensionFlagPlacement } from "Base/ExtensionFlagPlacement";
+import { DataUpdate } from "utils/DataUpdate";
+import { Starter } from "Drones/starter";
+import { Harvester } from "Drones/Harvester";
+import { TowerOperation } from "Base/TowerOperation";
+import * as creepT from "Types/CreepType";
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {

@@ -1,4 +1,4 @@
-import * as creepT from "creepType";
+import * as creepT from "Types/CreepType";
 
 export function PrettyPrintErr(iErr: number): string {
     switch (iErr) {
@@ -23,7 +23,7 @@ export function PrettyPrintErr(iErr: number): string {
 }
 
 
-export function PrettyPrintCreep(iType: creepT.CreepConstant): string {
+export function PrettyPrintCreep(iType: CreepConstant): string {
     switch (iType) {
         case creepT.STARTER: return "starter";
         case creepT.HARVESTER: return "harvester";

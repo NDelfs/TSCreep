@@ -1,5 +1,5 @@
 import { PrettyPrintErr, PrettyPrintCreep } from "../utils/PrettyPrintErr";
-import * as creepT from "creepType";
+import * as creepT from "Types/CreepType";
 
 let names1 = ["Jackson", "Aiden", "Liam", "Lucas", "Noah", "Mason", "Jayden", "Ethan", "Jacob", "Jack", "Caden", "Logan", "Benjamin", "Michael", "Caleb", "Ryan", "Alexander", "Elijah", "James", "William", "Oliver", "Connor", "Matthew", "Daniel", "Luke", "Brayden", "Jayce", "Henry", "Carter", "Dylan", "Gabriel", "Joshua", "Nicholas", "Isaac", "Owen", "Nathan", "Grayson", "Eli", "Landon", "Andrew", "Max", "Samuel", "Gavin", "Wyatt", "Christian", "Hunter", "Cameron", "Evan", "Charlie", "David", "Sebastian", "Joseph", "Dominic", "Anthony", "Colton", "John", "Tyler", "Zachary", "Thomas", "Julian", "Levi", "Adam", "Isaiah", "Alex", "Aaron", "Parker", "Cooper", "Miles", "Chase", "Muhammad", "Christopher", "Blake", "Austin", "Jordan", "Leo", "Jonathan", "Adrian", "Colin", "Hudson", "Ian", "Xavier", "Camden", "Tristan", "Carson", "Jason", "Nolan", "Riley", "Lincoln", "Brody", "Bentley", "Nathaniel", "Josiah", "Declan", "Jake", "Asher", "Jeremiah", "Cole", "Mateo", "Micah", "Elliot"]
 let names2 = ["Sophia", "Emma", "Olivia", "Isabella", "Mia", "Ava", "Lily", "Zoe", "Emily", "Chloe", "Layla", "Madison", "Madelyn", "Abigail", "Aubrey", "Charlotte", "Amelia", "Ella", "Kaylee", "Avery", "Aaliyah", "Hailey", "Hannah", "Addison", "Riley", "Harper", "Aria", "Arianna", "Mackenzie", "Lila", "Evelyn", "Adalyn", "Grace", "Brooklyn", "Ellie", "Anna", "Kaitlyn", "Isabelle", "Sophie", "Scarlett", "Natalie", "Leah", "Sarah", "Nora", "Mila", "Elizabeth", "Lillian", "Kylie", "Audrey", "Lucy", "Maya", "Annabelle", "Makayla", "Gabriella", "Elena", "Victoria", "Claire", "Savannah", "Peyton", "Maria", "Alaina", "Kennedy", "Stella", "Liliana", "Allison", "Samantha", "Keira", "Alyssa", "Reagan", "Molly", "Alexandra", "Violet", "Charlie", "Julia", "Sadie", "Ruby", "Eva", "Alice", "Eliana", "Taylor", "Callie", "Penelope", "Camilla", "Bailey", "Kaelyn", "Alexis", "Kayla", "Katherine", "Sydney", "Lauren", "Jasmine", "London", "Bella", "Adeline", "Caroline", "Vivian", "Juliana", "Gianna", "Skyler", "Jordyn"]
@@ -47,30 +47,29 @@ function calculateStarterQue(room: Room, curentHarv: Creep[]):void
     }
 }
 
-function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[]{
+function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
     let ret: queData[] = [];
-    const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, working: true, deliver: false, currentTarget: null, mainTarget: "", targetType: "" };
-    room.memory.sourcesUsed.forEach(function (source) {
+    const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, deliver: false, currentTarget: null, mainTarget: "" };
+    for (let source of room.memory.sourcesUsed) {
         const current = allHarv.find(function (creep) { return creep.memory.mainTarget == source});
         if (current == null) {
             mem.mainTarget = source;
             ret.push({ memory: mem, body: getHarvesterBody(room) });
         }
-    });
+    }
     return ret;
 }
 
 function spawnStarter(que: harvesterQueData[], spawner: StructureSpawn) {
     if (que.length > 0 && spawner.spawning == null) {
         const body = getStarterBody(spawner);
-        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: que[0].room, working: true, deliver: false, currentTarget: null, mainTarget: que[0].mainTarget, targetType: "" };
+        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: que[0].room, deliver: false, currentTarget: null, mainTarget: que[0].mainTarget };
         const err = spawner.spawnCreep(body, "test1", { dryRun: true });
         if (err == OK) {
             let err = spawner.spawnCreep(body, 'starter ' + getRandomName(), { memory: mem });
             if (err == OK) {
-                console.log(`spawned starte`);
+                console.log(`spawned starter`);
                 que.shift();
-                console.log("left in que " + que.length);
             }
             else
                 console.log(`failed spawned starter {}`, err);
@@ -90,7 +89,7 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): void {
                 que.shift();
             }
             else
-                console.log("failed to spawne", PrettyPrintCreep(que[0].memory.type), " due to ", PrettyPrintErr(err));
+                console.log("failed to spawn", PrettyPrintCreep(que[0].memory.type), " due to ", PrettyPrintErr(err));
         }
     }
 }

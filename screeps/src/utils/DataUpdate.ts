@@ -1,6 +1,6 @@
-import { storePos, restorePos } from "./../utils/posHelpers";
-import { Transporter } from "../Drones/Transporter";
-import * as creepT from "creepType";
+import { storePos, restorePos } from "utils/posHelpers";
+import * as creepT from "Types/CreepType";
+import * as targetT from "Types/TargetTypes";
 
 export function DataUpdate(): void {
     try {
@@ -78,17 +78,17 @@ function updateEnergyDemandAndNrCreeps() : void {
                 }
             });
 
-            let finalStruct = [];
+            let finalStruct: targetData[] = [];
             //console.log("test of struct ", del.length);
             for (let struct of structList) {
                
 
                 let transportersTmp = _.filter(del, function (creep) {
-                    return creep.memory.currentTarget == struct.id;
+                    return creep.memory.currentTarget &&creep.memory.currentTarget.ID == struct.id;
                 })
                 //console.log("test of transportersTmp ", transportersTmp.length);
                 if (transportersTmp.length == 0)
-                    finalStruct.push(struct.id);
+                    finalStruct.push({ ID: struct.id, type: targetT.STRUCTURE, pos: struct.pos, range:1 });
             }
             room.memory.EnergyNeedStruct = finalStruct;
         }
@@ -104,7 +104,7 @@ function updateEnergyDemandAndNrCreeps() : void {
             for (let [inx, energy] of Object.entries(energys)) {
                 sMem.AvailEnergy+= energy.amount;
                 const transportersTmp = _.filter(transporters, function (creep) {
-                    return creep.memory.currentTarget == energy.id;
+                    return creep.memory.currentTarget&& creep.memory.currentTarget.ID == energy.id;
                 })
                 for (const [index, transp] of Object.entries(transportersTmp)) {
                     sMem.AvailEnergy -= Number(transp.carryCapacity);
