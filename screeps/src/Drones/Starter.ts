@@ -1,16 +1,40 @@
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
+import { isEqualPos } from "../utils/posHelpers";
+import { restorePos } from "../utils/posHelpers";
+import { Harvester } from "./Harvester";
 
 export function Starter(creep: Creep) {
     if (creep.memory.working) {
-        //let sources = creep.room.find(FIND_SOURCES);
-        let source: Source | null = Game.getObjectById(creep.memory.mainTarget);
-        if (source) {
-            let harvestErr = creep.harvest(source);
-            if (harvestErr == ERR_NOT_IN_RANGE) {
-                creep.moveTo(source.pos, { visualizePathStyle: { stroke: '#ffaa00' } });
+        for (let [indx, ID] of Object.entries(creep.room.memory.sourcesUsed)) {
+            let sourceMem: SourceMemory = Memory.Sources[ID];
+            if (sourceMem.AvailEnergy > creep.carryCapacity * 0.8) {
+                const workPos = restorePos(sourceMem.workPos);
+                let res = workPos.lookFor(LOOK_RESOURCES);
+                if (res.length > 0) {
+                    creep.memory.currentTarget = res[0].id;
+                    creep.memory.targetType = RESOURCE_ENERGY;
+                    creep.memory.working = false;
+                    sourceMem.AvailEnergy -= creep.carryCapacity;
+                    creep.say("Go to so " + indx);
+                    break;
+                }
             }
-            else if (harvestErr == OK && creep.carry.energy == creep.carryCapacity)
-                creep.memory.working = false;
+        }
+        //if (workPos.getRangeTo(creep.pos.x,creep.pos.y)>1) {
+          //  creep.moveTo(workPos);
+        //}
+
+        const harvesters = _.filter(Game.creeps, function (creepF) { return creepF.memory.role == "harvester" && creepF.memory.mainTarget == creep.memory.mainTarget });
+        if (harvesters.length == 0) {
+            let source: Source | null = Game.getObjectById(creep.memory.mainTarget);
+            if (source) {
+                let harvestErr = creep.harvest(source);
+                if (harvestErr == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(source.pos, { visualizePathStyle: { stroke: '#ffaa00' } });
+                }
+                else if (harvestErr == OK && creep.carry.energy == creep.carryCapacity)
+                    creep.memory.working = false;
+            }
         }
     }
     else {
@@ -26,12 +50,20 @@ export function Starter(creep: Creep) {
             let controller = creep.room.controller;
             if (controller) {
                 let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_EXTENSION || STRUCTURE_CONTAINER } });
+                //let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                 if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
                     creep.memory.currentTarget = _.first(inQue).id;
-                    console.log("Build target set with tics left ", controller.ticksToDowngrade)
+                    console.log("Build extension with tics left ", controller.ticksToDowngrade)
                 }
-                else
-                    creep.memory.currentTarget = controller.id;
+                else {
+                    let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
+                    if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
+                        creep.memory.currentTarget = _.first(inQue).id;
+                        console.log("Build construction set with tics left ", controller.ticksToDowngrade)
+                    }
+                    else
+                        creep.memory.currentTarget = controller.id;
+                }
             }
         }
         if (creep.memory.currentTarget == null) {
@@ -39,8 +71,29 @@ export function Starter(creep: Creep) {
             return;
         }
 
-
-        if (creep.room.controller && creep.memory.currentTarget == creep.room.controller.id) {
+        if (creep.memory.targetType == RESOURCE_ENERGY) {
+            let targetObj: Resource | null = Game.getObjectById(creep.memory.currentTarget);
+            if (targetObj) {
+                const err = creep.pickup(targetObj);
+                if (err == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(targetObj.pos, { visualizePathStyle: { stroke: '#ffaa00' } });
+                    return;
+                }
+                else if (err == OK) {
+                    creep.say("OK transf");
+                    creep.memory.targetType = "";
+                    creep.memory.currentTarget = null;
+                    return;
+                }
+            }
+            //if here reset
+                creep.say("Cancel Res");
+                creep.memory.targetType = "";
+                creep.memory.currentTarget = null;
+                return;
+            
+        }
+        else if (creep.room.controller && creep.memory.currentTarget == creep.room.controller.id) {
 
             let transfErr = creep.upgradeController(creep.room.controller);
             if (transfErr == ERR_NOT_IN_RANGE) {
@@ -59,7 +112,7 @@ export function Starter(creep: Creep) {
                     else if (builderr != OK) {
 
                         //creep.memory.currentTarget = null;
-                        console.log(builderr + " err build with energy " + creep.carry[RESOURCE_ENERGY]);
+                        console.log(PrettyPrintErr(builderr) + " err build with energy " + creep.carry[RESOURCE_ENERGY]);
                         creep.say("Build failed with " + PrettyPrintErr(builderr));
                     }
                 }
@@ -87,6 +140,7 @@ export function Starter(creep: Creep) {
 
         }
         if (creep.carry.energy == 0) {
+            creep.say("reset");
             creep.memory.working = true;
             creep.memory.currentTarget = null;
             creep.memory.deliver = false;

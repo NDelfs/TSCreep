@@ -6,6 +6,8 @@ import { Spawner } from "Spawners/Spawner";
 import { ExtensionFlagPlacement } from "./Base/ExtensionFlagPlacement";
 import { DataUpdate } from "./utils/DataUpdate";
 import { Starter } from "./Drones/starter";
+import { Harvester } from "./Drones/Harvester";
+import { TowerOperation } from "./Base/TowerOperation";
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -36,10 +38,23 @@ function reset() {
     }
 }
 
-
+function testeCode() {
+    let pos = new RoomPosition(4, 21, Game.spawns["Spawn1"].pos.roomName);
+    let homeRoomPos = Game.spawns["Spawn1"].pos;
+    let goal = { pos: pos, range: 1 };
+    let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later.
+    let newWorkPos = _.last(pathObj.path);
+    console.log(newWorkPos.x, newWorkPos.y, newWorkPos.roomName);
+}
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
+    try {
+        //testeCode();
+    }
+    catch (e) {
+        console.log("Testecode failed with : ", e);
+    }
     reset();
     try {
         DataUpdate();
@@ -67,15 +82,20 @@ export const loop = ErrorMapper.wrapLoop(() => {
             if (Game.creeps[creepID].memory.role == "upgrader") {
                 Upgrader(Game.creeps[creepID]);
             }
-            //if (Game.creeps[creepID].memory.role == "builder") {
-        //    roleBuilder(Game.creeps[creepID]);
-        //}
+            if (Game.creeps[creepID].memory.role == "harvester") {
+                Harvester(Game.creeps[creepID]);
+            }
         }
         catch (e) {
             console.log("Failed creep with: ",e);
         }       
     }
-
+    try {
+        TowerOperation();
+    }
+    catch (e) {
+        console.log("Tower failet to run ", e);
+    }
   // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
     if (!(name in Game.creeps)) {

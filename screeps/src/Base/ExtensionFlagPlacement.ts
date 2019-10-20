@@ -2,7 +2,7 @@ import { restorePos } from "../utils/posHelpers";
 import { storePos } from "../utils/posHelpers";
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 
-function isBuildable(pos: RoomPosition) : boolean {
+function isBuildable(pos: RoomPosition) : number {
     const atPos = pos.look();
     const SWAMP = "swamp";
     const PLAIN = "plain";
@@ -10,16 +10,16 @@ function isBuildable(pos: RoomPosition) : boolean {
         switch (atPos[ind].type) {
             case LOOK_TERRAIN:
                 if (!(atPos[ind].terrain == PLAIN || atPos[ind].terrain == SWAMP))
-                    return false;
+                    return 0;
                 break;
             case LOOK_STRUCTURES:    
-                return false;
+                return 1;
             case LOOK_CONSTRUCTION_SITES:
-                return false;
+                return 1;
             default:
         }
     }
-    return true;
+    return 2;
 }
 
 function getMaxCap(level: number): number {
@@ -39,7 +39,8 @@ function getMaxCap(level: number): number {
 
 function buildAt(x: number, y: number, room: string): boolean {
     const tmpPos = new RoomPosition(x, y, room);
-    if (isBuildable(tmpPos)) {
+    const err = isBuildable(tmpPos)
+    if (err==2) {
         const err = tmpPos.createConstructionSite(STRUCTURE_EXTENSION);
         if (err == OK) {
             return true;
@@ -50,7 +51,9 @@ function buildAt(x: number, y: number, room: string): boolean {
             throw ("The extension calculation was wrong in ExtensionFlag")
         console.log("Built at location with warning", tmpPos, PrettyPrintErr(err));
     }
-    return false;
+    else if(err==0)
+        return false;
+    return true;
 }
 
 export function ExtensionFlagPlacement() {

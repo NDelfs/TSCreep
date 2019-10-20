@@ -85,11 +85,12 @@ function updateEnergyDemandAndNrCreeps() : void {
             let structList = room.find(FIND_MY_STRUCTURES, {
                 filter: function (str) {
                     return (str.structureType == STRUCTURE_EXTENSION ||
-                        str.structureType == STRUCTURE_SPAWN) &&
+                        str.structureType == STRUCTURE_SPAWN || str.structureType == STRUCTURE_TOWER) &&
                         str.energy < str.energyCapacity
 
                 }
             });
+
             let finalStruct = [];
             //console.log("test of struct ", del.length);
             for (let struct of structList) {
@@ -108,24 +109,25 @@ function updateEnergyDemandAndNrCreeps() : void {
 
     //////update sources//////
     //_.forEach(Memory.Sources, function (sMem, index, arr) {
-    
-    for (let [ID, sMem] of Object.entries(Memory.Sources)) {
-        const pos = restorePos(sMem.workPos);
-        const energys = pos.lookFor(LOOK_RESOURCES);
-        if (energys.length > 0)
-        {
-            sMem.AvailEnergy= energys[0].amount;
-        }
-        
-        const transportersTmp = _.filter(transporters, function (creep) {
-            return creep.memory.currentTarget == ID;
-        })
-        for (const [index, transp] of Object.entries(transportersTmp))
-        {
-            sMem.AvailEnergy -= Number(transp.carry);
+    try {
+        for (let [ID, sMem] of Object.entries(Memory.Sources)) {
+            const pos = restorePos(sMem.workPos);
+            const energys = pos.lookFor(LOOK_RESOURCES);
+            sMem.AvailEnergy = 0;
+            for (let [inx, energy] of Object.entries(energys)) {
+                sMem.AvailEnergy+= energy.amount;
+                const transportersTmp = _.filter(transporters, function (creep) {
+                    return creep.memory.currentTarget == energy.id;
+                })
+                for (const [index, transp] of Object.entries(transportersTmp)) {
+                    sMem.AvailEnergy -= Number(transp.carryCapacity);
+                }
+            }     
         }
     }
-    
+    catch (e) {
+        console.log("Failed to update sources ", e);
+    }
 }
 
 
@@ -141,10 +143,9 @@ function addSources(room: Room, homeRoomPos: RoomPosition) {
             nrNeig += Number(spot.terrain != "wall");
         }
         let goal = { pos: pos, range: 1 };
-        let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later.
+        let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later. cant use for desirialize
         let newWorkPos = _.last(pathObj.path);
-        console.log(newWorkPos.x, newWorkPos.y, newWorkPos.roomName);
-        
+             
         Memory.Sources[sources[source].id] = {
             pos: storePos(sources[source].pos),
             usedByRoom: homeRoomPos.roomName,
