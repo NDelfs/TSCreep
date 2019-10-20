@@ -1,8 +1,6 @@
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
-import { isEqualPos } from "../utils/posHelpers";
 import { restorePos } from "../utils/posHelpers";
-import { Harvester } from "./Harvester";
-
+import * as creepT from "creepType";
 export function Starter(creep: Creep) {
     if (creep.memory.working) {
         for (let [indx, ID] of Object.entries(creep.room.memory.sourcesUsed)) {
@@ -24,7 +22,7 @@ export function Starter(creep: Creep) {
           //  creep.moveTo(workPos);
         //}
 
-        const harvesters = _.filter(Game.creeps, function (creepF) { return creepF.memory.role == "harvester" && creepF.memory.mainTarget == creep.memory.mainTarget });
+        const harvesters = _.filter(Game.creeps, function (creepF) { return creepF.memory.type == creepT.TRANSPORTER && creepF.memory.mainTarget == creep.memory.mainTarget });
         if (harvesters.length == 0) {
             let source: Source | null = Game.getObjectById(creep.memory.mainTarget);
             if (source) {

@@ -65,6 +65,9 @@
     <TypeScriptCompile Include="src\Drones\Upgrader.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\creepType.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\main.ts" />
     <TypeScriptCompile Include="src\Spawners\Spawner.ts">
       <SubType>Code</SubType>

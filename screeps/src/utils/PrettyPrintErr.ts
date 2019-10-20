@@ -1,3 +1,5 @@
+import * as creepT from "creepType";
+
 export function PrettyPrintErr(iErr: number): string {
     switch (iErr) {
         case 0: return "OK";
@@ -17,5 +19,16 @@ export function PrettyPrintErr(iErr: number): string {
         case -14: return "ERR_RCL_NOT_ENOUGH";
         case -15: return "ERR_GCL_NOT_ENOUGH";
         default: return "Err not added to print";
+    }
+}
+
+
+export function PrettyPrintCreep(iType: creepT.CreepConstant): string {
+    switch (iType) {
+        case creepT.STARTER: return "starter";
+        case creepT.HARVESTER: return "harvester";
+        case creepT.UPGRADER: return "upgrader";
+        case creepT.TRANSPORTER: return "transporter";
+        case creepT.BUILDER: return "builder";
     }
 }
