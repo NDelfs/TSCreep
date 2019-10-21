@@ -11,7 +11,6 @@ type TargetEnergy =
     | SOURCE
     | DROPPED_ENERGY;
 
-
 type CONTROLLER = 1;
 type STRUCTURE = 11;
 type SOURCE = 21;
@@ -42,7 +41,6 @@ interface targetData {
 interface CreepMemory {
     type: CreepConstant;//found when used from creepType
     creationRoom: string;
-    deliver: boolean;//to know when delivering, extra important for starter creep
     currentTarget: targetData|null;
     mainTarget: string; //used by i.e harvesters. creeps not using this has ""
 }
@@ -100,7 +98,6 @@ interface SourceMemory {
     maxUser: number;
     workPos: posData;
     container: string | null;
-    ClaimedEnergy: number;
     AvailEnergy: number;
 }
 

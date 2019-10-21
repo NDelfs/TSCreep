@@ -1,6 +1,7 @@
 import { storePos, restorePos } from "utils/posHelpers";
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
+import { STRUCTURE } from "Types/TargetTypes";
 
 export function DataUpdate(): void {
     try {
@@ -63,7 +64,11 @@ function updateEnergyDemandAndNrCreeps() : void {
 
             room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
             let del = _.filter(locTransporters, function (obj) {
-                return obj.memory.deliver;
+                if (obj.memory.currentTarget) {
+                    return obj.memory.currentTarget.type == targetT.STRUCTURE && obj.carry[RESOURCE_ENERGY];
+                }
+                return false;
+
             });
             for (let creepName in del) {
                 room.memory.EnergyNeed -= del[creepName].carry[RESOURCE_ENERGY];
@@ -140,7 +145,6 @@ function addSources(room: Room, homeRoomPos: RoomPosition) {
             workPos: newWorkPos,
             container: null,
             AvailEnergy: 0,
-            ClaimedEnergy: 0
         };
         room.memory.sourcesUsed.push(sources[source].id);
     }

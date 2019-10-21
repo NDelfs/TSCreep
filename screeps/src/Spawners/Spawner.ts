@@ -42,14 +42,20 @@ function calculateStarterQue(room: Room, curentHarv: Creep[]):void
 {
     for (const source in room.memory.sourcesUsed) {
         const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == room.memory.sourcesUsed[source] });
-        if (excist.length < Memory.Sources[room.memory.sourcesUsed[source]].maxUser*2)
-            room.memory.starterque.push({ room: room.name, mainTarget: room.memory.sourcesUsed[source] });
+        if (room.energyCapacityAvailable < 550) {
+            if (excist.length < Memory.Sources[room.memory.sourcesUsed[source]].maxUser * 2)
+                room.memory.starterque.push({ room: room.name, mainTarget: room.memory.sourcesUsed[source] });
+        }
+        else {
+            if (excist.length < 3)// the old limits does not mater when harvesters excist
+                room.memory.starterque.push({ room: room.name, mainTarget: room.memory.sourcesUsed[source] });
+        }
     }
 }
 
 function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
     let ret: queData[] = [];
-    const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, deliver: false, currentTarget: null, mainTarget: "" };
+    const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: null, mainTarget: "" };
     for (let source of room.memory.sourcesUsed) {
         const current = allHarv.find(function (creep) { return creep.memory.mainTarget == source});
         if (current == null) {
@@ -63,7 +69,7 @@ function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
 function spawnStarter(que: harvesterQueData[], spawner: StructureSpawn) {
     if (que.length > 0 && spawner.spawning == null) {
         const body = getStarterBody(spawner);
-        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: que[0].room, deliver: false, currentTarget: null, mainTarget: que[0].mainTarget };
+        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: que[0].room, currentTarget: null, mainTarget: que[0].mainTarget };
         const err = spawner.spawnCreep(body, "test1", { dryRun: true });
         if (err == OK) {
             let err = spawner.spawnCreep(body, 'starter ' + getRandomName(), { memory: mem });

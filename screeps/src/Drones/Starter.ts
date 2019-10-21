@@ -3,6 +3,7 @@ import { restorePos } from "utils/posHelpers";
 import { goToTarget } from "Drones/Funcs/Walk"
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
+import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 
 
 
@@ -10,23 +11,16 @@ function printRes(creep: Creep, iErr: number, name: string): void {
     if (iErr == OK)
         creep.say("OK " + name);
     else
-        creep.say("transf " + PrettyPrintErr(iErr));
+        creep.say(name + " " + PrettyPrintErr(iErr));
 }
 
 export function Starter(creep: Creep) {
     //got no energy, find where
     if (creep.memory.currentTarget == null && creep.carry.energy == 0) {
-        for (let [indx, ID] of Object.entries(creep.room.memory.sourcesUsed)) {
-            let sourceMem: SourceMemory = Memory.Sources[ID];
-            if (sourceMem.AvailEnergy > creep.carryCapacity * 0.8) {
-                const workPos = restorePos(sourceMem.workPos);
-                let res = workPos.lookFor(LOOK_RESOURCES);
-                if (res.length > 0) {
-                    creep.memory.currentTarget = { ID: res[0].id, type: targetT.DROPPED_ENERGY, pos: sourceMem.workPos, range: 1 };
-                    sourceMem.AvailEnergy -= creep.carryCapacity;
-                    creep.say("Go to so " + indx);
-                }
-            }
+        creep.memory.currentTarget = getEnergyTarget(creep);
+        if (creep.memory.currentTarget) {
+            Memory.Sources[creep.memory.currentTarget.ID].AvailEnergy -= creep.carryCapacity;
+            creep.say("Go to source")
         }
 
         if (creep.memory.currentTarget == null) {
@@ -46,7 +40,6 @@ export function Starter(creep: Creep) {
             let availBuild = Game.rooms[creep.memory.creationRoom].memory.EnergyNeedStruct;
             if (availBuild.length > 0) {
                 creep.memory.currentTarget = availBuild[0];
-                creep.memory.deliver = true;
                 availBuild.shift();
             }
         }
@@ -57,13 +50,13 @@ export function Starter(creep: Creep) {
                 //let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                 if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
                     creep.memory.currentTarget = { ID: inQue[0].id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3 };
-                    console.log("Build extension with tics left ", controller.ticksToDowngrade)
+                    //console.log("Build extension with tics left ", controller.ticksToDowngrade)
                 }
                 else {
                     let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
                     if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
                         creep.memory.currentTarget = { ID: _.first(inQue).id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3 };
-                        console.log("Build construction set with tics left ", controller.ticksToDowngrade)
+                        //console.log("Build construction set with tics left ", controller.ticksToDowngrade)
                     }
                     else
                         creep.memory.currentTarget = { ID: controller.id, type: targetT.CONTROLLER, pos: controller.pos, range: 3 };
@@ -80,14 +73,8 @@ export function Starter(creep: Creep) {
     if (creep.memory.currentTarget && goToTarget(creep)) {      
         switch (creep.memory.currentTarget.type) {
             case targetT.DROPPED_ENERGY: {
-                let targetObj: Resource | null = Game.getObjectById(creep.memory.currentTarget.ID);
-                if (targetObj) {
-                    const err = creep.pickup(targetObj);
-                    printRes(creep, err, "transf");
-                }
-                else {//if here reset
-                    creep.say("Cancel Res");
-                }
+                const err = useEnergyTarget(creep, creep.memory.currentTarget);
+                printRes(creep, err, "transf");
                 creep.memory.currentTarget = null;
                 return;
             }
@@ -146,7 +133,6 @@ export function Starter(creep: Creep) {
         if (creep.carry.energy == 0) {
             creep.say("reset");
             creep.memory.currentTarget = null;
-            creep.memory.deliver = false;
         }
     }
 }

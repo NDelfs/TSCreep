@@ -55,6 +55,9 @@
     <TypeScriptCompile Include="src\Base\TowerOperation.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Drones\Funcs\DroppedEnergy.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Drones\Funcs\Walk.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
