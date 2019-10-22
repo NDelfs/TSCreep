@@ -30,5 +30,6 @@ export function PrettyPrintCreep(iType: CreepConstant): string {
         case creepT.UPGRADER: return "upgrader";
         case creepT.TRANSPORTER: return "transporter";
         case creepT.BUILDER: return "builder";
+        case creepT.SCOUT: return "scout";
     }
 }

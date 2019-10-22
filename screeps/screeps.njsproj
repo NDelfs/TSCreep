@@ -64,6 +64,9 @@
     <TypeScriptCompile Include="src\Drones\Harvester.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Drones\Scout.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Drones\Starter.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

@@ -7,6 +7,7 @@ import { ExtensionFlagPlacement } from "Base/ExtensionFlagPlacement";
 import { DataUpdate } from "utils/DataUpdate";
 import { Starter } from "Drones/starter";
 import { Harvester } from "Drones/Harvester";
+import { scout } from "Drones/Scout";
 import { TowerOperation } from "Base/TowerOperation";
 import * as creepT from "Types/CreepType";
 
@@ -74,17 +75,27 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
     for (let creepID in Game.creeps) {
         try {
-            if (Game.creeps[creepID].memory.type == creepT.STARTER) {
-                Starter(Game.creeps[creepID]);
-            }
-            if (Game.creeps[creepID].memory.type == creepT.TRANSPORTER) {
-                Transporter(Game.creeps[creepID]);
-            }
-            if (Game.creeps[creepID].memory.type == creepT.UPGRADER) {
-                Upgrader(Game.creeps[creepID]);
-            }
-            if (Game.creeps[creepID].memory.type == creepT.HARVESTER) {
-                Harvester(Game.creeps[creepID]);
+            switch (Game.creeps[creepID].memory.type) {
+                case creepT.STARTER: {
+                    Starter(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.TRANSPORTER: {
+                    Transporter(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.UPGRADER: {
+                    Upgrader(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.HARVESTER: {
+                    Harvester(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.SCOUT: {
+                    scout(Game.creeps[creepID]);
+                    break;
+                }
             }
         }
         catch (e) {

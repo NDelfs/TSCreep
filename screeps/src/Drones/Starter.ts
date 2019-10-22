@@ -1,11 +1,8 @@
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
-import { restorePos } from "utils/posHelpers";
 import { goToTarget } from "Drones/Funcs/Walk"
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
-
-
 
 function printRes(creep: Creep, iErr: number, name: string): void {
     if (iErr == OK)
@@ -45,7 +42,7 @@ export function Starter(creep: Creep) {
         }
         if (creep.memory.currentTarget == null) {
             let controller = creep.room.controller;
-            if (controller) {
+            if (controller) {//if safe tick run external construction target getter, same used for builder
                 let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_EXTENSION || STRUCTURE_CONTAINER } });
                 //let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                 if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {

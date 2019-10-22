@@ -5,7 +5,9 @@ type TargetConstant =
     | STRUCTURE
     | SOURCE
     | DROPPED_ENERGY
-    | CONSTRUCTION;
+    | CONSTRUCTION
+    | FLAG_RED
+    | FLAG_WHITE;
 
 type TargetEnergy =
     | SOURCE
@@ -16,20 +18,23 @@ type STRUCTURE = 11;
 type SOURCE = 21;
 type DROPPED_ENERGY = 31;
 type CONSTRUCTION = 41;
+type FLAG_RED = 100;
+type FLAG_WHITE = 190;
 
 type CreepConstant =
     | STARTER
     | HARVESTER
     | UPGRADER
     | TRANSPORTER
-    | BUILDER;
+    | BUILDER
+    | SCOUT;
 
 type STARTER = 1;
 type HARVESTER = 11;
 type UPGRADER = 21;
 type TRANSPORTER = 31;
 type BUILDER = 41;
-
+type SCOUT = 51;
 
 interface targetData {
     ID: string;
@@ -41,8 +46,9 @@ interface targetData {
 interface CreepMemory {
     type: CreepConstant;//found when used from creepType
     creationRoom: string;
-    currentTarget: targetData|null;
+    currentTarget: targetData | null;
     mainTarget: string; //used by i.e harvesters. creeps not using this has ""
+    permTarget: targetData | null;
 }
 
 interface posData {
@@ -70,10 +76,6 @@ interface Memory {
 
 }
 
-interface harvesterQueData {
-    room: string;
-    mainTarget: string;
-}
 
 interface queData {
     memory: CreepMemory;
@@ -82,7 +84,6 @@ interface queData {
 
 interface RoomMemory {
     sourcesUsed: string[];
-    starterque: harvesterQueData[];
     startSpawnPos: posData | null;
     EnergyNeedStruct: targetData[];
     EnergyNeed: number;
@@ -99,6 +100,10 @@ interface SourceMemory {
     workPos: posData;
     container: string | null;
     AvailEnergy: number;
+}
+
+interface FlagMemory {
+
 }
 
 // `global` extension samples

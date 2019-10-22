@@ -1,7 +1,6 @@
 import { storePos, restorePos } from "utils/posHelpers";
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
-import { STRUCTURE } from "Types/TargetTypes";
 
 export function DataUpdate(): void {
     try {
@@ -28,7 +27,6 @@ export function DataUpdate(): void {
     catch (e) {
         console.log("Failed updateEnergyDemandAndNrCreeps update with: ", e);
     }
-
 }
 
 
@@ -166,7 +164,6 @@ function initNewRooms() {
     for (let room in Game.rooms) {
         if (Game.rooms[room].memory.sourcesUsed == null) {
             Game.rooms[room].memory.sourcesUsed = [];
-            Game.rooms[room].memory.starterque = [];
         }
     }
 }

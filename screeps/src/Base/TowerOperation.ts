@@ -26,7 +26,7 @@ export function TowerOperation() {
                 else {
                     let struct = tower.pos.findClosestByRange(FIND_STRUCTURES, {
                         filter: function (struct) {
-                            return (struct.hits < 5000) && (struct.hits < struct.hitsMax);
+                            return tower.room.controller && (struct.hits < tower.room.controller.level*100000) && (struct.hits < struct.hitsMax);
                         }
                     });
                     if (tower.room.energyAvailable > tower.room.energyCapacityAvailable * 0.8 && struct && tower.energy > tower.energyCapacity * 0.5) {

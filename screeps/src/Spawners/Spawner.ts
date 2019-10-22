@@ -1,5 +1,6 @@
 import { PrettyPrintErr, PrettyPrintCreep } from "../utils/PrettyPrintErr";
 import * as creepT from "Types/CreepType";
+import * as targetT from "Types/TargetTypes";
 
 let names1 = ["Jackson", "Aiden", "Liam", "Lucas", "Noah", "Mason", "Jayden", "Ethan", "Jacob", "Jack", "Caden", "Logan", "Benjamin", "Michael", "Caleb", "Ryan", "Alexander", "Elijah", "James", "William", "Oliver", "Connor", "Matthew", "Daniel", "Luke", "Brayden", "Jayce", "Henry", "Carter", "Dylan", "Gabriel", "Joshua", "Nicholas", "Isaac", "Owen", "Nathan", "Grayson", "Eli", "Landon", "Andrew", "Max", "Samuel", "Gavin", "Wyatt", "Christian", "Hunter", "Cameron", "Evan", "Charlie", "David", "Sebastian", "Joseph", "Dominic", "Anthony", "Colton", "John", "Tyler", "Zachary", "Thomas", "Julian", "Levi", "Adam", "Isaiah", "Alex", "Aaron", "Parker", "Cooper", "Miles", "Chase", "Muhammad", "Christopher", "Blake", "Austin", "Jordan", "Leo", "Jonathan", "Adrian", "Colin", "Hudson", "Ian", "Xavier", "Camden", "Tristan", "Carson", "Jason", "Nolan", "Riley", "Lincoln", "Brody", "Bentley", "Nathaniel", "Josiah", "Declan", "Jake", "Asher", "Jeremiah", "Cole", "Mateo", "Micah", "Elliot"]
 let names2 = ["Sophia", "Emma", "Olivia", "Isabella", "Mia", "Ava", "Lily", "Zoe", "Emily", "Chloe", "Layla", "Madison", "Madelyn", "Abigail", "Aubrey", "Charlotte", "Amelia", "Ella", "Kaylee", "Avery", "Aaliyah", "Hailey", "Hannah", "Addison", "Riley", "Harper", "Aria", "Arianna", "Mackenzie", "Lila", "Evelyn", "Adalyn", "Grace", "Brooklyn", "Ellie", "Anna", "Kaitlyn", "Isabelle", "Sophie", "Scarlett", "Natalie", "Leah", "Sarah", "Nora", "Mila", "Elizabeth", "Lillian", "Kylie", "Audrey", "Lucy", "Maya", "Annabelle", "Makayla", "Gabriella", "Elena", "Victoria", "Claire", "Savannah", "Peyton", "Maria", "Alaina", "Kennedy", "Stella", "Liliana", "Allison", "Samantha", "Keira", "Alyssa", "Reagan", "Molly", "Alexandra", "Violet", "Charlie", "Julia", "Sadie", "Ruby", "Eva", "Alice", "Eliana", "Taylor", "Callie", "Penelope", "Camilla", "Bailey", "Kaelyn", "Alexis", "Kayla", "Katherine", "Sydney", "Lauren", "Jasmine", "London", "Bella", "Adeline", "Caroline", "Vivian", "Juliana", "Gianna", "Skyler", "Jordyn"]
@@ -15,9 +16,9 @@ function getRandomName() {
     return namesCombined[Memory.creepIndex % namesCombined.length]
 }
 
-function getStarterBody(spawn: StructureSpawn): BodyPartConstant[] {
+function getStarterBody(room: Room): BodyPartConstant[] {
     let body: BodyPartConstant[] = [WORK, WORK, CARRY, MOVE];
-    if (spawn.room.energyCapacityAvailable >= 550)
+    if (room.energyCapacityAvailable >= 550)
         body = [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE,MOVE];
     return body;
 }
@@ -38,27 +39,31 @@ function getUpgradeBody(spawn: StructureSpawn): BodyPartConstant[] {
 }
 
 
-function calculateStarterQue(room: Room, curentHarv: Creep[]):void
-{
-    for (const source in room.memory.sourcesUsed) {
-        const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == room.memory.sourcesUsed[source] });
+function calculateStarterQue(room: Room, curentHarv: Creep[]): queData[]{
+    let ret: queData[] = [];
+    for (const source of room.memory.sourcesUsed) {
+        const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == source });
+        const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
+        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: room.name, currentTarget: null, permTarget: targ, mainTarget: source };
         if (room.energyCapacityAvailable < 550) {
-            if (excist.length < Memory.Sources[room.memory.sourcesUsed[source]].maxUser * 2)
-                room.memory.starterque.push({ room: room.name, mainTarget: room.memory.sourcesUsed[source] });
+            if (excist.length < Memory.Sources[source].maxUser * 2)
+                ret.push({ memory: mem, body: getStarterBody(room) });
         }
         else {
             if (excist.length < 3)// the old limits does not mater when harvesters excist
-                room.memory.starterque.push({ room: room.name, mainTarget: room.memory.sourcesUsed[source] });
+                ret.push({ memory: mem, body: getStarterBody(room) });
         }
     }
+    return ret;
 }
 
 function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
     let ret: queData[] = [];
-    const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: null, mainTarget: "" };
     for (let source of room.memory.sourcesUsed) {
         const current = allHarv.find(function (creep) { return creep.memory.mainTarget == source});
         if (current == null) {
+            const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
+            const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };
             mem.mainTarget = source;
             ret.push({ memory: mem, body: getHarvesterBody(room) });
         }
@@ -66,24 +71,21 @@ function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
     return ret;
 }
 
-function spawnStarter(que: harvesterQueData[], spawner: StructureSpawn) {
-    if (que.length > 0 && spawner.spawning == null) {
-        const body = getStarterBody(spawner);
-        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: que[0].room, currentTarget: null, mainTarget: que[0].mainTarget };
-        const err = spawner.spawnCreep(body, "test1", { dryRun: true });
-        if (err == OK) {
-            let err = spawner.spawnCreep(body, 'starter ' + getRandomName(), { memory: mem });
-            if (err == OK) {
-                console.log(`spawned starter`);
-                que.shift();
-            }
-            else
-                console.log(`failed spawned starter {}`, err);
+function calculateScoutQue(room: Room): queData[] {
+    let ret: queData[] = [];
+    const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
+    for (let flag of wflags) {
+        const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.currentTarget && creep.memory.currentTarget.ID == flag.name; });
+        if (creeps.length == 0) {
+            const targ: targetData = { ID: flag.name, type: targetT.FLAG_WHITE, pos: flag.pos, range: 0 };
+            const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };
+            ret.push({ memory: mem, body: [MOVE] });
         }
-        //else
-            //console.log("could not create due to {}",  err );
     }
+
+    return ret;
 }
+
 
 function spawnCreep(que: queData[], spawner: StructureSpawn): void {
     if (que.length > 0 && spawner.spawning == null) {
@@ -107,14 +109,13 @@ export function Spawner() {
         let room = Game.rooms[roomID];
         var spawns = room.find(FIND_MY_SPAWNS);
         if (spawns.length > 0) {
-            if (room.memory.starterque == null || room.memory.starterque.length == 0)
-                calculateStarterQue(room, starters);
+            let starterQue = calculateStarterQue(room, starters);
             let harvestQue = calculateHarvesterQue(room, harvesters);
+            let scoutQue = calculateScoutQue(room);
             for (let spawnID in spawns) {
-                if (harvestQue.length > 0)
-                    spawnCreep(harvestQue, spawns[spawnID])
-                else
-                    spawnStarter(room.memory.starterque, spawns[spawnID]);  
+                spawnCreep(harvestQue, spawns[spawnID]);             
+                spawnCreep(starterQue, spawns[spawnID]);               
+                spawnCreep(scoutQue, spawns[spawnID]);
             }
         }
     }
