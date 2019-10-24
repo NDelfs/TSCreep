@@ -75,7 +75,6 @@ interface Memory {
     creepIndex: number;
     Sources: { [name: string]: SourceMemory };
     LevelTick: number[];
-
 }
 
 

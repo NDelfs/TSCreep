@@ -18,8 +18,10 @@ function getRandomName() {
 
 function getStarterBody(room: Room): BodyPartConstant[] {
     let body: BodyPartConstant[] = [WORK, WORK, CARRY, MOVE];
+    if (room.energyCapacityAvailable >= 800)
+        body = [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
     if (room.energyCapacityAvailable >= 550)
-        body = [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE,MOVE];
+        body = [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE];
     return body;
 }
 
@@ -50,7 +52,9 @@ function calculateStarterQue(room: Room, curentHarv: Creep[]): queData[]{
                 ret.push({ memory: mem, body: getStarterBody(room) });
         }
         else {
-            if (excist.length < 4)// the old limits does not mater when harvesters excist
+            if (room.energyCapacityAvailable < 800 && excist.length < 4)// the old limits does not mater when harvesters excist
+                ret.push({ memory: mem, body: getStarterBody(room) });
+            else if(room.energyCapacityAvailable >= 800 && excist.length < 3)// the old limits does not mater when harvesters excist
                 ret.push({ memory: mem, body: getStarterBody(room) });
         }
     }

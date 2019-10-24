@@ -49,6 +49,9 @@
     <Folder Include="src\utils\" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="src\Base\BaseExpansion.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\ExtensionFlagPlacement.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

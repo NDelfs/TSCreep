@@ -11,6 +11,7 @@ import { scout } from "Drones/Scout";
 import { TowerOperation } from "Base/TowerOperation";
 import * as creepT from "Types/CreepType";
 import { PrettyPrintCreep } from "./utils/PrettyPrintErr";
+import { baseExpansion } from "./Base/BaseExpansion";
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -61,10 +62,15 @@ export const loop = ErrorMapper.wrapLoop(() => {
     reset();
     try {
         DataUpdate();
-        ExtensionFlagPlacement();
     }
     catch (e) {
         console.log("Failed Data update with: ", e);
+    }
+    try {
+        baseExpansion();
+    }
+    catch (e) {
+        console.log("Failed base expansion update with: ", e);
     }
     try {
         Spawner();
@@ -114,5 +120,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
     if (!(name in Game.creeps)) {
       delete Memory.creeps[name];
     }
-  }
+    }
+
+
+
+    
 });
