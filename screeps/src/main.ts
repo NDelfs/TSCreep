@@ -10,6 +10,7 @@ import { Harvester } from "Drones/Harvester";
 import { scout } from "Drones/Scout";
 import { TowerOperation } from "Base/TowerOperation";
 import * as creepT from "Types/CreepType";
+import { PrettyPrintCreep } from "./utils/PrettyPrintErr";
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -99,7 +100,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
         catch (e) {
-            console.log("Failed creep with: ",e);
+            console.log("Failed creep off type ", PrettyPrintCreep(Game.creeps[creepID].memory.type), " with err: ", e);
         }       
     }
     try {

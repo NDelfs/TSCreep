@@ -6,6 +6,7 @@ type TargetConstant =
     | SOURCE
     | DROPPED_ENERGY
     | CONSTRUCTION
+    | POSITION
     | FLAG_RED
     | FLAG_WHITE;
 
@@ -18,6 +19,7 @@ type STRUCTURE = 11;
 type SOURCE = 21;
 type DROPPED_ENERGY = 31;
 type CONSTRUCTION = 41;
+type POSITION = 51;
 type FLAG_RED = 100;
 type FLAG_WHITE = 190;
 
@@ -100,6 +102,7 @@ interface SourceMemory {
     workPos: posData;
     container: string | null;
     AvailEnergy: number;
+    nrUsers: number;
 }
 
 interface FlagMemory {

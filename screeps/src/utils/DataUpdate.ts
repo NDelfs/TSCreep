@@ -143,20 +143,28 @@ function addSources(room: Room, homeRoomPos: RoomPosition) {
             workPos: newWorkPos,
             container: null,
             AvailEnergy: 0,
+            nrUsers: 0,
         };
         room.memory.sourcesUsed.push(sources[source].id);
     }
 }
 
-function expandRoom(homeRoom: Room) {
-    if (homeRoom.memory.sourcesUsed.length == 0 && homeRoom.memory.startSpawnPos) {
-        addSources(homeRoom, restorePos( homeRoom.memory.startSpawnPos));
+function expandRoom(homeRoom: Room, centrePos: RoomPosition) {
+    if (homeRoom.memory.sourcesUsed.length == 0) {
+        addSources(homeRoom, centrePos);
     }
 }
 
 function expand() {
     for (let spawn in Game.spawns) {//always have same room sources
-        expandRoom(Game.spawns[spawn].room);
+        let room = Game.spawns[spawn].room;
+        if (room.memory.startSpawnPos)
+          expandRoom(room, restorePos(room.memory.startSpawnPos));
+    }
+    for (let [id, flag] of Object.entries(Game.flags)) {
+        if (flag.color == COLOR_WHITE && flag.room) {
+            expandRoom(flag.room, flag.pos);
+        }
     }
 }
 

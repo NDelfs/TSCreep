@@ -50,7 +50,7 @@ function calculateStarterQue(room: Room, curentHarv: Creep[]): queData[]{
                 ret.push({ memory: mem, body: getStarterBody(room) });
         }
         else {
-            if (excist.length < 3)// the old limits does not mater when harvesters excist
+            if (excist.length < 4)// the old limits does not mater when harvesters excist
                 ret.push({ memory: mem, body: getStarterBody(room) });
         }
     }
@@ -76,7 +76,7 @@ function calculateScoutQue(room: Room): queData[] {
     const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
     for (let flag of wflags) {
         const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.currentTarget && creep.memory.currentTarget.ID == flag.name; });
-        if (creeps.length == 0) {
+        if (creeps.length == 0 && flag.room == null) {
             const targ: targetData = { ID: flag.name, type: targetT.FLAG_WHITE, pos: flag.pos, range: 0 };
             const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };
             ret.push({ memory: mem, body: [MOVE] });
@@ -86,6 +86,26 @@ function calculateScoutQue(room: Room): queData[] {
     return ret;
 }
 
+function calculateExpansiontQue(): queData[] {
+    let ret: queData[] = [];
+    const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
+    for (let flag of wflags) {
+        if (flag.room != null && flag.room.find(FIND_MY_SPAWNS).length == 0) {
+            const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.creationRoom == flag.pos.roomName; });
+            if (creeps.length < 4) {
+                ret = calculateStarterQue(flag.room, creeps);
+                if (ret.length > 0) {
+                    if (flag.room.controller && !flag.room.controller.my)
+                        ret[0].body = [CLAIM, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
+                    else
+                        ret[0].body = [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
+                    ret[0].memory.currentTarget = { ID: "", type: targetT.POSITION, pos: flag.pos, range: 10 };
+                }
+            }
+        }
+    }
+    return ret;
+}
 
 function spawnCreep(que: queData[], spawner: StructureSpawn): void {
     if (que.length > 0 && spawner.spawning == null) {
@@ -112,10 +132,12 @@ export function Spawner() {
             let starterQue = calculateStarterQue(room, starters);
             let harvestQue = calculateHarvesterQue(room, harvesters);
             let scoutQue = calculateScoutQue(room);
+            let expQue = calculateExpansiontQue();
             for (let spawnID in spawns) {
                 spawnCreep(harvestQue, spawns[spawnID]);             
                 spawnCreep(starterQue, spawns[spawnID]);               
                 spawnCreep(scoutQue, spawns[spawnID]);
+                spawnCreep(expQue, spawns[spawnID]);
             }
         }
     }

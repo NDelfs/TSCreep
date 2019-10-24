@@ -3,6 +3,7 @@ import { goToTarget } from "Drones/Funcs/Walk"
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
+import { restorePos } from "../utils/posHelpers";
 
 function printRes(creep: Creep, iErr: number, name: string): void {
     if (iErr == OK)
@@ -33,7 +34,7 @@ export function Starter(creep: Creep) {
         }
     }
     else {
-        if (creep.memory.currentTarget == null) {
+        if (creep.memory.currentTarget == null && Game.rooms[creep.memory.creationRoom].memory.EnergyNeedStruct) {
             let availBuild = Game.rooms[creep.memory.creationRoom].memory.EnergyNeedStruct;
             if (availBuild.length > 0) {
                 creep.memory.currentTarget = availBuild[0];
@@ -91,7 +92,13 @@ export function Starter(creep: Creep) {
             }
             case targetT.CONTROLLER: {
                 if (creep.room.controller) {
-                    const err = creep.upgradeController(creep.room.controller);
+                    let err = creep.upgradeController(creep.room.controller);
+                    if (err == ERR_NOT_OWNER) {
+                        err = creep.claimController(creep.room.controller);
+                        if (err == ERR_NOT_IN_RANGE)
+                            creep.moveTo(creep.room.controller);
+                       
+                    }
                     printRes(creep, err, "upgrade");
                 }
                 else
@@ -120,6 +127,11 @@ export function Starter(creep: Creep) {
                 }   
                 creep.memory.currentTarget = null;
                 break;
+            }
+            case targetT.POSITION: {
+                const workPos = restorePos(creep.memory.currentTarget.pos);
+                if (creep.pos.getRangeTo(workPos.x, workPos.y) <= creep.memory.currentTarget.range && workPos.roomName == creep.pos.roomName)
+                    creep.memory.currentTarget = null;
             }
             default: {
                 creep.memory.currentTarget = null;
