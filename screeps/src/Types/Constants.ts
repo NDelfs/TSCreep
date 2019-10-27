@@ -1,0 +1,1 @@
+export const CONSTRUCTIONSTORAGE = -100000;

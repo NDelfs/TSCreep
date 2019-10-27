@@ -4,6 +4,8 @@ import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 import { restorePos } from "../utils/posHelpers";
+import { resetDeliverTarget, getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
+import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
 
 function printRes(creep: Creep, iErr: number, name: string): void {
     if (iErr == OK)
@@ -13,6 +15,8 @@ function printRes(creep: Creep, iErr: number, name: string): void {
 }
 
 export function Starter(creep: Creep) {
+    resetDeliverTarget(creep);
+
     //got no energy, find where
     if (creep.memory.currentTarget == null && creep.carry.energy == 0) {
         creep.memory.currentTarget = getEnergyTarget(creep);
@@ -28,37 +32,27 @@ export function Starter(creep: Creep) {
                 if (source) {
                     let sourceMem: SourceMemory = Memory.Sources[source.id];
                     creep.say("go mining");
-                    creep.memory.currentTarget = { ID: source.id, type: targetT.SOURCE, pos: sourceMem.workPos, range: 0};
+                    creep.memory.currentTarget = { ID: source.id, type: targetT.SOURCE, pos: sourceMem.pos, range: 1 };
                 }
             }
         }
     }
     else {
-        if (creep.memory.currentTarget == null && Game.rooms[creep.memory.creationRoom].memory.EnergyNeedStruct) {
-            let availBuild = Game.rooms[creep.memory.creationRoom].memory.EnergyNeedStruct;
-            if (availBuild.length > 0) {
-                creep.memory.currentTarget = availBuild[0];
-                availBuild.shift();
-            }
+        if (creep.memory.currentTarget == null) {
+            creep.memory.currentTarget = getDeliverTarget(creep, false);
         }
         if (creep.memory.currentTarget == null) {
             let controller = creep.room.controller;
             if (controller) {//if safe tick run external construction target getter, same used for builder
-                let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_EXTENSION || STRUCTURE_CONTAINER } });
-                //let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
-                if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
-                    creep.memory.currentTarget = { ID: inQue[0].id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3};
-                    //console.log("Build extension with tics left ", controller.ticksToDowngrade)
-                }
-                else {
-                    let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
-                    if (controller.ticksToDowngrade > 2000 && inQue.length > 0) {
-                        creep.memory.currentTarget = { ID: _.first(inQue).id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3};
-                        //console.log("Build construction set with tics left ", controller.ticksToDowngrade)
+                if (controller.ticksToDowngrade > 5000) {
+                    getRepairTarget(creep);            
+                    if (creep.memory.currentTarget == null) {
+                        getBuildTarget(creep);
                     }
-                    else
-                        creep.memory.currentTarget = { ID: controller.id, type: targetT.CONTROLLER, pos: controller.pos, range: 3 };
                 }
+                if (creep.memory.currentTarget== null)
+                    creep.memory.currentTarget = { ID: controller.id, type: targetT.CONTROLLER, pos: controller.pos, range: 3 };
+                
             }
         }
         if (creep.memory.currentTarget == null) {
@@ -66,7 +60,22 @@ export function Starter(creep: Creep) {
             return;
         }
     }
-   
+
+    //repair roads
+    if ((creep.room.controller == null || creep.room.controller.level < 3) && creep.carry.energy > 0) {
+        let road = creep.pos.lookFor(LOOK_STRUCTURES);
+        if (road.length > 0 && road[0].hits < road[0].hitsMax) {
+            let err = creep.repair(road[0]);
+            if (err==OK)
+                creep.say("repaired");
+        }
+        let roadCon = creep.pos.lookFor(LOOK_CONSTRUCTION_SITES);
+        if (roadCon.length >0) {
+            const err = creep.build(roadCon[0]);
+            if (err == OK)
+                creep.say("built");
+        }
+    }
     ///////////////use the target///////////
     if (creep.memory.currentTarget && goToTarget(creep)) {
         switch (creep.memory.currentTarget.type) {
@@ -89,6 +98,7 @@ export function Starter(creep: Creep) {
                 }
                 else
                     creep.memory.currentTarget = null
+                break;
             }
             case targetT.CONTROLLER: {
                 if (creep.room.controller) {
@@ -106,42 +116,32 @@ export function Starter(creep: Creep) {
                 break;
             }
             case targetT.CONSTRUCTION: {
-                let con: ConstructionSite | null = Game.getObjectById(creep.memory.currentTarget.ID);
-                if (con) {
-                    const err = creep.build(con);
-                    printRes(creep, err, "Build");
-                }
-                else
-                    creep.memory.currentTarget = null
+                let err = useBuildTarget(creep);
+                printRes(creep, err, "build");
                 break;
             }
-            case targetT.STRUCTURE: {
-                let target: Structure | null = Game.getObjectById(creep.memory.currentTarget.ID);
-                if (target) {
-                    const err = creep.transfer(target, RESOURCE_ENERGY);
-                    if (err != ERR_FULL && err!=OK) {
-                        creep.say("give " + PrettyPrintErr(err));
-                    }
-                    else
-                        creep.say("OK give")
-                }   
-                creep.memory.currentTarget = null;
+            case targetT.REPAIR: {
+                let err = useRepairTarget(creep);
+                printRes(creep, err, "rep");
+                break;
+            }
+            case targetT.POWERSTORAGE:
+            case targetT.POWERUSER: {
+                const err = useDeliverTarget(creep, creep.memory.currentTarget);
+                printRes(creep, err, "transf");
                 break;
             }
             case targetT.POSITION: {
                 const workPos = restorePos(creep.memory.currentTarget.pos);
                 if (creep.pos.getRangeTo(workPos.x, workPos.y) <= creep.memory.currentTarget.range && workPos.roomName == creep.pos.roomName)
                     creep.memory.currentTarget = null;
+                break;
             }
             default: {
+                let type = creep.memory.currentTarget.type;
                 creep.memory.currentTarget = null;
-                throw ("The target type is not handled");
+                throw ("The target type is not handled " + type);
             }
-        }
-
-        if (creep.carry.energy == 0) {
-            creep.say("reset");
-            creep.memory.currentTarget = null;
         }
     }
 }

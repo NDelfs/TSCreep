@@ -12,6 +12,8 @@ import { TowerOperation } from "Base/TowerOperation";
 import * as creepT from "Types/CreepType";
 import { PrettyPrintCreep } from "./utils/PrettyPrintErr";
 import { baseExpansion } from "./Base/BaseExpansion";
+import { Defender } from "./Drones/Defender";
+import { Builder } from "./Drones/Builder";
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -103,10 +105,18 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     scout(Game.creeps[creepID]);
                     break;
                 }
+                case creepT.DEFENDER: {
+                    Defender(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.BUILDER: {
+                    Builder(Game.creeps[creepID]);
+                    break;
+                }
             }
         }
         catch (e) {
-            console.log("Failed creep off type ", PrettyPrintCreep(Game.creeps[creepID].memory.type), " with err: ", e);
+            console.log(Game.creeps[creepID].pos.roomName, " a creep failed, type =", PrettyPrintCreep(Game.creeps[creepID].memory.type), "with err: ", e);
         }       
     }
     try {

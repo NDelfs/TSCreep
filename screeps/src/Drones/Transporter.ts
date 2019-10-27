@@ -1,6 +1,7 @@
 import { goToTarget } from "Drones/Funcs/Walk";
-import { getEnergyTarget } from "Drones/Funcs/DroppedEnergy";
-
+import { getEnergyTarget, useEnergyTarget } from "Drones/Funcs/DroppedEnergy";
+import { getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
+import * as targetT from "Types/TargetTypes";
 
 export function Transporter(creep: Creep) {
     if (creep.carry[RESOURCE_ENERGY] == 0 && creep.memory.currentTarget == null) {
@@ -11,11 +12,28 @@ export function Transporter(creep: Creep) {
         }
     }
     else if (creep.memory.currentTarget == null) {
-        //3 codes to get xtensions, spawns, storage. right now xt and spawn could be just struct
-        //take the most important or closest one
+        let targ = getDeliverTarget(creep, true);
+        if(targ)
+          creep.memory.currentTarget = targ;
+    }
+    if (creep.memory.currentTarget == null && creep.room.memory.EnergyNeed > 0) {
+        let storages = creep.room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } });
+        if (storages.length > 0) {
+            creep.memory.currentTarget = {
+                ID: storages[0].id, type: targetT.DROPPED_ENERGY, pos: storages[0].pos, range: 1
+            }
+        }
     }
 
+    if (creep.memory.currentTarget == null)
+        creep.say("zZzZ")
+
     if (creep.memory.currentTarget && goToTarget(creep)) {
-        //use target, switch on targets type
+        switch (creep.memory.currentTarget.type) {
+            case targetT.POWERSTORAGE:
+            case targetT.POWERUSER: useDeliverTarget(creep, creep.memory.currentTarget); break;
+            case targetT.DROPPED_ENERGY: useEnergyTarget(creep, creep.memory.currentTarget); creep.memory.currentTarget = null; break;
+            default: console.log("Canceled ", creep.memory.currentTarget.type); creep.memory.currentTarget = null;
+    }
     }
 }

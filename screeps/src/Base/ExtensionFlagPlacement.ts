@@ -37,13 +37,13 @@ function getMaxCap(level: number): number {
     return 0;   
 }
 
-function buildAt(x: number, y: number, room: string): boolean {
+function buildAt(x: number, y: number, room: string): number {
     const tmpPos = new RoomPosition(x, y, room);
     const err = isBuildable(tmpPos)
     if (err==2) {
         const err = tmpPos.createConstructionSite(STRUCTURE_EXTENSION);
         if (err == OK) {
-            return true;
+            return 1;
         }
         if (err == ERR_FULL)
             throw ("Cant expand due too to many constructions")
@@ -52,8 +52,8 @@ function buildAt(x: number, y: number, room: string): boolean {
         console.log("Built at location with warning", tmpPos, PrettyPrintErr(err));
     }
     else if(err==0)
-        return false;
-    return true;
+        return 0;
+    return 10;
 }
 
 export function ExtensionFlagPlacement(room: Room) {
@@ -95,7 +95,8 @@ export function ExtensionFlagPlacement(room: Room) {
                     success += Number(buildAt(pos.x + 1, pos.y, pos.roomName));
                     if (success == 0)
                         break;
-                    inQue += success;
+                    console.log(nrBuilt, inQue, success);
+                    inQue += success%10;
                     if (getMaxCap(contr.level) <= nrBuilt + inQue) {
                         console.log("cant extend more for now ", pos);
                         return;

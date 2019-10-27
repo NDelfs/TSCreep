@@ -31,5 +31,10 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
     if (res.length > 0) {
         return creep.pickup(res[0]);
     }
+    else {
+        let res = workPos.lookFor(LOOK_STRUCTURES);
+        if (res.length > 0)
+            creep.withdraw(res[0], RESOURCE_ENERGY);
+    }
     return ERR_NOT_FOUND;
 }

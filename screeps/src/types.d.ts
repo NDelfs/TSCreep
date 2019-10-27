@@ -2,24 +2,30 @@
 // memory extension samples
 type TargetConstant =
     | CONTROLLER
-    | STRUCTURE
+    | POWERUSER
+    | POWERSTORAGE
     | SOURCE
     | DROPPED_ENERGY
     | CONSTRUCTION
+    | REPAIR
     | POSITION
     | FLAG_RED
-    | FLAG_WHITE;
+    | FLAG_WHITE
+    | DEFEND;
 
 type TargetEnergy =
     | SOURCE
     | DROPPED_ENERGY;
 
 type CONTROLLER = 1;
-type STRUCTURE = 11;
+type POWERUSER = 11;
+type POWERSTORAGE = 12;
 type SOURCE = 21;
 type DROPPED_ENERGY = 31;
 type CONSTRUCTION = 41;
+type REPAIR = 45;
 type POSITION = 51;
+type DEFEND = 61
 type FLAG_RED = 100;
 type FLAG_WHITE = 190;
 
@@ -29,7 +35,8 @@ type CreepConstant =
     | UPGRADER
     | TRANSPORTER
     | BUILDER
-    | SCOUT;
+    | SCOUT
+|DEFENDER;
 
 type STARTER = 1;
 type HARVESTER = 11;
@@ -37,6 +44,8 @@ type UPGRADER = 21;
 type TRANSPORTER = 31;
 type BUILDER = 41;
 type SCOUT = 51;
+type DEFENDER = 61
+
 
 interface targetData {
     ID: string;
@@ -88,7 +97,10 @@ interface RoomMemory {
     startSpawnPos: posData | null;
     EnergyNeedStruct: targetData[];
     EnergyNeed: number;
-    energyAvail: number;
+    ExpandedLevel: number;
+    //controllerStore: posData | null;
+    controllerStoreID: string | null;
+    controllerStoreDef: number; 
 }
 interface SpawnMemory {
 
