@@ -36,7 +36,9 @@ type CreepConstant =
     | TRANSPORTER
     | BUILDER
     | SCOUT
-|DEFENDER;
+    | DEFENDER
+    | ATTACKER
+    | ATTACKERCONTROLLER;
 
 type STARTER = 1;
 type HARVESTER = 11;
@@ -45,6 +47,8 @@ type TRANSPORTER = 31;
 type BUILDER = 41;
 type SCOUT = 51;
 type DEFENDER = 61
+type ATTACKER = 71;
+type ATTACKERCONTROLLER = 75;
 
 
 interface targetData {

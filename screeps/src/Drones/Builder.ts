@@ -1,14 +1,18 @@
 import { goToTarget } from "Drones/Funcs/Walk";
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import { resetDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
-import { getBuildTarget, useBuildTarget } from "./Funcs/Build";
+import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
 import * as targetT from "Types/TargetTypes";
 import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 
 export function Builder(creep: Creep) {
     resetDeliverTarget(creep);
-    if (creep.memory.currentTarget == null && creep.carry.energy > 50)
-        getBuildTarget(creep);
+    if (creep.memory.currentTarget == null && creep.carry.energy > 50) {
+        getRepairTarget(creep);
+        if (creep.memory.currentTarget == null) {
+            getBuildTarget(creep);
+        }
+    }
     else if (creep.memory.currentTarget == null) {//get closest energy
         let target1 = getEnergyTarget(creep);
         let target2: targetData|null=null;
@@ -42,8 +46,13 @@ export function Builder(creep: Creep) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);
                 break;
+            case targetT.REPAIR: {
+                useRepairTarget(creep);
+                break;
+            }
             case targetT.DROPPED_ENERGY:
                 useEnergyTarget(creep, creep.memory.currentTarget);
+                creep.memory.currentTarget = null;
                 break;
             default: {
                 let type = creep.memory.currentTarget.type;

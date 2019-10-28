@@ -1,0 +1,51 @@
+import { goToTarget } from "Drones/Funcs/Walk";
+import * as targetT from "Types/TargetTypes";
+
+export function Attacker(creep: Creep) {
+    if (creep.memory.currentTarget == null) {
+        let attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_BLUE });
+        if (attackFlag.length > 0 && attackFlag[0].pos.roomName != creep.pos.roomName) {
+            creep.memory.currentTarget = { ID: attackFlag[0].name, type: targetT.POSITION, pos: attackFlag[0].pos, range: 5 };
+        }
+    }
+    if (goToTarget(creep)) {
+        creep.memory.currentTarget = null;
+    }
+
+    let spawns = creep.room.find(FIND_HOSTILE_SPAWNS);
+    if (spawns.length > 0) {
+        creep.attack(spawns[0]);
+        creep.moveTo(spawns[0]);
+        
+    }
+
+    
+    let enemy = creep.room.find(FIND_HOSTILE_CREEPS);
+    if (enemy.length > 0 && spawns.length == 0) {
+        let err = creep.attack(enemy[0]);
+        //if (err == ERR_NOT_IN_RANGE)
+        creep.moveTo(enemy[0]);
+    }
+    if (enemy.length > 0) {
+        for (let enCre of enemy) {
+            let dist = creep.pos.getRangeTo(enCre.pos.x, enCre.pos.y);
+            if (dist < 4)
+                creep.rangedAttack(enCre);
+            if (dist == 1)
+                creep.attack(enCre);
+        }
+    }
+    else if (spawns.length == 0) {
+        let stru = creep.room.find(FIND_STRUCTURES, {
+            filter: function (str) {
+                return (str.structureType == STRUCTURE_EXTENSION ||
+                    str.structureType == STRUCTURE_TOWER)
+            }
+        });//
+        if (stru.length > 0) {
+            creep.attack(stru[0]);
+            creep.moveTo(stru[0]);
+
+        }
+    }
+}

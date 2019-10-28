@@ -14,6 +14,8 @@ import { PrettyPrintCreep } from "./utils/PrettyPrintErr";
 import { baseExpansion } from "./Base/BaseExpansion";
 import { Defender } from "./Drones/Defender";
 import { Builder } from "./Drones/Builder";
+import { Attacker } from "Drones/Attack";
+import { AttackerController } from "./Drones/AttackController";
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -111,6 +113,14 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 }
                 case creepT.BUILDER: {
                     Builder(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.ATTACKER: {
+                    Attacker(Game.creeps[creepID]);
+                    break;
+                }
+                case creepT.ATTACKERCONTROLLER: {
+                    AttackerController(Game.creeps[creepID]);
                     break;
                 }
             }

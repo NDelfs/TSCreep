@@ -13,11 +13,9 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
     let retT : targetData | null = null;
     let room = Game.rooms[creep.memory.creationRoom];
     let availBuild = room.memory.EnergyNeedStruct;
-    let limit = 0;
-    if (creep.room.controller && creep.room.controller.level > 3)
-        limit = 50;
 
-    if (availBuild.length > 0 && room.memory.EnergyNeed >= limit) {
+
+    if (availBuild.length > 0 && room.memory.EnergyNeed >0) {
         let closest = availBuild[0];
         let dist = creep.pos.getRangeTo(closest.pos.x, closest.pos.y)
         for (let building of availBuild) {

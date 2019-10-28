@@ -18,7 +18,6 @@ export function TowerOperation() {
                     tower.attack(hostile);
                 }
                 else if (emergencyB.length > 0) {
-                    console.log("nr dmg build " + emergencyB.length + " , " + emergencyB[0]);
                     const err = tower.repair(emergencyB[0]);
                     if (err)
                         console.log("Tower got error while repairing " + PrettyPrintErr(err));
