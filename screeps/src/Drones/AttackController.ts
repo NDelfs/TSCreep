@@ -10,8 +10,10 @@ export function AttackerController(creep: Creep) {
     }
     if (goToTarget(creep)) {
         if (creep.room.controller) {
+            console.log("before con attack ", creep.room.controller.ticksToDowngrade);
             creep.attackController(creep.room.controller);
             creep.moveTo(creep.room.controller);
+            console.log("after con attack ", creep.room.controller.ticksToDowngrade);
         }
     }
 }
