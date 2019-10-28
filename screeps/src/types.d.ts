@@ -102,6 +102,7 @@ interface RoomMemory {
     EnergyNeedStruct: targetData[];
     EnergyNeed: number;
     ExpandedLevel: number;
+    bigStoreID: string| null;
     //controllerStore: posData | null;
     controllerStoreID: string | null;
     controllerStoreDef: number; 

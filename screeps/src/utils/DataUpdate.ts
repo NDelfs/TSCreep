@@ -116,16 +116,24 @@ function updateEnergyDemandAndNrCreeps() : void {
         for (let [ID, sMem] of Object.entries(Memory.Sources)) {
             const pos = restorePos(sMem.workPos);
             if (Game.rooms[pos.roomName]) {
-                const energys = pos.lookFor(LOOK_RESOURCES);
-                sMem.AvailEnergy = 0;
-                for (let [inx, energy] of Object.entries(energys)) {
+                sMem.AvailEnergy = 0;  
+                const energys = pos.lookFor(LOOK_RESOURCES);                        
+                for (let energy of energys) {
                     sMem.AvailEnergy += energy.amount;
-                    const transportersTmp = _.filter(transporters, function (creep) {
-                        return creep.memory.currentTarget && creep.memory.currentTarget.ID == energy.id;
-                    })
-                    for (const [index, transp] of Object.entries(transportersTmp)) {
-                        sMem.AvailEnergy -= Number(transp.carryCapacity);
+                }
+                const structs = pos.lookFor(LOOK_STRUCTURES);  
+                for (let struct of structs) {
+                    if (struct.structureType == STRUCTURE_CONTAINER) {
+                        let cont = struct as StructureContainer;
+                        sMem.AvailEnergy += cont.store.energy;
                     }
+                }
+
+                const transportersTmp = _.filter(transporters, function (creep) {
+                    return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
+                })
+                for (const transp of transportersTmp) {
+                    sMem.AvailEnergy -= Number(transp.carryCapacity);
                 }
             }
         }

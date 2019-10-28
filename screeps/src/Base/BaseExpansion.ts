@@ -1,6 +1,15 @@
 import { ExtensionFlagPlacement } from "./ExtensionFlagPlacement";
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
+import { restorePos } from "../utils/posHelpers";
+
+function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange:number) {
+    let goal = { pos: goalPos, range: iRange };
+    let pathObj = PathFinder.search(startPos, goal);
+    for (let pos of pathObj.path) {
+        pos.createConstructionSite(STRUCTURE_ROAD);
+    }
+}
 
 export function baseExpansion() {
     for (let [id, room] of Object.entries(Game.rooms)) {
@@ -13,6 +22,7 @@ export function baseExpansion() {
             }
             try {
                 if (room.controller.level > room.memory.ExpandedLevel) {
+                    let buildFlag = room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
                     let spawns = room.find(FIND_MY_SPAWNS);
                     if (room.memory.ExpandedLevel == 0) {
                         if (spawns.length == 0) {
@@ -46,7 +56,7 @@ export function baseExpansion() {
                                 console.log("built Tower in ", room.name);
                                 let flags = room.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
                                 if (flags.length > 0)
-                                  flags[0].remove();
+                                    flags[0].remove();
                             }
                             else {
                                 console.log("failed to build Tower in ", room.name, PrettyPrintErr(err));
@@ -76,31 +86,40 @@ export function baseExpansion() {
                                 console.log("failed to build storage in ", room.name, PrettyPrintErr(err));
                                 return;
                             }
-                            
+
                         }
-                        room.memory.ExpandedLevel = 4;
-                    } //else if (room.memory.ExpandedLevel == 3) {
-                    //    let storage = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
-                    //    let storagecons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
-                    //    if (storage.length + storagecons.length <= 1) {
-                    //        let pos = spawns[0].pos;
-                    //        pos.x += 3;
-                    //        pos.y += 3;
-                    //        let err = pos.createConstructionSite(STRUCTURE_TOWER);
-                    //        if (err != OK) {
-                    //            pos.x -= 6;
-                    //            err = pos.createConstructionSite(STRUCTURE_TOWER);
-                    //        }
-                    //        if (err == OK) {
-                    //            console.log("built tower in ", room.name);
-                    //        }
-                    //        else {
-                    //            console.log("failed to build tower in ", room.name, PrettyPrintErr(err));
-                    //            return;
-                    //        }
-                    //    }
-                    //    room.memory.ExpandedLevel = 5;
-                    //}
+                        if (storage.length == 1) {
+                            room.memory.bigStoreID = storage[0].id;
+                            let sStoreP = storage[0].pos;
+                            sStoreP.y += 1;
+                            for (let sourceID of room.memory.sourcesUsed) {
+                                let goal = restorePos( Memory.Sources[sourceID].workPos);
+                                buildRoad(sStoreP, goal, 0);
+                            }
+                            for (let flag of buildFlag) {
+                                buildRoad(sStoreP, flag.pos, 0);
+                            }
+                            room.memory.ExpandedLevel = 4;
+                        }
+                    } else if (room.memory.ExpandedLevel == 4) {
+                        let towers = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
+                        let towercons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
+                        if (towers.length == 1 && towercons.length == 0) {
+                            let pos = spawns[0].pos;
+                            pos.x -= 3;
+                            pos.y += 3;
+                            let err = pos.createConstructionSite(STRUCTURE_TOWER);
+                            if (err == OK) {
+                                console.log("built Tower in ", room.name);                                
+                            }
+                            else {
+                                console.log("failed to build Tower in ", room.name, PrettyPrintErr(err));
+                                return;
+                            }
+                        }
+                        if (towers.length + towercons.length == 2)
+                            room.memory.ExpandedLevel = 5;
+                    }
                 } 
             }
             catch (e) {

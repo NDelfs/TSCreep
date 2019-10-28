@@ -64,12 +64,23 @@ function getTransportBody(room: Room): BodyPartConstant[] {
     return ret;
 }
 
-function getUpgradeBody(room: Room): BodyPartConstant[] {
-    if (room.energyCapacityAvailable >= 1150)
-        return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
-    if (room.energyCapacityAvailable >= 750)
-        return [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE]; 
-    throw ("cant get harvester body with less than 550 energy");
+function getUpgradeBody(room: Room, size: number): BodyPartConstant[] {
+    switch (size) {
+        case 1:
+            if (room.energyCapacityAvailable >= 750)
+                return [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
+        case 2:
+            if (room.energyCapacityAvailable >= 950)
+                return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
+        case 3:
+            if (room.energyCapacityAvailable >= 1150)
+                return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
+        case 4:
+            if (room.energyCapacityAvailable >= 1350)
+                return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
+    
+}
+    throw ("cant get harvester body with current index");
 }
 
 function calculateTransportQue(room: Room): queData[] {
@@ -140,20 +151,31 @@ function calculateUpgraderQue(room: Room): queData[] {
         let store: StructureContainer | null = Game.getObjectById(room.memory.controllerStoreID);
         if (store) {
             let limit = 1;
+            let size = 1;
             let roomEne = 0;
             for (let sourceID of room.memory.sourcesUsed) {
                 roomEne += Memory.Sources[sourceID].AvailEnergy;
             }
-            let storages = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } }) as StructureStorage[];
-            if (roomEne > 4000 && room.memory.controllerStoreDef < 500 && storages.length == 0)
+            
+            if (roomEne > 4000 && room.memory.controllerStoreDef < 500 && room.memory.bigStoreID != null) {
                 limit = 2;
+            }
+            if (room.memory.bigStoreID != null) {
+                size = 2;
+                let storage: StructureStorage | null = Game.getObjectById(room.memory.bigStoreID);
+                if (storage && storage.store.energy > 1e5)
+                    size = 3;
+                if (storage && storage.store.energy > 2e5 && room.controller.level >= 5)
+                    size = 4;
+
+            }
 
             let conID = room.controller.id;
             let current = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.UPGRADER && creep.memory.currentTarget && creep.memory.currentTarget.ID == conID});
             if (current.length < limit) {
                 const targ: targetData = { ID: room.controller.id, type: targetT.CONTROLLER, pos: store.pos, range: 1 };
                 const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };
-                ret.push({ memory: mem, body: getUpgradeBody(room) });
+                ret.push({ memory: mem, body: getUpgradeBody(room, size) });
             }
         }      
     }

@@ -57,7 +57,7 @@ function buildAt(x: number, y: number, room: string): number {
 }
 
 export function ExtensionFlagPlacement(room: Room) {
-    let buildFlag = _.first( room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED && flag.secondaryColor != COLOR_GREEN } }));
+    let buildFlag = _.first( room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED && flag.secondaryColor == COLOR_RED } }));
     let xDir: number;
     let yDir: number;
     
