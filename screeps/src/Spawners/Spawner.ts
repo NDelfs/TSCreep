@@ -202,7 +202,8 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
         if (err == OK) {
             let err = spawner.spawnCreep(que[0].body, PrettyPrintCreep(que[0].memory.type) + " " + getRandomName(), { memory: que[0].memory });
             if (err == OK) {
-                console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
+                if (que[0].memory.type == creepT.DEFENDER)
+                  console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
                 que.shift();
                 return 1;
             }
@@ -233,7 +234,8 @@ export function Spawner() {
             let upgradeQue = calculateUpgraderQue(room);
             let nrNewSpawns:number = 0;
             for (let spawnID in spawns) {
-                if (enemy.length == 0) {
+               // if (enemy.length == 0) {
+                
                     nrNewSpawns += spawnCreep(harvestQue, spawns[spawnID]);
                     nrNewSpawns += spawnCreep(TransQue, spawns[spawnID]);
                     nrNewSpawns += spawnCreep(starterQue, spawns[spawnID]);
@@ -241,12 +243,13 @@ export function Spawner() {
                     nrNewSpawns += spawnCreep(upgradeQue, spawns[spawnID]);
                     nrNewSpawns += spawnCreep(scoutQue, spawns[spawnID]);
                     nrNewSpawns += spawnCreep(expQue, spawns[spawnID]);
-                }
-                else {
+               // }
+                //else {
+                if (enemy.length > 0) {
                     spawnCreep(calculateDefQue(room), spawns[spawnID]);
-                }
+               }
             }
-            if (creepsInRoom.length + nrNewSpawns <= 2 && room.energyAvailable < room.energyCapacityAvailable && room.controller && room.controller.level >=3) {
+            if (creepsInRoom.length + nrNewSpawns <= 2&& room.controller && room.controller.level >=3) {
                 nrNewSpawns = 0;
                 for (let room2ID in Game.rooms) {
                     let room2 = Game.rooms[room2ID];
