@@ -11,6 +11,16 @@ function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange:number)
     }
 }
 
+function buildPrint(err: number, type : string, room : string) {
+    if (err == OK) {
+        console.log("built", type , "in " , room);
+    }
+    else {
+        console.log("failed to build", type, "in", room, PrettyPrintErr(err));
+        throw ("build fail");
+    }
+}
+
 export function baseExpansion() {
     for (let [id, room] of Object.entries(Game.rooms)) {
         if (room.controller && room.controller.my && room.controller.level > 0) {
@@ -27,17 +37,13 @@ export function baseExpansion() {
                     if (room.memory.ExpandedLevel == 0) {
                         if (spawns.length == 0) {
                             let spawnscons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_SPAWN } });
-                            if (spawns.length == 0) {
+                            if (spawnscons.length == 0) {
                                 let flags = room.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
                                 if (flags.length > 0) {
-                                    let err = flags[0].pos.createConstructionSite(STRUCTURE_SPAWN);
-                                    if (err == OK)
-                                        console.log("build new spawn in", room.name);
-                                    else {
-                                        console.log("failed to build spawn ", PrettyPrintErr(err));
-                                        return;
-                                    }
-
+                                    let middle = flags[0].pos;
+                                    middle.y += -2;
+                                    let err = middle.createConstructionSite(STRUCTURE_SPAWN);
+                                    buildPrint(err, "spawn", room.name);
                                 }
                             }
                         }
@@ -49,8 +55,8 @@ export function baseExpansion() {
                         let towercons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                         if (towers.length == 0 && towercons.length == 0) {
                             let pos = spawns[0].pos;
-                            pos.x += 3;
-                            pos.y += 3;
+                            pos.x += 1;
+                            pos.y += 5;
                             let err = pos.createConstructionSite(STRUCTURE_TOWER);
                             if (err == OK) {
                                 console.log("built Tower in ", room.name);
@@ -76,22 +82,15 @@ export function baseExpansion() {
                         if (room.storage == null && storagecons.length == 0) {
                             let pos = spawns[0].pos;
                             pos.x += 0;
-                            pos.y += 1;
+                            pos.y += 3;
                             let err = pos.createConstructionSite(STRUCTURE_STORAGE);
-                            if (err == OK) {
-                                console.log("built storage in ", room.name);
-                            }
-                            else {
-                                console.log("failed to build storage in ", room.name, PrettyPrintErr(err));
-                                return;
-                            }
-
+                            buildPrint(err, "storage", room.name);
                         }
                         if (room.storage) {
                             let sStoreP = room.storage.pos;
-                            sStoreP.y += 1;
+                            sStoreP.y += -2;
                             for (let sourceID of room.memory.sourcesUsed) {
-                                let goal = restorePos( Memory.Sources[sourceID].workPos);
+                                let goal = restorePos(Memory.Sources[sourceID].workPos);
                                 buildRoad(sStoreP, goal, 0);
                             }
                             for (let flag of buildFlag) {
@@ -104,20 +103,24 @@ export function baseExpansion() {
                         let towercons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                         if (towers.length == 1 && towercons.length == 0) {
                             let pos = spawns[0].pos;
-                            pos.x -= 3;
-                            pos.y += 3;
+                            pos.x -= 1;
+                            pos.y += 5;
                             let err = pos.createConstructionSite(STRUCTURE_TOWER);
-                            if (err == OK) {
-                                console.log("built Tower in ", room.name);                                
-                            }
-                            else {
-                                console.log("failed to build Tower in ", room.name, PrettyPrintErr(err));
-                                return;
-                            }
+                            buildPrint(err, "tower", room.name);
                         }
-                        if (towers.length + towercons.length == 2)
-                            room.memory.ExpandedLevel = 5;
+                        room.memory.ExpandedLevel = 5;
                     }
+                    //else if (room.memory.ExpandedLevel == 5) {
+                    //    let link = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_LINK } });
+                    //    let linkcons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_LINK } });
+                    //    if (link.length + linkcons.length < 3) {
+                    //        let pos = spawns[0].pos; //for the 7 one
+                    //        pos.y += 2;
+                    //        let err = pos.createConstructionSite(STRUCTURE_LINK);
+                    //        buildPrint(err, "link", room.name);
+                    //        //put close to harvesters
+                    //    }
+                    //}
                 } 
             }
             catch (e) {
