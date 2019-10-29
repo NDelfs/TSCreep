@@ -15,11 +15,10 @@ export function Builder(creep: Creep) {
     }
     else if (creep.memory.currentTarget == null) {//get closest energy
         let target1 = getEnergyTarget(creep);
-        let target2: targetData|null=null;
-        let storages = creep.room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } });
-        if (storages.length > 0) {
+        let target2: targetData | null = null;
+        if (creep.room.storage) {
             target2 = {
-                ID: storages[0].id, type: targetT.DROPPED_ENERGY, pos: storages[0].pos, range: 1
+                ID: creep.room.storage.id, type: targetT.DROPPED_ENERGY, pos: creep.room.storage.pos, range: 1
             }
         }
         if (target1 && target2) {

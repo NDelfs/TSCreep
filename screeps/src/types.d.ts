@@ -62,7 +62,6 @@ interface CreepMemory {
     type: CreepConstant;//found when used from creepType
     creationRoom: string;
     currentTarget: targetData | null;
-    mainTarget: string; //used by i.e harvesters. creeps not using this has ""
     permTarget: targetData | null;
 }
 
@@ -102,8 +101,6 @@ interface RoomMemory {
     EnergyNeedStruct: targetData[];
     EnergyNeed: number;
     ExpandedLevel: number;
-    bigStoreID: string| null;
-    //controllerStore: posData | null;
     controllerStoreID: string | null;
     controllerStoreDef: number; 
 }

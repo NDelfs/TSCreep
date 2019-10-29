@@ -26,9 +26,11 @@ export function Starter(creep: Creep) {
         }
 
         if (creep.memory.currentTarget == null) {
-            const harvesters = _.filter(Game.creeps, function (creepF) { return creepF.memory.type == creepT.HARVESTER && creepF.memory.mainTarget == creep.memory.mainTarget });
+            const harvesters = _.filter(Game.creeps, function (creepF) { return creepF.memory.type == creepT.HARVESTER && creepF.memory.permTarget && creep.memory.permTarget && creepF.memory.permTarget.ID == creep.memory.permTarget.ID });
             if (harvesters.length == 0) {
-                let source: Source | null = Game.getObjectById(creep.memory.mainTarget);
+                if (creep.memory.permTarget == null)
+                    throw ("no permanent target on starter");
+                let source: Source | null = Game.getObjectById(creep.memory.permTarget.ID);
                 if (source) {
                     let sourceMem: SourceMemory = Memory.Sources[source.id];
                     creep.say("go mining");
@@ -86,7 +88,9 @@ export function Starter(creep: Creep) {
                 return;
             }
             case targetT.SOURCE: {
-                let source: Source | null = Game.getObjectById(creep.memory.mainTarget);
+                if (creep.memory.permTarget == null)
+                    throw ("no permanent target on starter");
+                let source: Source | null = Game.getObjectById(creep.memory.permTarget.ID);
                 if (source) {
                     const err = creep.harvest(source);
                     if (err == OK && creep.carry.energy == creep.carryCapacity)

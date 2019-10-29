@@ -91,17 +91,16 @@ function calculateTransportQue(room: Room): queData[] {
         for (let sourceID of room.memory.sourcesUsed) {
             roomEne += Memory.Sources[sourceID].AvailEnergy;
         }
-        let storages = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } }) as StructureStorage[];
-        if (roomEne > 1500 && (room.memory.controllerStoreDef > 500 || storages.length>0))
+        if (roomEne > 1500 && (room.memory.controllerStoreDef > 500 || room.storage))
             limit = 3;
-        if (roomEne > 3000 && (room.memory.controllerStoreDef > 500 || storages.length > 0))
+        if (roomEne > 3000 && (room.memory.controllerStoreDef > 500 || room.storage))
             limit = 4;
         let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.TRANSPORTER && creep.memory.creationRoom == room.name });
         for (const source of room.memory.sourcesUsed) {
             //const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == source });     
             if (creeps.length < limit) {
                 const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 1 };
-                const mem: CreepMemory = { type: creepT.TRANSPORTER, creationRoom: room.name, currentTarget: null, permTarget: targ, mainTarget: "" };
+                const mem: CreepMemory = { type: creepT.TRANSPORTER, creationRoom: room.name, currentTarget: null, permTarget: targ};
                 ret.push({ memory: mem, body: getTransportBody(room) });
             }
         }
@@ -112,9 +111,9 @@ function calculateTransportQue(room: Room): queData[] {
 function calculateStarterQue(room: Room, curentHarv: Creep[]): queData[]{
     let ret: queData[] = [];
     for (const source of room.memory.sourcesUsed) {
-        const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == source });
+        const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
         const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
-        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: room.name, currentTarget: null, permTarget: targ, mainTarget: source };
+        const mem: CreepMemory = { type: creepT.STARTER, creationRoom: room.name, currentTarget: null, permTarget: targ};
         if (room.energyCapacityAvailable < 550) {
             if (excist.length < Memory.Sources[source].maxUser * 2)
                 ret.push({ memory: mem, body: getStarterBody(room) });
@@ -133,11 +132,10 @@ function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
     let ret: queData[] = [];
     if (room.energyCapacityAvailable >= 550) {
         for (let source of room.memory.sourcesUsed) {
-            const current = allHarv.find(function (creep) { return creep.memory.mainTarget == source });
+            const current = allHarv.find(function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source; });
             if (current == null) {
                 const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
-                const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };
-                mem.mainTarget = source;
+                const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ};
                 ret.push({ memory: mem, body: getHarvesterBody(room) });
             }
         }
@@ -156,16 +154,15 @@ function calculateUpgraderQue(room: Room): queData[] {
             for (let sourceID of room.memory.sourcesUsed) {
                 roomEne += Memory.Sources[sourceID].AvailEnergy;
             }
-            
-            if (roomEne > 4000 && room.memory.controllerStoreDef < 500 && room.memory.bigStoreID != null) {
+
+            if (roomEne > 4000 && room.memory.controllerStoreDef < 500 && room.storage) {
                 limit = 2;
             }
-            if (room.memory.bigStoreID != null) {
+            if (room.storage) {
                 size = 2;
-                let storage: StructureStorage | null = Game.getObjectById(room.memory.bigStoreID);
-                if (storage && storage.store.energy > 1e5)
+                if (room.storage.store.energy > 1e5)
                     size = 3;
-                if (storage && storage.store.energy > 2e5 && room.controller.level >= 5)
+                if (room.storage.store.energy > 2e5 && room.controller.level >= 5)
                     size = 4;
 
             }
@@ -174,7 +171,7 @@ function calculateUpgraderQue(room: Room): queData[] {
             let current = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.UPGRADER && creep.memory.currentTarget && creep.memory.currentTarget.ID == conID});
             if (current.length < limit) {
                 const targ: targetData = { ID: room.controller.id, type: targetT.CONTROLLER, pos: store.pos, range: 1 };
-                const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };
+                const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: room.name, currentTarget: targ, permTarget: targ};
                 ret.push({ memory: mem, body: getUpgradeBody(room, size) });
             }
         }      
@@ -188,7 +185,7 @@ function calculateBuilderQue(room: Room): queData[] {
     if (inQue.length > 0 && room.memory.controllerStoreID) {
         let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.BUILDER && creep.memory.creationRoom == room.name });
         if (creeps.length < 2) {
-            const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: room.name, currentTarget: null, permTarget: null, mainTarget: "" };
+            const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: room.name, currentTarget: null, permTarget: null };
             ret.push({ memory: mem, body: getBuilderBody(room) });
         }
     }
@@ -202,7 +199,7 @@ function calculateScoutQue(room: Room): queData[] {
         const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.memory.currentTarget && creep.memory.currentTarget.ID == flag.name; });
         if (creeps.length == 0 && flag.room == null) {
             const targ: targetData = { ID: flag.name, type: targetT.POSITION, pos: flag.pos, range: 2 };
-            const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, currentTarget: targ, permTarget: targ, mainTarget: "" };           
+            const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, currentTarget: targ, permTarget: targ};           
             ret.push({ memory: mem, body: [CLAIM, MOVE] });            
         }
     }
@@ -235,7 +232,7 @@ function calculateDefQue(room: Room): queData[] {
     let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.DEFENDER && creep.memory.creationRoom == room.name });
     if (creeps.length < 2) {
         //const targ: targetData = { ID: "", type: targetT., pos: flag.pos, range: 2 };
-        const mem: CreepMemory = { type: creepT.DEFENDER, creationRoom: room.name, currentTarget: null, permTarget: null, mainTarget: "" };
+        const mem: CreepMemory = { type: creepT.DEFENDER, creationRoom: room.name, currentTarget: null, permTarget: null };
         ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK] });  
     }
     return ret;
@@ -248,7 +245,7 @@ function calculateAttackQue(): queData[] {
         let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKER });
         if (creeps.length < 2) {
             const targ: targetData = { ID: attackFlag[0].name, type: targetT.POSITION, pos: attackFlag[0].pos, range: 2 };
-            const mem: CreepMemory = { type: creepT.ATTACKER, creationRoom: "", currentTarget: targ, permTarget: null, mainTarget: "" };
+            const mem: CreepMemory = { type: creepT.ATTACKER, creationRoom: "", currentTarget: targ, permTarget: null};
             ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, TOUGH, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, RANGED_ATTACK] });
         }
     }
@@ -257,7 +254,7 @@ function calculateAttackQue(): queData[] {
         let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKERCONTROLLER });
         if (creeps.length < 1) {
             const targ: targetData = { ID: attackFlag[0].name, type: targetT.POSITION, pos: attackFlag[0].pos, range: 2 };
-            const mem: CreepMemory = { type: creepT.ATTACKERCONTROLLER, creationRoom: "", currentTarget: targ, permTarget: null, mainTarget: "" };
+            const mem: CreepMemory = { type: creepT.ATTACKERCONTROLLER, creationRoom: "", currentTarget: targ, permTarget: null};
             ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE,MOVE, CLAIM, CLAIM, CLAIM] });
         }
     }
@@ -304,13 +301,12 @@ export function Spawner() {
             let upgradeQue = calculateUpgraderQue(room);
             let nrNewSpawns: number = 0;
 
-            let storages = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } }) as StructureStorage[];
             let roomEne = 0;
             for (let sourceID of room.memory.sourcesUsed) {
                 roomEne += Memory.Sources[sourceID].AvailEnergy;
             }
-            if (storages.length > 0)
-                roomEne += storages[0].store.energy;
+            if (room.storage)
+                roomEne += room.storage.store.energy;
             //if (roomEne < 800)
                 //console.log(room.name, "has to litle energy", roomEne);
             for (let spawnID in spawns) {

@@ -72,9 +72,8 @@ export function baseExpansion() {
 
                         room.memory.ExpandedLevel = 3;
                     } else if (room.memory.ExpandedLevel == 3) {
-                        let storage = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } });
                         let storagecons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
-                        if (storage.length == 0 && storagecons.length == 0) {
+                        if (room.storage == null && storagecons.length == 0) {
                             let pos = spawns[0].pos;
                             pos.x += 0;
                             pos.y += 1;
@@ -88,9 +87,8 @@ export function baseExpansion() {
                             }
 
                         }
-                        if (storage.length == 1) {
-                            room.memory.bigStoreID = storage[0].id;
-                            let sStoreP = storage[0].pos;
+                        if (room.storage) {
+                            let sStoreP = room.storage.pos;
                             sStoreP.y += 1;
                             for (let sourceID of room.memory.sourcesUsed) {
                                 let goal = restorePos( Memory.Sources[sourceID].workPos);

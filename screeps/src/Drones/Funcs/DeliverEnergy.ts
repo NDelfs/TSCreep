@@ -39,10 +39,9 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
             }
         }
         else if (findStore) {
-            let storages = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } });
-            if (storages.length > 0) {
+            if (room.storage) {
                 retT = {
-                    ID: storages[0].id, type: targetT.POWERSTORAGE, pos: storages[0].pos, range: 1
+                    ID: room.storage.id, type: targetT.POWERSTORAGE, pos: room.storage.pos, range: 1
                 }
             }
         }

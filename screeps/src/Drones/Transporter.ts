@@ -17,10 +17,9 @@ export function Transporter(creep: Creep) {
           creep.memory.currentTarget = targ;
     }
     if (creep.memory.currentTarget == null && creep.room.memory.EnergyNeed > 0) {
-        let storages = creep.room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_STORAGE } });
-        if (storages.length > 0) {
+        if (creep.room.storage) {
             creep.memory.currentTarget = {
-                ID: storages[0].id, type: targetT.DROPPED_ENERGY, pos: storages[0].pos, range: 1
+                ID: creep.room.storage.id, type: targetT.DROPPED_ENERGY, pos: creep.room.storage.pos, range: 1
             }
         }
     }
