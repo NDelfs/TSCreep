@@ -86,6 +86,7 @@ interface Memory {
     respawncomplete: boolean;
     creepIndex: number;
     Sources: { [name: string]: SourceMemory };
+    Minerals: { [name: string]: SourceMemory };
     LevelTick: number[];
 }
 
@@ -97,6 +98,7 @@ interface queData {
 
 interface RoomMemory {
     sourcesUsed: string[];
+    mineralsUsed: string[];
     startSpawnPos: posData | null;
     EnergyNeedStruct: targetData[];
     EnergyNeed: number;
@@ -114,6 +116,7 @@ interface SourceMemory {
     maxUser: number;
     workPos: posData;
     container: string | null;
+    linkID: string | null;
     AvailEnergy: number;
     nrUsers: number;
 }

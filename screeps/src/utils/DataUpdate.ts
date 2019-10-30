@@ -1,7 +1,6 @@
 import { storePos, restorePos } from "utils/posHelpers";
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
-import { Transporter } from "../Drones/Transporter";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
 
 export function DataUpdate(): void {
@@ -175,10 +174,13 @@ function updateEnergyDemandAndNrCreeps() : void {
 
 
 
-function addSources(room: Room, homeRoomPos: RoomPosition) {
-    const sources = room.find(FIND_SOURCES);
-    for (const source in sources) {
-        let pos = sources[source].pos;
+function addSources(room: Room, homeRoomPos: RoomPosition, findType: FIND_MINERALS | FIND_SOURCES) {
+    const sources = room.find(findType);
+    if (findType == FIND_MINERALS) {
+        console.log("addSource 1", sources.length);
+    }
+    for (const source of sources) {
+        let pos = source.pos;
         let nrNeig = 0;
         let res = room.lookForAtArea(LOOK_TERRAIN, pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true);
         for (let [ind, spot] of Object.entries(res)) {
@@ -187,23 +189,38 @@ function addSources(room: Room, homeRoomPos: RoomPosition) {
         let goal = { pos: pos, range: 1 };
         let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later. cant use for desirialize
         let newWorkPos = _.last(pathObj.path);
-             
-        Memory.Sources[sources[source].id] = {
-            pos: storePos(sources[source].pos),
+        let mem = {
+            pos: storePos(source.pos),
             usedByRoom: homeRoomPos.roomName,
             maxUser: nrNeig,
             workPos: newWorkPos,
             container: null,
+            linkID: null,
             AvailEnergy: 0,
             nrUsers: 0,
         };
-        room.memory.sourcesUsed.push(sources[source].id);
+        if (findType == FIND_MINERALS) {
+            console.log("addSource 2", nrNeig);
+        }
+        if (findType == FIND_SOURCES) {
+            Memory.Sources[source.id] = mem;
+            room.memory.sourcesUsed.push(source.id);
+        }
+        else if (findType == FIND_MINERALS) {
+            if (Memory.Minerals == null)
+                Memory.Minerals = {};
+            Memory.Minerals[source.id] = mem;
+            room.memory.mineralsUsed.push(source.id);
+        }
     }
 }
 
 function expandRoom(homeRoom: Room, centrePos: RoomPosition) {
     if (homeRoom.memory.sourcesUsed.length == 0) {
-        addSources(homeRoom, centrePos);
+        addSources(homeRoom, centrePos, FIND_SOURCES);
+    }
+    if (homeRoom.memory.mineralsUsed.length == 0) {
+        addSources(homeRoom, centrePos, FIND_MINERALS);
     }
 }
 
@@ -230,6 +247,8 @@ function initNewRooms() {
             room.memory.ExpandedLevel = 0;
         if (room.memory.controllerStoreDef == null)
             room.memory.controllerStoreDef = 0;
+        if (room.memory.mineralsUsed == null)
+            room.memory.mineralsUsed = [];
     }
 }
 
