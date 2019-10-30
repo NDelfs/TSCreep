@@ -5,7 +5,32 @@ import { restorePos } from "../utils/posHelpers";
 
 function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange:number) {
     let goal = { pos: goalPos, range: iRange };
-    let pathObj = PathFinder.search(startPos, goal);
+    let options: PathFinderOpts = {
+        // We still want to avoid some swamp purely out of upkeep cost
+        plainCost: 1,
+        swampCost: 3,
+        //here we only add avodance to building that we cant pass
+        roomCallback: function (roomName : string) {
+            let room = Game.rooms[roomName];
+            // In this example `room` will always exist, but since 
+            // PathFinder supports searches which span multiple rooms 
+            // you should be careful!
+            if (!room) return false;
+            let costs = new PathFinder.CostMatrix;
+
+            room.find(FIND_STRUCTURES).forEach(function (struct) {
+                if (struct.structureType !== STRUCTURE_CONTAINER &&
+                    (struct.structureType !== STRUCTURE_RAMPART ||
+                        !struct.my)) {
+                    // Can't walk through non-walkable buildings
+                    costs.set(struct.pos.x, struct.pos.y, 0xff);
+                }
+            });
+            return costs;
+        },
+    }
+
+    let pathObj = PathFinder.search(startPos, goal, options);
     for (let pos of pathObj.path) {
         pos.createConstructionSite(STRUCTURE_ROAD);
     }
