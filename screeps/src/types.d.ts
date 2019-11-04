@@ -125,6 +125,10 @@ interface FlagMemory {
 
 }
 
+interface Room {
+    my: boolean;
+}
+
 // `global` extension samples
 declare namespace NodeJS {
   interface Global {

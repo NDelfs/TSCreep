@@ -1,4 +1,7 @@
+'use strict';
 import { ErrorMapper } from "utils/ErrorMapper";
+import './ScreepExtends/Room';
+
 
 import { Transporter } from "Drones/Transporter";
 import { Upgrader } from "Drones/Upgrader";
@@ -16,6 +19,8 @@ import { Defender } from "./Drones/Defender";
 import { Builder } from "./Drones/Builder";
 import { Attacker } from "Drones/Attack";
 import { AttackerController } from "./Drones/AttackController";
+
+
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -137,7 +142,4 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
     }
 
-
-
-    
 });

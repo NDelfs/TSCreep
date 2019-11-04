@@ -44,6 +44,7 @@
     <Folder Include="src\Drones\" />
     <Folder Include="src\Base\" />
     <Folder Include="src\Drones\Funcs\" />
+    <Folder Include="src\ScreepExtends\" />
     <Folder Include="src\Types\" />
     <Folder Include="src\Spawners\" />
     <Folder Include="src\utils\" />
@@ -95,6 +96,9 @@
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Drones\Upgrader.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="src\ScreepExtends\Room.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Types\Constants.ts">
