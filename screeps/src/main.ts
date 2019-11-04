@@ -47,12 +47,7 @@ function reset() {
 }
 
 function testeCode() {
-    //let pos = new RoomPosition(4, 21, Game.spawns["Spawn1"].pos.roomName);
-    //let homeRoomPos = Game.spawns["Spawn1"].pos;
-    //let goal = { pos: pos, range: 1 };
-    //let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later.
-    //let newWorkPos = _.last(pathObj.path);
-    //console.log(newWorkPos.x, newWorkPos.y, newWorkPos.roomName);
+   
 }
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code

@@ -76,6 +76,7 @@ export function baseExpansion() {
 
                     }
                     else if (room.memory.ExpandedLevel == 2) {
+                        room.controller.sign = { username: "Gorgar", text: "IMO the chocolate bar", time: Game.time, datetime: new Date() };
                         let towers = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
                         let towercons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                         if (towers.length == 0 && towercons.length == 0) {
