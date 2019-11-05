@@ -44,6 +44,7 @@
     <Folder Include="src\Drones\" />
     <Folder Include="src\Base\" />
     <Folder Include="src\Drones\Funcs\" />
+    <Folder Include="src\Declarations\" />
     <Folder Include="src\ScreepExtends\" />
     <Folder Include="src\Types\" />
     <Folder Include="src\Spawners\" />
@@ -57,6 +58,12 @@
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\TowerOperation.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Declarations\Memory.d.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Declarations\Prototypes.d.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Drones\Attack.ts">
@@ -98,6 +105,9 @@
     <TypeScriptCompile Include="src\Drones\Upgrader.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\ScreepExtends\Creep.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\ScreepExtends\Room.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -111,7 +121,7 @@
     <TypeScriptCompile Include="src\Spawners\Spawner.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\types.d.ts" />
+    <TypeScriptCompile Include="src\Declarations\types.d.ts" />
     <TypeScriptCompile Include="src\Types\TargetTypes.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

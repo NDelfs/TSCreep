@@ -42,7 +42,7 @@ function updateEnergyDemandAndNrCreeps() : void {
     for (let roomName in Game.rooms) {
         //********all rooms*************//////
         let room = Game.rooms[roomName];
-        if (room.controller && room.controller.level > 0) {//no point going trhour rooms that cant create stuff
+        if (room.my) {//no point going trhour rooms that cant create stuff
             let locTransporters = _.filter(transporters, function (creep) {
                 return creep.memory.creationRoom == roomName;
             });
