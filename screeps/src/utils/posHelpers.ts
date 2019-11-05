@@ -9,3 +9,24 @@ export function restorePos(pos: posData): RoomPosition {
 export function isEqualPos(pos: RoomPosition | posData, pos2: RoomPosition | posData): boolean {
     return pos.x == pos2.x && pos.y == pos2.y && pos.roomName == pos2.roomName;
 }
+
+
+export function isBuildable(pos: RoomPosition): number {
+    const atPos = pos.look();
+    const SWAMP = "swamp";
+    const PLAIN = "plain";
+    for (const ind in atPos) {
+        switch (atPos[ind].type) {
+            case LOOK_TERRAIN:
+                if (!(atPos[ind].terrain == PLAIN || atPos[ind].terrain == SWAMP))
+                    return 0;
+                break;
+            case LOOK_STRUCTURES:
+                return 1;
+            case LOOK_CONSTRUCTION_SITES:
+                return 1;
+            default:
+        }
+    }
+    return 2;
+}

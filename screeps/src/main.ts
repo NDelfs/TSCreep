@@ -1,4 +1,7 @@
+'use strict';
 import { ErrorMapper } from "utils/ErrorMapper";
+import './ScreepExtends/Room';
+import './ScreepExtends/Creep';
 
 import { Transporter } from "Drones/Transporter";
 import { Upgrader } from "Drones/Upgrader";
@@ -16,6 +19,9 @@ import { Defender } from "./Drones/Defender";
 import { Builder } from "./Drones/Builder";
 import { Attacker } from "Drones/Attack";
 import { AttackerController } from "./Drones/AttackController";
+import { HARVESTER } from "Types/CreepType";
+
+
 
 function clearVec(vec: { [name: string]: any }) {
     for (var i in vec) {
@@ -47,12 +53,7 @@ function reset() {
 }
 
 function testeCode() {
-    //let pos = new RoomPosition(4, 21, Game.spawns["Spawn1"].pos.roomName);
-    //let homeRoomPos = Game.spawns["Spawn1"].pos;
-    //let goal = { pos: pos, range: 1 };
-    //let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later.
-    //let newWorkPos = _.last(pathObj.path);
-    //console.log(newWorkPos.x, newWorkPos.y, newWorkPos.roomName);
+   
 }
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -143,6 +144,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
 
 
-
+    //for (let roomID in Game.rooms) {
+    //    if (roomID == "E49N47") {
+    //        let room = Game.rooms[roomID];
+    //        console.log("call energy need", room.creeps[HARVESTER].length);
+    //    }
+    //}
     
 });

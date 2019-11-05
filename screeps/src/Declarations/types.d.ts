@@ -51,19 +51,6 @@ type ATTACKER = 71;
 type ATTACKERCONTROLLER = 75;
 
 
-interface targetData {
-    ID: string;
-    type: TargetConstant;
-    pos: posData;
-    range: number;
-}
-
-interface CreepMemory {
-    type: CreepConstant;//found when used from creepType
-    creationRoom: string;
-    currentTarget: targetData | null;
-    permTarget: targetData | null;
-}
 
 interface posData {
     /**
@@ -80,47 +67,19 @@ interface posData {
     y: number;
 }
 
-interface Memory {
-  uuid: number;
-    log: any;
-    respawncomplete: boolean;
-    creepIndex: number;
-    Sources: { [name: string]: SourceMemory };
-    LevelTick: number[];
+interface targetData {
+    ID: string;
+    type: TargetConstant;
+    pos: posData;
+    range: number;
 }
-
 
 interface queData {
     memory: CreepMemory;
     body: BodyPartConstant[];
 }
 
-interface RoomMemory {
-    sourcesUsed: string[];
-    startSpawnPos: posData | null;
-    EnergyNeedStruct: targetData[];
-    EnergyNeed: number;
-    ExpandedLevel: number;
-    controllerStoreID: string | null;
-    controllerStoreDef: number; 
-}
-interface SpawnMemory {
 
-}
-
-interface SourceMemory {
-    pos: posData;
-    usedByRoom: string;
-    maxUser: number;
-    workPos: posData;
-    container: string | null;
-    AvailEnergy: number;
-    nrUsers: number;
-}
-
-interface FlagMemory {
-
-}
 
 // `global` extension samples
 declare namespace NodeJS {

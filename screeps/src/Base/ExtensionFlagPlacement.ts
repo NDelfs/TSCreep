@@ -1,26 +1,6 @@
-import { restorePos } from "../utils/posHelpers";
-import { storePos } from "../utils/posHelpers";
-import { PrettyPrintErr } from "../utils/PrettyPrintErr";
+import { restorePos, storePos, isBuildable } from "utils/posHelpers";
+import { PrettyPrintErr } from "utils/PrettyPrintErr";
 
-function isBuildable(pos: RoomPosition) : number {
-    const atPos = pos.look();
-    const SWAMP = "swamp";
-    const PLAIN = "plain";
-    for (const ind in atPos) {
-        switch (atPos[ind].type) {
-            case LOOK_TERRAIN:
-                if (!(atPos[ind].terrain == PLAIN || atPos[ind].terrain == SWAMP))
-                    return 0;
-                break;
-            case LOOK_STRUCTURES:    
-                return 1;
-            case LOOK_CONSTRUCTION_SITES:
-                return 1;
-            default:
-        }
-    }
-    return 2;
-}
 
 function getMaxCap(level: number): number {
     switch (level) {
