@@ -1,5 +1,5 @@
 import * as targetT from "Types/TargetTypes";
-import { restorePos } from "utils/posHelpers";
+import { restorePos, storePos } from "utils/posHelpers";
 
 function getRandomInt(max : number) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -33,8 +33,11 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
     }
     else {
         let res = workPos.lookFor(LOOK_STRUCTURES);
-        if (res.length > 0)
-            creep.withdraw(res[0], RESOURCE_ENERGY);
+        for (let struct of res) {
+            if (struct.structureType != STRUCTURE_ROAD) {
+                creep.withdraw(struct, RESOURCE_ENERGY);
+            }
+        }
     }
     return ERR_NOT_FOUND;
 }

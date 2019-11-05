@@ -109,10 +109,10 @@ function calculateTransportQue(room: Room): queData[] {
     return ret;
 }
 
-function calculateStarterQue(room: Room, curentHarv: Creep[]): queData[]{
+function calculateStarterQue(room: Room): queData[]{
     let ret: queData[] = [];
     for (const source of room.memory.sourcesUsed) {
-        const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
+        const excist = _.filter(room.creepsAll, function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && creep.type == creepT.STARTER });
         const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
         const mem: CreepMemory = { type: creepT.STARTER, creationRoom: room.name, currentTarget: null, permTarget: targ};
         if (room.energyCapacityAvailable < 550) {
@@ -129,11 +129,11 @@ function calculateStarterQue(room: Room, curentHarv: Creep[]): queData[]{
     return ret;
 }
 
-function calculateHarvesterQue(room: Room, allHarv: Creep[]): queData[] {
+function calculateHarvesterQue(room: Room): queData[] {
     let ret: queData[] = [];
     if (room.energyCapacityAvailable >= 550) {
         for (let source of room.memory.sourcesUsed) {
-            const current = allHarv.find(function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source; });
+            const current = room.creepsAll.find(function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && creep.type == creepT.HARVESTER; });
             if (current == null) {
                 const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
                 const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ};
@@ -222,9 +222,8 @@ function calculateExpansiontQue(): queData[] {
     const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
     for (let flag of wflags) {
         if (flag.room != null && (flag.room.controller == null || flag.room.controller.level < 3)) {
-            const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.creationRoom == flag.pos.roomName; });
             //if (creeps.length < 4) {
-            ret = calculateStarterQue(flag.room, creeps);
+            ret = calculateStarterQue(flag.room);
 
                 if (ret.length > 0) {
                     ret[0].body = [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
@@ -290,21 +289,19 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
 }
 
 export function Spawner() {
-    let starters = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.STARTER });
-    let harvesters = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.HARVESTER });
     let expQue = calculateExpansiontQue();
     let attackQue = calculateAttackQue();
     for (let roomID in Game.rooms) {
         let room = Game.rooms[roomID];
         try {     
-            let creepsInRoom = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.creationRoom == room.name; });
+            //let creepsInRoom = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.creationRoom == room.name; });
             let enemy = room.find(FIND_HOSTILE_CREEPS);
             var spawns = room.find(FIND_MY_SPAWNS);
             if (spawns.length > 0) {
                 let starterQue: queData[] = [];
-                if (room.memory.controllerStoreID == null || creepsInRoom.length <= 2)
-                    starterQue = calculateStarterQue(room, starters);
-                let harvestQue = calculateHarvesterQue(room, harvesters);
+                if (room.memory.controllerStoreID == null || room.creepsAll.length <= 2)
+                    starterQue = calculateStarterQue(room);
+                let harvestQue = calculateHarvesterQue(room);
                 let builderQue = calculateBuilderQue(room);
                 let scoutQue = calculateScoutQue(room);
 
@@ -328,7 +325,7 @@ export function Spawner() {
                         nrNewSpawns += spawnCreep(TransQue, spawns[spawnID]);
                     }
                     nrNewSpawns += spawnCreep(starterQue, spawns[spawnID]);
-                    if (roomEne > 800 && creepsInRoom.length > 2) {
+                    if (roomEne > 800 && room.creepsAll.length > 2) {
                         nrNewSpawns += spawnCreep(upgradeQue, spawns[spawnID]);
                         if (room.energyAvailable > room.energyCapacityAvailable * 0.9) {
                             nrNewSpawns += spawnCreep(builderQue, spawns[spawnID]);
@@ -339,11 +336,11 @@ export function Spawner() {
                     }
                     // }
                     //else {
-                    if (enemy.length > 0) {
+                    if (room.controller && (enemy.length > 0 && room.controller.level <= 3)) {
                         spawnCreep(calculateDefQue(room), spawns[spawnID]);
                     }
                 }
-                if (creepsInRoom.length <= 2 && room.controller && room.controller.level >= 3) {
+                if (room.creepsAll.length <= 2 && room.controller && room.controller.level >= 3) {
                     nrNewSpawns = 0;
                     for (let room2ID in Game.rooms) {
                         let room2 = Game.rooms[room2ID];

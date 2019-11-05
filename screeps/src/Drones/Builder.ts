@@ -28,8 +28,9 @@ export function Builder(creep: Creep) {
                 creep.memory.currentTarget = target1;
                 Memory.Sources[creep.memory.currentTarget.ID].AvailEnergy -= creep.carryCapacity;
             }
-            else
+            else {
                 creep.memory.currentTarget = target2;
+            }
         }
         else if (target1) {
             creep.memory.currentTarget = target1;
@@ -51,6 +52,7 @@ export function Builder(creep: Creep) {
             }
             case targetT.DROPPED_ENERGY:
                 useEnergyTarget(creep, creep.memory.currentTarget);
+                creep.say("withdraw");
                 creep.memory.currentTarget = null;
                 break;
             default: {

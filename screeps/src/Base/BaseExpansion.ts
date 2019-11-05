@@ -19,7 +19,7 @@ function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange:number)
             let costs = new PathFinder.CostMatrix;
 
             room.find(FIND_STRUCTURES).forEach(function (struct) {
-                if (struct.structureType !== STRUCTURE_CONTAINER &&
+                if (struct.structureType !== STRUCTURE_CONTAINER && struct.structureType !== STRUCTURE_ROAD &&
                     (struct.structureType !== STRUCTURE_RAMPART ||
                         !struct.my)) {
                     // Can't walk through non-walkable buildings
@@ -168,10 +168,12 @@ export function baseExpansion() {
                             }
                         }
                         for (let sourceID of room.memory.mineralsUsed) {
-                            let goal = restorePos(Memory.Minerals[sourceID].workPos);
-                            restorePos(Memory.Minerals[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
-                            let sStoreP = room.storage.pos;
-                            buildRoad(goal, sStoreP, 5);
+                            if (restorePos(Memory.Minerals[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
+                                let goal = restorePos(Memory.Minerals[sourceID].workPos);
+                                restorePos(Memory.Minerals[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
+                                let sStoreP = room.storage.pos;
+                                buildRoad(goal, sStoreP, 5);
+                            }
                         }
 
                         if (link.length == 3) {
