@@ -55,6 +55,10 @@
     <TypeScriptCompile Include="src\Base\ExtensionFlagPlacement.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Base\LinkOperation.ts">
+      <SubType>Code</SubType>
+      <TestFramework>ExportRunner</TestFramework>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\TowerOperation.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

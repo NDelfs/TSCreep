@@ -211,7 +211,9 @@ function expand() {
     for (let spawn in Game.spawns) {//always have same room sources
         let room = Game.spawns[spawn].room;
         if (room.memory.startSpawnPos)
-          expandRoom(room, restorePos(room.memory.startSpawnPos));
+            expandRoom(room, restorePos(room.memory.startSpawnPos));
+        else
+            room.memory.startSpawnPos = Game.spawns[spawn].pos;
     }
     for (let [id, flag] of Object.entries(Game.flags)) {
         if (flag.color == COLOR_WHITE && flag.room) {
