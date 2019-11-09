@@ -19,7 +19,7 @@ import { Defender } from "./Drones/Defender";
 import { Builder } from "./Drones/Builder";
 import { Attacker } from "Drones/Attack";
 import { AttackerController } from "./Drones/AttackController";
-import { HARVESTER } from "Types/CreepType";
+import { HARVESTER, SCOUT } from "Types/CreepType";
 
 
 
@@ -147,7 +147,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     //for (let roomID in Game.rooms) {
     //    if (roomID == "E49N47") {
     //        let room = Game.rooms[roomID];
-    //        console.log("call energy need", room.creeps[HARVESTER].length);
+    //        console.log("call energy need", room.getCreeps(HARVESTER).length);
     //    }
     //}
     

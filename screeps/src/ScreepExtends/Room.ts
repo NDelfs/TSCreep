@@ -41,6 +41,10 @@ Object.defineProperty(Room.prototype, 'creeps', {
     },
     configurable: true,
 });
+
+Room.prototype.getCreeps = function (creep: CreepConstant): Creep[] {
+    return this.creeps[creep] || [];
+}
 // Room properties: structures =========================================================================================
 
 Object.defineProperty(Room.prototype, 'constructionSites', {
