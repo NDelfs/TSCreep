@@ -115,7 +115,7 @@ export function baseExpansion() {
                         if (room.storage) {
                             let sStoreP = room.storage.pos;
                             for (let sourceID of room.memory.sourcesUsed) {
-                                let goal = restorePos(Memory.Sources[sourceID].workPos);
+                                let goal = restorePos(Memory.Resources[sourceID].workPos);
                                 buildRoad(goal, sStoreP, 5);
                             }
                             for (let flag of buildFlag) {
@@ -162,15 +162,15 @@ export function baseExpansion() {
                             }
                             //put close to harvesters
                             for (let sourceID of room.memory.sourcesUsed) {
-                                let source = Memory.Sources[sourceID];
+                                let source = Memory.Resources[sourceID];
                                 let err2 = findAndBuildLink(restorePos(source.workPos));
                                 buildPrint(err2, "link", room.name);
                             }
                         }
                         for (let sourceID of room.memory.mineralsUsed) {
-                            if (restorePos(Memory.Minerals[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
-                                let goal = restorePos(Memory.Minerals[sourceID].workPos);
-                                restorePos(Memory.Minerals[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
+                            if (restorePos(Memory.Resources[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
+                                let goal = restorePos(Memory.Resources[sourceID].workPos);
+                                restorePos(Memory.Resources[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
                                 let sStoreP = room.storage.pos;
                                 buildRoad(goal, sStoreP, 5);
                             }
@@ -178,7 +178,7 @@ export function baseExpansion() {
 
                         if (link.length == 3) {
                             for (let sourceID of room.memory.sourcesUsed) {
-                                let source = Memory.Sources[sourceID];
+                                let source = Memory.Resources[sourceID];
                                 let pos = restorePos(source.workPos);
                                 let structures: StructureLink[] = pos.findInRange(FIND_MY_STRUCTURES, 1, { filter: { structuceType: STRUCTURE_LINK } }) as StructureLink[];
                                 if (structures.length > 0) {

@@ -6,6 +6,7 @@ type TargetConstant =
     | POWERSTORAGE
     | SOURCE
     | DROPPED_ENERGY
+    | DROPPED_MINERAL
     | CONSTRUCTION
     | REPAIR
     | POSITION
@@ -22,6 +23,7 @@ type POWERUSER = 11;
 type POWERSTORAGE = 12;
 type SOURCE = 21;
 type DROPPED_ENERGY = 31;
+type DROPPED_MINERAL = 35;
 type CONSTRUCTION = 41;
 type REPAIR = 45;
 type POSITION = 51;

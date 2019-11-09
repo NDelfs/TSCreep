@@ -12,3 +12,13 @@ Object.defineProperty(Creep.prototype, 'creationRoom', {
     },
     configurable: true,
 });
+
+Object.defineProperty(Creep.prototype, 'carryAmount', {
+    get() {
+        if (!this._carryAmount) {
+            this._carryAmount = _.sum(this.carry);
+        }
+        return this._carryAmount;
+    },
+     configurable: true,
+});

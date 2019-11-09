@@ -16,7 +16,7 @@ export function Builder(creep: Creep) {
     else if (creep.memory.currentTarget == null) {//get closest energy
         let target1 = getEnergyTarget(creep);
         let target2: targetData | null = null;
-        if (creep.room.storage) {
+        if (creep.room.storage && creep.room.storage.store.energy>0) {
             target2 = {
                 ID: creep.room.storage.id, type: targetT.DROPPED_ENERGY, pos: creep.room.storage.pos, range: 1
             }
@@ -26,7 +26,7 @@ export function Builder(creep: Creep) {
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
             if (range1 < range2) {
                 creep.memory.currentTarget = target1;
-                Memory.Sources[creep.memory.currentTarget.ID].AvailEnergy -= creep.carryCapacity;
+                Memory.Resources[creep.memory.currentTarget.ID].AvailResource -= creep.carryCapacity;
             }
             else {
                 creep.memory.currentTarget = target2;
@@ -34,7 +34,7 @@ export function Builder(creep: Creep) {
         }
         else if (target1) {
             creep.memory.currentTarget = target1;
-            Memory.Sources[creep.memory.currentTarget.ID].AvailEnergy -= creep.carryCapacity;
+            Memory.Resources[creep.memory.currentTarget.ID].AvailResource -= creep.carryCapacity;
         }
         else if (target2) {
             creep.memory.currentTarget = target2;

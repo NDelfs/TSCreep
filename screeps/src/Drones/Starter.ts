@@ -21,7 +21,7 @@ export function Starter(creep: Creep) {
     if (creep.memory.currentTarget == null && creep.carry.energy == 0) {
         creep.memory.currentTarget = getEnergyTarget(creep);
         if (creep.memory.currentTarget) {
-            Memory.Sources[creep.memory.currentTarget.ID].AvailEnergy -= creep.carryCapacity;
+            Memory.Resources[creep.memory.currentTarget.ID].AvailResource -= creep.carryCapacity;
             creep.say("Go to source")
         }
 
@@ -32,7 +32,7 @@ export function Starter(creep: Creep) {
                     throw ("no permanent target on starter");
                 let source: Source | null = Game.getObjectById(creep.memory.permTarget.ID);
                 if (source) {
-                    let sourceMem: SourceMemory = Memory.Sources[source.id];
+                    let sourceMem: SourceMemory = Memory.Resources[source.id];
                     creep.say("go mining");
                     creep.memory.currentTarget = { ID: source.id, type: targetT.SOURCE, pos: sourceMem.pos, range: 1 };
                 }

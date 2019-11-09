@@ -20,6 +20,8 @@ import { Builder } from "./Drones/Builder";
 import { Attacker } from "Drones/Attack";
 import { AttackerController } from "./Drones/AttackController";
 import { HARVESTER, SCOUT } from "Types/CreepType";
+import { connect } from "http2";
+
 
 
 
@@ -34,7 +36,7 @@ function reset() {
         var room = _.find(Game.rooms); // get the only room somehow
         if (room && room.controller && room.controller.level == 1) { // RCL one on a single room means we've *just* respawned
             clearVec(Memory.creeps);
-            clearVec(Memory.Sources);
+            clearVec(Memory.Resources);
             clearVec(Memory.rooms);
             clearVec(Memory.flags);
             clearVec(Memory.spawns);
@@ -43,7 +45,7 @@ function reset() {
             console.log("Reset Memory because of respawn")
 
             // do all the once-off code here
-            Memory.Sources = {};
+            Memory.Resources = {};
             Memory.LevelTick = [];
             Memory.LevelTick.push(Game.time);
         }
@@ -59,7 +61,6 @@ function testeCode() {
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
     try {
-        //testeCode();
     }
     catch (e) {
         console.log("Testecode failed with : ", e);
@@ -87,41 +88,44 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
     for (let creepID in Game.creeps) {
         try {
-            switch (Game.creeps[creepID].memory.type) {
+            let creep = Game.creeps[creepID];
+            if (creep.spawning)
+                continue;
+            switch (creep.type) {
                 case creepT.STARTER: {
-                    Starter(Game.creeps[creepID]);
+                    Starter(creep);
                     break;
                 }
                 case creepT.TRANSPORTER: {
-                    Transporter(Game.creeps[creepID]);
+                    Transporter(creep);
                     break;
                 }
                 case creepT.UPGRADER: {
-                    Upgrader(Game.creeps[creepID]);
+                    Upgrader(creep);
                     break;
                 }
                 case creepT.HARVESTER: {
-                    Harvester(Game.creeps[creepID]);
+                    Harvester(creep);
                     break;
                 }
                 case creepT.SCOUT: {
-                    scout(Game.creeps[creepID]);
+                    scout(creep);
                     break;
                 }
                 case creepT.DEFENDER: {
-                    Defender(Game.creeps[creepID]);
+                    Defender(creep);
                     break;
                 }
                 case creepT.BUILDER: {
-                    Builder(Game.creeps[creepID]);
+                    Builder(creep);
                     break;
                 }
                 case creepT.ATTACKER: {
-                    Attacker(Game.creeps[creepID]);
+                    Attacker(creep);
                     break;
                 }
                 case creepT.ATTACKERCONTROLLER: {
-                    AttackerController(Game.creeps[creepID]);
+                    AttackerController(creep);
                     break;
                 }
             }

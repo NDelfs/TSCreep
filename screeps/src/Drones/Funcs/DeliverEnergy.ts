@@ -15,7 +15,7 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
     let availBuild = room.memory.EnergyNeedStruct;
 
 
-    if (availBuild.length > 0 && room.memory.EnergyNeed >0) {
+    if (availBuild.length > 0 && room.memory.EnergyNeed > 0 && creep.carry.energy > 0) {
         let closest = availBuild[0];
         let dist = creep.pos.getRangeTo(closest.pos.x, closest.pos.y)
         for (let building of availBuild) {
@@ -29,7 +29,7 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
         room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
-        if (room.memory.controllerStoreID && room.memory.controllerStoreDef > 0) {
+        if (room.memory.controllerStoreID && room.memory.controllerStoreDef > 0 && creep.carry.energy > 0) {
             let store: StructureContainer | null = Game.getObjectById(room.memory.controllerStoreID);
             if (store) {
                 retT = {
@@ -69,10 +69,13 @@ function getCloseDeliverTarget(creep: Creep): targetData | null {
 
 
 export function useDeliverTarget(creep: Creep, target: targetData): number {
-    let targetObj: Structure | null = Game.getObjectById(target.ID);
+    let targetObj = Game.getObjectById(target.ID) as StructureStorage | StructureContainer | null;
     let err: number = ERR_NOT_FOUND;
     if (targetObj) {
-        err = creep.transfer(targetObj, RESOURCE_ENERGY);
+        let key = _.findKey(creep.carry) as ResourceConstant;
+        //creep.say(key);
+        if (key)
+            err = creep.transfer(targetObj, key);
         if (err == ERR_FULL || err == OK) {
             if (creep.carry.energy >= 50 && target.type == targetT.POWERUSER) {
                 creep.memory.currentTarget = getCloseDeliverTarget(creep);

@@ -112,19 +112,19 @@ function updateEnergyDemandAndNrCreeps() : void {
     //////update sources//////
     //_.forEach(Memory.Sources, function (sMem, index, arr) {
     try {
-        for (let [ID, sMem] of Object.entries(Memory.Sources)) {
+        for (let [ID, sMem] of Object.entries(Memory.Resources)) {
             const pos = restorePos(sMem.workPos);
             if (Game.rooms[pos.roomName]) {
-                sMem.AvailEnergy = 0;  
+                sMem.AvailResource = 0;  
                 const energys = pos.lookFor(LOOK_RESOURCES);                        
                 for (let energy of energys) {
-                    sMem.AvailEnergy += energy.amount;
+                    sMem.AvailResource += energy.amount;
                 }
                 const structs = pos.lookFor(LOOK_STRUCTURES);  
                 for (let struct of structs) {
                     if (struct.structureType == STRUCTURE_CONTAINER) {
                         let cont = struct as StructureContainer;
-                        sMem.AvailEnergy += cont.store.energy;
+                        sMem.AvailResource += _.sum(cont.store);
                     }
                 }
 
@@ -132,7 +132,7 @@ function updateEnergyDemandAndNrCreeps() : void {
                     return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
                 })
                 for (const transp of transportersTmp) {
-                    sMem.AvailEnergy -= Number(transp.carryCapacity);
+                    sMem.AvailResource -= Number(transp.carryCapacity);
                 }
             }
         }
@@ -189,27 +189,26 @@ function addSources(room: Room, homeRoomPos: RoomPosition, findType: FIND_MINERA
         let goal = { pos: pos, range: 1 };
         let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later. cant use for desirialize
         let newWorkPos = _.last(pathObj.path);
-        let mem = {
+        let mem: SourceMemory ={
             pos: storePos(source.pos),
             usedByRoom: homeRoomPos.roomName,
             maxUser: nrNeig,
             workPos: newWorkPos,
             container: null,
             linkID: null,
-            AvailEnergy: 0,
+            AvailResource: 0,
             nrUsers: 0,
+            resourceType: RESOURCE_ENERGY,
         };
-        if (findType == FIND_MINERALS) {
-            console.log("addSource 2", nrNeig);
-        }
+
         if (findType == FIND_SOURCES) {
-            Memory.Sources[source.id] = mem;
+            Memory.Resources[source.id] = mem;
             room.memory.sourcesUsed.push(source.id);
         }
         else if (findType == FIND_MINERALS) {
-            if (Memory.Minerals == null)
-                Memory.Minerals = {};
-            Memory.Minerals[source.id] = mem;
+            let min = source as Mineral;
+            mem.resourceType = min.mineralType;
+            Memory.Resources[source.id] = mem;
             room.memory.mineralsUsed.push(source.id);
         }
     }

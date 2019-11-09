@@ -3,6 +3,7 @@ export const POWERUSER = 11;
 export const POWERSTORAGE = 12;
 export const SOURCE = 21;
 export const DROPPED_ENERGY = 31;
+export const DROPPED_MINERAL = 35;
 export const CONSTRUCTION = 41;
 export const REPAIR = 45;
 export const POSITION = 51;

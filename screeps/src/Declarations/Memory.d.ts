@@ -12,8 +12,7 @@ interface Memory {
     log: any;
     respawncomplete: boolean;
     creepIndex: number;
-    Sources: { [name: string]: SourceMemory };
-    Minerals: { [name: string]: SourceMemory };
+    Resources: { [name: string]: SourceMemory };
     LevelTick: number[];
 }
 
@@ -40,8 +39,9 @@ interface SourceMemory {
     workPos: posData;
     container: string | null;
     linkID: string | null;
-    AvailEnergy: number;
+    AvailResource: number;
     nrUsers: number;
+    resourceType: ResourceConstant;
 }
 
 interface FlagMemory {

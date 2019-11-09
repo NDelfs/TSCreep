@@ -2,7 +2,8 @@ import { PrettyPrintErr, PrettyPrintCreep } from "../utils/PrettyPrintErr";
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { CONTROLLER } from "Types/TargetTypes";
-import { TRANSPORTER } from "Types/CreepType";
+import { TRANSPORTER, HARVESTER, STARTER } from "Types/CreepType";
+import { Transporter } from "../Drones/Transporter";
 
 let names1 = ["Jackson", "Aiden", "Liam", "Lucas", "Noah", "Mason", "Jayden", "Ethan", "Jacob", "Jack", "Caden", "Logan", "Benjamin", "Michael", "Caleb", "Ryan", "Alexander", "Elijah", "James", "William", "Oliver", "Connor", "Matthew", "Daniel", "Luke", "Brayden", "Jayce", "Henry", "Carter", "Dylan", "Gabriel", "Joshua", "Nicholas", "Isaac", "Owen", "Nathan", "Grayson", "Eli", "Landon", "Andrew", "Max", "Samuel", "Gavin", "Wyatt", "Christian", "Hunter", "Cameron", "Evan", "Charlie", "David", "Sebastian", "Joseph", "Dominic", "Anthony", "Colton", "John", "Tyler", "Zachary", "Thomas", "Julian", "Levi", "Adam", "Isaiah", "Alex", "Aaron", "Parker", "Cooper", "Miles", "Chase", "Muhammad", "Christopher", "Blake", "Austin", "Jordan", "Leo", "Jonathan", "Adrian", "Colin", "Hudson", "Ian", "Xavier", "Camden", "Tristan", "Carson", "Jason", "Nolan", "Riley", "Lincoln", "Brody", "Bentley", "Nathaniel", "Josiah", "Declan", "Jake", "Asher", "Jeremiah", "Cole", "Mateo", "Micah", "Elliot"]
 let names2 = ["Sophia", "Emma", "Olivia", "Isabella", "Mia", "Ava", "Lily", "Zoe", "Emily", "Chloe", "Layla", "Madison", "Madelyn", "Abigail", "Aubrey", "Charlotte", "Amelia", "Ella", "Kaylee", "Avery", "Aaliyah", "Hailey", "Hannah", "Addison", "Riley", "Harper", "Aria", "Arianna", "Mackenzie", "Lila", "Evelyn", "Adalyn", "Grace", "Brooklyn", "Ellie", "Anna", "Kaitlyn", "Isabelle", "Sophie", "Scarlett", "Natalie", "Leah", "Sarah", "Nora", "Mila", "Elizabeth", "Lillian", "Kylie", "Audrey", "Lucy", "Maya", "Annabelle", "Makayla", "Gabriella", "Elena", "Victoria", "Claire", "Savannah", "Peyton", "Maria", "Alaina", "Kennedy", "Stella", "Liliana", "Allison", "Samantha", "Keira", "Alyssa", "Reagan", "Molly", "Alexandra", "Violet", "Charlie", "Julia", "Sadie", "Ruby", "Eva", "Alice", "Eliana", "Taylor", "Callie", "Penelope", "Camilla", "Bailey", "Kaelyn", "Alexis", "Kayla", "Katherine", "Sydney", "Lauren", "Jasmine", "London", "Bella", "Adeline", "Caroline", "Vivian", "Juliana", "Gianna", "Skyler", "Jordyn"]
@@ -23,6 +24,8 @@ function getStarterBody(room: Room): BodyPartConstant[] {
     if (room.energyCapacityAvailable >= 1200) {
         body = [];
         let nrSets = room.energyCapacityAvailable * 0.8 / 200.0;
+        if (nrSets > 8)
+            nrSets = 8;
         for (let i = 0; i < nrSets; i++) {
             body.push(WORK);
             body.push(CARRY);
@@ -96,7 +99,7 @@ function calculateTransportQue(room: Room): queData[] {
         let limit = 2;
         let roomEne = 0;
         for (let sourceID of room.memory.sourcesUsed) {
-            roomEne += Memory.Sources[sourceID].AvailEnergy;
+            roomEne += Memory.Resources[sourceID].AvailResource;
         }
         if (roomEne > 1500 && (room.memory.controllerStoreDef > 500 || room.storage))
             limit = 3;
@@ -106,7 +109,7 @@ function calculateTransportQue(room: Room): queData[] {
         for (const source of room.memory.sourcesUsed) {
             //const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == source });     
             if (creeps.length < limit) {
-                const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 1 };
+                const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 1 };
                 const mem: CreepMemory = { type: creepT.TRANSPORTER, creationRoom: room.name, currentTarget: null, permTarget: targ};
                 ret.push({ memory: mem, body: getTransportBody(room) });
             }
@@ -119,10 +122,10 @@ function calculateStarterQue(room: Room): queData[]{
     let ret: queData[] = [];
     for (const source of room.memory.sourcesUsed) {
         const excist = _.filter(room.getCreeps(creepT.STARTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source});
-        const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
+        const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
         const mem: CreepMemory = { type: creepT.STARTER, creationRoom: room.name, currentTarget: null, permTarget: targ};
         if (room.energyCapacityAvailable < 550) {
-            if (excist.length < Memory.Sources[source].maxUser * 2)
+            if (excist.length < Memory.Resources[source].maxUser * 2)
                 ret.push({ memory: mem, body: getStarterBody(room) });
         }
         else {
@@ -141,9 +144,21 @@ function calculateHarvesterQue(room: Room): queData[] {
         for (let source of room.memory.sourcesUsed) {
             const current = _.filter(room.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
             if (current.length == 0) {
-                const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Sources[source].workPos, range: 0 };
+                const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
                 const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ};
                 ret.push({ memory: mem, body: getHarvesterBody(room) });
+            }
+        }
+    }
+    if (room.controller && room.controller.level >= 6 && ret.length == 0) {
+        if (room.name == "E49N47") {
+            for (let source of room.memory.mineralsUsed) {
+                const current = _.filter(room.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
+                if (current.length == 0) {
+                    const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
+                    const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ };
+                    ret.push({ memory: mem, body: getHarvesterBody(room) });
+                }
             }
         }
     }
@@ -159,7 +174,7 @@ function calculateUpgraderQue(room: Room): queData[] {
             let size = 1;
             let roomEne = 0;
             for (let sourceID of room.memory.sourcesUsed) {
-                roomEne += Memory.Sources[sourceID].AvailEnergy;
+                roomEne += Memory.Resources[sourceID].AvailResource;
             }
    
             if (room.storage) {
@@ -280,15 +295,25 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
             let err = spawner.spawnCreep(que[0].body, PrettyPrintCreep(que[0].memory.type) + " " + getRandomName(), { memory: que[0].memory });
             if (err == OK) {
                 //if (que[0].memory.type == creepT.DEFENDER)
-                  console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
+                console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
                 que.shift();
                 return 1;
             }
             else
                 console.log("failed to spawn", PrettyPrintCreep(que[0].memory.type), " due to ", PrettyPrintErr(err));
         }
+        else if (err != ERR_NOT_ENOUGH_ENERGY)
+            console.log(spawner.room.name, "spawn failed to spawn", PrettyPrintCreep(que[0].memory.type), PrettyPrintErr(err));
     }
     return 0;
+}
+
+function isFailedEconomy(room: Room): boolean {
+    if ((room.getCreeps(HARVESTER).length > 0 && room.getCreeps(TRANSPORTER).length > 0) || room.getCreeps(STARTER).length > 1)
+        return false;
+    if ((room.getCreeps(TRANSPORTER).length > 0 || room.getCreeps(STARTER).length > 0) && room.availEnergy > 800)
+        return false;
+    return true;
 }
 
 export function Spawner() {
@@ -302,7 +327,7 @@ export function Spawner() {
             var spawns = room.find(FIND_MY_SPAWNS);
             if (spawns.length > 0) {
                 let starterQue: queData[] = [];
-                if (room.memory.controllerStoreID == null || room.creepsAll.length <= 2)
+                if (room.memory.controllerStoreID == null || isFailedEconomy(room))
                     starterQue = calculateStarterQue(room);
                 let harvestQue = calculateHarvesterQue(room);
                 let builderQue = calculateBuilderQue(room);
@@ -311,24 +336,15 @@ export function Spawner() {
                 let TransQue = calculateTransportQue(room);
                 let upgradeQue = calculateUpgraderQue(room);
                 let nrNewSpawns: number = 0;
-
-                let roomEne = 0;
-                for (let sourceID of room.memory.sourcesUsed) {
-                    roomEne += Memory.Sources[sourceID].AvailEnergy;
-                }
-                if (room.storage)
-                    roomEne += room.storage.store.energy;
-                //if (roomEne < 800)
-                //console.log(room.name, "has to litle energy", roomEne);
                 for (let spawnID in spawns) {
                     // if (enemy.length == 0) {
 
                     nrNewSpawns += spawnCreep(harvestQue, spawns[spawnID]);
-                    if (roomEne > 800) {
+                    if (room.availEnergy > 800) {
                         nrNewSpawns += spawnCreep(TransQue, spawns[spawnID]);
                     }
                     nrNewSpawns += spawnCreep(starterQue, spawns[spawnID]);
-                    if (roomEne > 800 && room.creepsAll.length > 2) {
+                    if (room.availEnergy > 800 && room.creepsAll.length > 2) {
                         nrNewSpawns += spawnCreep(upgradeQue, spawns[spawnID]);
                         if (room.energyAvailable > room.energyCapacityAvailable * 0.9) {
                             nrNewSpawns += spawnCreep(builderQue, spawns[spawnID]);
@@ -343,7 +359,7 @@ export function Spawner() {
                         spawnCreep(calculateDefQue(room), spawns[spawnID]);
                     }
                 }
-                if (room.creepsAll.length <= 2 && room.controller && room.controller.level >= 3) {
+                if (isFailedEconomy(room) && room.controller && room.controller.level >= 3) {
                     nrNewSpawns = 0;
                     for (let room2ID in Game.rooms) {
                         let room2 = Game.rooms[room2ID];

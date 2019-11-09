@@ -11,10 +11,11 @@ interface Room {
     constructionSites: ConstructionSite[];
     drops: { [resourceType: string]: Resource[] };
     droppedEnergy: Resource[];
+    availEnergy: number;
 }
-
 
 interface Creep {
     creationRoom: string;
     type: CreepConstant;
+    carryAmount: number;
 }
