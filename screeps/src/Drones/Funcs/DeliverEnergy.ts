@@ -14,6 +14,12 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
     let room = Game.rooms[creep.memory.creationRoom];
     let availBuild = room.memory.EnergyNeedStruct;
 
+    if (creep.carry.energy == 0 && room.terminal && creep.carryAmount >0) {
+        retT = {
+            ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1
+        }
+        return retT;
+    }
 
     if (availBuild.length > 0 && room.memory.EnergyNeed > 0 && creep.carry.energy > 0) {
         let closest = availBuild[0];
@@ -39,7 +45,9 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
             }
         }
         else if (findStore) {
-            if (room.storage) {
+            if (room.terminal && room.terminal.store.energy < 2e4 && room.storage && room.storage.store.energy > 5e4)
+                retT = { ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1 };
+            else if (room.storage) {
                 retT = {
                     ID: room.storage.id, type: targetT.POWERSTORAGE, pos: room.storage.pos, range: 1
                 }

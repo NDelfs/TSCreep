@@ -117,6 +117,7 @@ export function baseExpansion() {
                             for (let sourceID of room.memory.sourcesUsed) {
                                 let goal = restorePos(Memory.Resources[sourceID].workPos);
                                 buildRoad(goal, sStoreP, 5);
+                                goal.createConstructionSite(STRUCTURE_CONTAINER);
                             }
                             for (let flag of buildFlag) {
                                 buildRoad(flag.pos, sStoreP, 5);

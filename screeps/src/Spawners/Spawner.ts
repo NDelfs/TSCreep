@@ -96,14 +96,15 @@ function getUpgradeBody(room: Room, size: number): BodyPartConstant[] {
 function calculateTransportQue(room: Room): queData[] {
     let ret: queData[] = [];
     if (room.controller && room.controller.level >= 3) {
+        let transportSize = (room.energyCapacityAvailable * 0.8 / 150.0)*100;
         let limit = 2;
         let roomEne = 0;
         for (let sourceID of room.memory.sourcesUsed) {
             roomEne += Memory.Resources[sourceID].AvailResource;
         }
-        if (roomEne > 1500 && (room.memory.controllerStoreDef > 500 || room.storage))
+        if (roomEne > transportSize*4 && (room.memory.controllerStoreDef > 500 || room.storage))
             limit = 3;
-        if (roomEne > 3000 && (room.memory.controllerStoreDef > 500 || room.storage))
+        if (roomEne > transportSize*8 && (room.memory.controllerStoreDef > 500 || room.storage))
             limit = 4;
         const creeps = room.getCreeps(creepT.TRANSPORTER);
         for (const source of room.memory.sourcesUsed) {
@@ -150,17 +151,19 @@ function calculateHarvesterQue(room: Room): queData[] {
             }
         }
     }
-    if (room.controller && room.controller.level >= 6 && ret.length == 0) {
-        if (room.name == "E49N47") {
-            for (let source of room.memory.mineralsUsed) {
+    if (room.terminal && ret.length == 0 && room.availEnergy > 4e4) {
+        for (let source of room.memory.mineralsUsed) {
+            const min = Game.getObjectById(source) as Mineral | null;
+            if (min && min.mineralAmount > 0) {
                 const current = _.filter(room.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
                 if (current.length == 0) {
                     const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
                     const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: room.name, currentTarget: targ, permTarget: targ };
-                    ret.push({ memory: mem, body: getHarvesterBody(room) });
+                    ret.push({ memory: mem, body: Array(16).fill(WORK).concat([MOVE, MOVE, MOVE, MOVE]) });
                 }
             }
         }
+
     }
     return ret;
 }
@@ -204,7 +207,13 @@ function calculateBuilderQue(room: Room): queData[] {
     let ret: queData[] = [];
     let inQue = room.find(FIND_MY_CONSTRUCTION_SITES);
     if (inQue.length > 0 && room.memory.controllerStoreID) {
-        if (room.getCreeps(creepT.BUILDER).length < 2) {
+        let limit = 0;
+        if (room.availEnergy > 2e3)
+            limit = 1;
+        if (room.availEnergy > 2e4)
+            limit = 2;
+
+        if (room.getCreeps(creepT.BUILDER).length < limit) {
             const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: room.name, currentTarget: null, permTarget: null };
             ret.push({ memory: mem, body: getBuilderBody(room) });
         }
@@ -297,6 +306,7 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
                 //if (que[0].memory.type == creepT.DEFENDER)
                 console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
                 que.shift();
+                spawner.room.memory.inCreepEmergency = null;
                 return 1;
             }
             else
@@ -308,12 +318,21 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
     return 0;
 }
 
-function isFailedEconomy(room: Room): boolean {
-    if ((room.getCreeps(HARVESTER).length > 0 && room.getCreeps(TRANSPORTER).length > 0) || room.getCreeps(STARTER).length > 1)
-        return false;
-    if ((room.getCreeps(TRANSPORTER).length > 0 || room.getCreeps(STARTER).length > 0) && room.availEnergy > 800)
-        return false;
-    return true;
+function isFailedEconomy(room: Room, spawns: StructureSpawn[]): void {
+    if (room.memory.inCreepEmergency == null) {
+        for (const spawn of spawns) {
+            const spawning = spawn.spawning;
+            if (spawning) {
+                return;
+            }
+        }
+
+        if ((room.getCreeps(HARVESTER).length > 0 && room.getCreeps(TRANSPORTER).length > 0) || room.getCreeps(STARTER).length > 1)
+            return;
+        if ((room.getCreeps(TRANSPORTER).length > 0 || room.getCreeps(STARTER).length > 0) && room.availEnergy > 800)
+            return;
+        room.memory.inCreepEmergency = 0;
+    }
 }
 
 export function Spawner() {
@@ -321,13 +340,14 @@ export function Spawner() {
     let attackQue = calculateAttackQue();
     for (let roomID in Game.rooms) {
         let room = Game.rooms[roomID];
-        try {     
+        try {
             //let creepsInRoom = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.creationRoom == room.name; });
             let enemy = room.find(FIND_HOSTILE_CREEPS);
             var spawns = room.find(FIND_MY_SPAWNS);
             if (spawns.length > 0) {
+                isFailedEconomy(room, spawns);
                 let starterQue: queData[] = [];
-                if (room.memory.controllerStoreID == null || isFailedEconomy(room))
+                if (room.memory.controllerStoreID == null)
                     starterQue = calculateStarterQue(room);
                 let harvestQue = calculateHarvesterQue(room);
                 let builderQue = calculateBuilderQue(room);
@@ -336,6 +356,7 @@ export function Spawner() {
                 let TransQue = calculateTransportQue(room);
                 let upgradeQue = calculateUpgraderQue(room);
                 let nrNewSpawns: number = 0;
+                
                 for (let spawnID in spawns) {
                     // if (enemy.length == 0) {
 
@@ -359,18 +380,22 @@ export function Spawner() {
                         spawnCreep(calculateDefQue(room), spawns[spawnID]);
                     }
                 }
-                if (isFailedEconomy(room) && room.controller && room.controller.level >= 3) {
-                    nrNewSpawns = 0;
+                if (room.memory.controllerStoreID && room.memory.inCreepEmergency) {
+                    starterQue = calculateStarterQue(room);
+                  
                     for (let room2ID in Game.rooms) {
-                        let room2 = Game.rooms[room2ID];
-                        //if (room2.energyAvailable>)//need to compute cost
-                        var spawns2 = room2.find(FIND_MY_SPAWNS);
-                        for (let spawn2ID in spawns2) {
-                            nrNewSpawns += spawnCreep(starterQue, spawns2[spawn2ID]);
+                        if (room.memory.inCreepEmergency == 0) {
+                            let room2 = Game.rooms[room2ID];
+                            //if (room2.energyAvailable>)//need to compute cost
+                            var spawns2 = room2.find(FIND_MY_SPAWNS);
+                            for (let spawn2ID in spawns2) {
+                                room.memory.inCreepEmergency = spawnCreep(starterQue, spawns2[spawn2ID]);
+                                if (room.memory.inCreepEmergency > 0) {
+                                    console.log(room.name, "Emergency build of starter remotely from", room2.name);
+                                }
+                            }
                         }
-                        if (nrNewSpawns > 0) {
-                            console.log(room.name, "Emergency build of starter remotely from", room2.name);
-                        }
+                       
                     }
                 }
 

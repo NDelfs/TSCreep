@@ -21,6 +21,7 @@ import { Attacker } from "Drones/Attack";
 import { AttackerController } from "./Drones/AttackController";
 import { HARVESTER, SCOUT } from "Types/CreepType";
 import { connect } from "http2";
+import { Market } from "./Base/Market";
 
 
 
@@ -57,33 +58,52 @@ function reset() {
 function testeCode() {
    
 }
+let cpuUsed : number;
+function bench(text: string) {
+    if (Memory.bench) {
+        console.log(text, Game.cpu.getUsed() - cpuUsed);
+        cpuUsed = Game.cpu.getUsed();
+    }
+}
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
+    cpuUsed  = 0;
     try {
     }
     catch (e) {
         console.log("Testecode failed with : ", e);
     }
     reset();
+    bench("after reset");
     try {
         DataUpdate();
     }
     catch (e) {
         console.log("Failed Data update with: ", e);
     }
+    bench("Data update");
     try {
         baseExpansion();
     }
     catch (e) {
         console.log("Failed base expansion update with: ", e);
     }
+    bench("Base expansion");
     try {
         Spawner();
     }
     catch (e) {
         console.log("Failed spawner update with: ",e);
     }
+    bench("Spawner");
+    try {
+        Market();
+    }
+    catch (e) {
+        console.log("Failed market with: ", e);
+    }
+    bench("Market");
     //console.log(`Current game tick is ${Game.time}`);
 
     for (let creepID in Game.creeps) {
@@ -134,12 +154,14 @@ export const loop = ErrorMapper.wrapLoop(() => {
             console.log(Game.creeps[creepID].pos.roomName, " a creep failed, type =", PrettyPrintCreep(Game.creeps[creepID].memory.type), "with err: ", e);
         }       
     }
+    bench("Creeps");
     try {
         TowerOperation();
     }
     catch (e) {
         console.log("Tower failet to run ", e);
     }
+    bench("Tower operation");
   // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
     if (!(name in Game.creeps)) {

@@ -61,6 +61,9 @@
       <SubType>Code</SubType>
       <TestFramework>ExportRunner</TestFramework>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Base\Market.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\TowerOperation.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

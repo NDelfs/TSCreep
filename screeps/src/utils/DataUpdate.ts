@@ -2,6 +2,7 @@ import { storePos, restorePos } from "utils/posHelpers";
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
+import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
 
 export function DataUpdate(): void {
     try {
@@ -28,32 +29,46 @@ export function DataUpdate(): void {
     catch (e) {
         console.log("Failed updateEnergyDemandAndNrCreeps update with: ", e);
     }
+    try {
+        if (Game.time % 100 == 0) {
+            for (let roomName in Game.rooms) {
+                //********all rooms*************//////
+                let room = Game.rooms[roomName];
+                room.memory.repairQue = [];
+                if (room.my) {//no point going trhour rooms that cant create stuff
+                    let structs = room.find(FIND_STRUCTURES, {
+                        filter: function (struct) {
+                            return room.controller && (struct.hits < room.controller.level * 100000) && (struct.hits < struct.hitsMax - 1000);
+                        }
+                    });
+                    structs.sort(function (obj, obj2): number { return obj.hits - obj2.hits; });
+                    for (let struct of structs) {
+                        room.memory.repairQue.push(struct.id);
+                    }
+                    if (structs.length > 0)
+                        console.log(room.name, "found", structs.length, "things to repair");
+                }
+            }
+        }
+    }
+    catch (e) {
+        console.log("Failed update rooms: ", e);
+    }
 }
 
 
 //updates energy demand and also the nr of creeps
 function updateEnergyDemandAndNrCreeps() : void {
 
-    let transporters = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.TRANSPORTER });
-    let builders = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.BUILDER });
-    if (transporters.length == 0)
-        transporters = transporters.concat(_.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.STARTER }));
+    //let transporters = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.TRANSPORTER });
+    //let builders = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.BUILDER });
+    //if (transporters.length == 0)
+    //    transporters = transporters.concat(_.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.STARTER }));
 
     for (let roomName in Game.rooms) {
         //********all rooms*************//////
         let room = Game.rooms[roomName];
         if (room.my) {//no point going trhour rooms that cant create stuff
-            let locTransporters = _.filter(transporters, function (creep) {
-                return creep.memory.creationRoom == roomName;
-            });
-            let locBuilder = _.filter(builders, function (creep) {
-                return creep.memory.creationRoom == roomName;
-            });
-
-            //console.log(transporters.length);
-            //room.memory.nrTransporters = locTransporters.length;          
-            //room.memory.nrBuilder = locBuilder.length;
-
 
             //****Energy demand
             //let tmpTowers: StructureTower[] = room.find(FIND_MY_STRUCTURES, { filter: {structureType: STRUCTURE_TOWER } }) as StructureTower[];
@@ -62,7 +77,7 @@ function updateEnergyDemandAndNrCreeps() : void {
             //console.log("found towers ", towers.length);
 
             room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
-            let del = _.filter(locTransporters, function (obj) {
+            let del = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
                 if (obj.memory.currentTarget) {
                     return obj.memory.currentTarget.type == targetT.POWERUSER && obj.carry[RESOURCE_ENERGY];
                 }
@@ -115,6 +130,7 @@ function updateEnergyDemandAndNrCreeps() : void {
         for (let [ID, sMem] of Object.entries(Memory.Resources)) {
             const pos = restorePos(sMem.workPos);
             if (Game.rooms[pos.roomName]) {
+                let room = Game.rooms[pos.roomName];
                 sMem.AvailResource = 0;  
                 const energys = pos.lookFor(LOOK_RESOURCES);                        
                 for (let energy of energys) {
@@ -127,7 +143,7 @@ function updateEnergyDemandAndNrCreeps() : void {
                         sMem.AvailResource += _.sum(cont.store);
                     }
                 }
-
+                let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
                 const transportersTmp = _.filter(transporters, function (creep) {
                     return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
                 })
@@ -148,6 +164,7 @@ function updateEnergyDemandAndNrCreeps() : void {
                 let store: StructureContainer|null = Game.getObjectById(room.memory.controllerStoreID);
                 if (store) {
                     let ID = store.id;
+                    let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
                     room.memory.controllerStoreDef = store.storeCapacity - store.store.energy;
                     let transportersTmp = _.filter(transporters, function (creep) {
                         return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;

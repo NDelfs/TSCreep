@@ -13,7 +13,7 @@ export function Builder(creep: Creep) {
             getBuildTarget(creep);
         }
     }
-    else if (creep.memory.currentTarget == null) {//get closest energy
+    else if (creep.memory.currentTarget == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
         let target1 = getEnergyTarget(creep);
         let target2: targetData | null = null;
         if (creep.room.storage && creep.room.storage.store.energy>0) {

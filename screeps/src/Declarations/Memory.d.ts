@@ -10,6 +10,7 @@ interface CreepMemory {
 interface Memory {
     uuid: number;
     log: any;
+    bench: any | null;
     respawncomplete: boolean;
     creepIndex: number;
     Resources: { [name: string]: SourceMemory };
@@ -19,6 +20,7 @@ interface Memory {
 
 
 interface RoomMemory {
+    inCreepEmergency: number | null;
     sourcesUsed: string[];
     mineralsUsed: string[];
     startSpawnPos: posData | null;
@@ -27,6 +29,7 @@ interface RoomMemory {
     ExpandedLevel: number;
     controllerStoreID: string | null;
     controllerStoreDef: number;
+    repairQue: string[];
 }
 interface SpawnMemory {
 

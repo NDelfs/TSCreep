@@ -26,25 +26,29 @@ export function getEnergyTarget(creep: Creep): targetData | null {
 
 
 export function useEnergyTarget(creep: Creep, target: targetData): number {
+    let retErr : number = ERR_NOT_FOUND;
     const workPos = restorePos(target.pos);
+    let freeSpace = creep.carryCapacity- creep.carryAmount;
     let res = workPos.lookFor(LOOK_RESOURCES);
-    if (res.length > 0) {
-        return creep.pickup(res[0]);
+    if (res.length > 0 ) {
+        freeSpace -= res[0].amount;
+        retErr = creep.pickup(res[0]);
     }
-    else {
-        let res = workPos.lookFor(LOOK_STRUCTURES);
-        for (let struct of res) {
+
+    if (freeSpace>0) {
+        let structs = workPos.lookFor(LOOK_STRUCTURES);
+        for (let struct of structs) {
             if (struct.structureType != STRUCTURE_ROAD) {
                 let key: ResourceConstant = RESOURCE_ENERGY;
                 if (target.type == targetT.DROPPED_MINERAL) {
                     let storageObj = struct as StructureStorage | StructureContainer;
                     key = _.findKey(storageObj.store) as ResourceConstant;
                 }
-                return creep.withdraw(struct, key);
+                retErr= creep.withdraw(struct, key, freeSpace);
             }
         }
     }
-    return ERR_NOT_FOUND;
+    return retErr;
 }
 
 export function getMineralTarget(creep: Creep): targetData | null {

@@ -6,36 +6,23 @@ export function TowerOperation() {
         let towers: StructureTower[] = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } }) as StructureTower[];
 
         if (towers.length > 0) {
-            var emergencyB = room.find(FIND_MY_STRUCTURES, {
-                filter: function (struct) {
-                    return struct.hits < 1000 && struct.hits < struct.hitsMax && struct.structureType != STRUCTURE_CONTROLLER;
-                }
-            });
+            let hostile = room.find(FIND_HOSTILE_CREEPS)[0];
+
             for (let [ind, tower] of Object.entries(towers)) {
                 //var hostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
-                let hostile = tower.room.find(FIND_HOSTILE_CREEPS)[0];
+
                 if (hostile) {
                     tower.attack(hostile);
                 }
-                else if (emergencyB.length > 0) {
-                    const err = tower.repair(emergencyB[0]);
-                    if (err)
-                        console.log("Tower got error while repairing " + PrettyPrintErr(err));
-                }
-                else {
-                    let struct = tower.pos.findClosestByRange(FIND_STRUCTURES, {
-                        filter: function (struct) {
-                            return tower.room.controller && (struct.hits < tower.room.controller.level*100000) && (struct.hits < struct.hitsMax);
-                        }
-                    });
-                    if (tower.room.energyAvailable > tower.room.energyCapacityAvailable * 0.8 && struct && tower.energy > tower.energyCapacity * 0.5) {
-                        tower.repair(struct);
-                    }
-                }
 
-
+                else if (room.memory.repairQue && room.memory.repairQue.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
+                    let struct = Game.getObjectById(room.memory.repairQue[0]) as Structure;
+                    tower.repair(struct);
+                    if (struct.hits > struct.hitsMax - 100 || room.controller && (struct.hits >= room.controller.level * 100000))
+                        room.memory.repairQue.shift();
+                }
             }
-
         }
     }
 }
+
