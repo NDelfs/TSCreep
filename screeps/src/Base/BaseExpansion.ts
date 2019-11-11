@@ -102,7 +102,6 @@ export function baseExpansion() {
                         if (pathObj.path.length < 2)
                             throw ("Could not place controller stuff due to short distance");
                         pathObj.path[1].createConstructionSite(STRUCTURE_CONTAINER);
-                        room.memory.controllerStoreDef = CONSTRUCTIONSTORAGE;
 
                         room.memory.ExpandedLevel = 3;
                     } else if (room.memory.ExpandedLevel == 3) {

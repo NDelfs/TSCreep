@@ -4,6 +4,7 @@ import * as targetT from "Types/TargetTypes";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
 import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
 import * as C from "Types/Constants"; 
+import { Starter } from "../Drones/starter";
 
 export function DataUpdate(): void {
     try {
@@ -30,55 +31,19 @@ export function DataUpdate(): void {
     catch (e) {
         console.log("Failed updateEnergyDemandAndNrCreeps update with: ", e);
     }
-    try {
-        if (Game.time % 100 == 0) {
-            for (let roomName in Game.rooms) {
-                //********all rooms*************//////
-                let room = Game.rooms[roomName];
-                room.memory.repairQue = [];
-                if (room.my) {//no point going trhour rooms that cant create stuff
-                    let structs = room.find(FIND_STRUCTURES, {
-                        filter: function (struct) {
-                            return room.controller && (struct.hits < room.controller.level * 100000) && (struct.hits < struct.hitsMax - 1000);
-                        }
-                    });
-                    structs.sort(function (obj, obj2): number { return obj.hits - obj2.hits; });
-                    for (let struct of structs) {
-                        room.memory.repairQue.push(struct.id);
-                    }
-                    //if (structs.length > 0)
-                        //console.log(room.name, "found", structs.length, "things to repair");
-                }
-            }
-        }
-    }
-    catch (e) {
-        console.log("Failed update rooms: ", e);
-    }
 }
 
 
 //updates energy demand and also the nr of creeps
 function updateEnergyDemandAndNrCreeps() : void {
 
-    //let transporters = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.TRANSPORTER });
-    //let builders = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.BUILDER });
-    //if (transporters.length == 0)
-    //    transporters = transporters.concat(_.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.STARTER }));
-
     for (let roomName in Game.rooms) {
         //********all rooms*************//////
         let room = Game.rooms[roomName];
         if (room.my) {//no point going trhour rooms that cant create stuff
 
-            //****Energy demand
-            //let tmpTowers: StructureTower[] = room.find(FIND_MY_STRUCTURES, { filter: {structureType: STRUCTURE_TOWER } }) as StructureTower[];
-            //let towers = _.filter(tmpTowers, function (tower: StructureTower) { return tower.energyCapacity - tower.energy < tower.energyCapacity * 0.8; });
-            //if (towers.length > 0)
-            //console.log("found towers ", towers.length);
-
             room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
-            let del = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
+            let del = _.filter(room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)), function (obj) {
                 if (obj.memory.currentTarget) {
                     return obj.memory.currentTarget.type == targetT.POWERUSER && obj.carry[RESOURCE_ENERGY];
                 }
@@ -89,21 +54,13 @@ function updateEnergyDemandAndNrCreeps() : void {
                 room.memory.EnergyNeed -= del[creepName].carry[RESOURCE_ENERGY];
             }
 
-            let structList: Structure[] = room.find(FIND_MY_STRUCTURES, {
-                filter: function (str) {
-                    return (str.structureType == STRUCTURE_EXTENSION ||
-                        str.structureType == STRUCTURE_SPAWN) &&
+            let structList: Structure[] = _.filter(room.myStructures, function (str: AnyOwnedStructure) {
+                    return (str.structureType == STRUCTURE_EXTENSION || str.structureType == STRUCTURE_SPAWN) &&
                         str.energy < str.energyCapacity
-
-                }
-            });
-            let structList2: StructureTower[] = room.find(FIND_MY_STRUCTURES, {
-                filter: function (str) {
-                    return (str.structureType == STRUCTURE_TOWER) &&
-                        str.energy < str.energyCapacity * 0.7
-
-                }
-            }) as StructureTower[];
+                });
+            let structList2: StructureTower[] = _.filter(room.myStructures, function (str: AnyOwnedStructure) {
+                    return str.structureType == STRUCTURE_TOWER && str.energy < str.energyCapacity * 0.7
+                }) as StructureTower[];
             for (let tower of structList2) {
                 room.memory.EnergyNeed += tower.energyCapacity - tower.energy;
             }
@@ -112,8 +69,6 @@ function updateEnergyDemandAndNrCreeps() : void {
             let finalStruct: targetData[] = [];
             //console.log("test of struct ", del.length);
             for (let struct of structList) {
-               
-
                 let transportersTmp = _.filter(del, function (creep) {
                     return creep.memory.currentTarget &&creep.memory.currentTarget.ID == struct.id;
                 })
@@ -161,28 +116,10 @@ function updateEnergyDemandAndNrCreeps() : void {
         for (let roomName in Game.rooms) {
             //********all rooms*************//////
             let room = Game.rooms[roomName];
-            if (room.memory.controllerStoreID) {
-                let store: StructureContainer|null = Game.getObjectById(room.memory.controllerStoreID);
-                if (store) {
-                    let ID = store.id;
-                    let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
-                    let def = store.storeCapacity - store.store.energy;
-                    if (def > C.Controler_AllowedDef) {
-                        room.memory.controllerStoreDef = def;
-                        let transportersTmp = _.filter(transporters, function (creep) {
-                            return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
-                        })
-                        for (let creep of transportersTmp) {
-                            room.memory.controllerStoreDef -= creep.carry.energy;
-                        }
-                    }
-                }
-            }
-            else if (room.memory.controllerStoreDef == CONSTRUCTIONSTORAGE && room.controller) {
+            if (room.my && room.controller && room.memory.controllerStoreID == null) {
                 let con = room.controller.pos.findInRange(FIND_STRUCTURES, 2, { filter: { structureType: STRUCTURE_CONTAINER } });
                 if (con.length > 0 && con[0].isActive()) {
                     room.memory.controllerStoreID = con[0].id;
-                    room.memory.controllerStoreDef = 0;
                 }
             }
         }
@@ -267,8 +204,6 @@ function initNewRooms() {
         }
         if (room.memory.ExpandedLevel == null)
             room.memory.ExpandedLevel = 0;
-        if (room.memory.controllerStoreDef == null)
-            room.memory.controllerStoreDef = 0;
         if (room.memory.mineralsUsed == null)
             room.memory.mineralsUsed = [];
     }

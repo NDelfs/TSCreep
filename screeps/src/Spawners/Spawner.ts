@@ -102,9 +102,9 @@ function calculateTransportQue(room: Room): queData[] {
         for (let sourceID of room.memory.sourcesUsed) {
             roomEne += Memory.Resources[sourceID].AvailResource;
         }
-        if (roomEne > transportSize*4 && (room.memory.controllerStoreDef > 500 || room.storage))
+        if (roomEne > transportSize*4 && (room.controllerStoreDef > 500 || room.storage))
             limit = 3;
-        if (roomEne > transportSize*8 && (room.memory.controllerStoreDef > 500 || room.storage))
+        if (roomEne > transportSize*8 && (room.controllerStoreDef > 500 || room.storage))
             limit = 4;
         const creeps = room.getCreeps(creepT.TRANSPORTER);
         for (const source of room.memory.sourcesUsed) {
@@ -170,7 +170,7 @@ function calculateHarvesterQue(room: Room): queData[] {
 
 function calculateUpgraderQue(room: Room): queData[] {
     let ret: queData[] = [];
-    if (room.controller && room.memory.controllerStoreID && room.memory.controllerStoreDef <1000) {
+    if (room.controller && room.memory.controllerStoreID && room.controllerStoreDef <1000) {
         let store: StructureContainer | null = Game.getObjectById(room.memory.controllerStoreID);
         if (store) {
             let limit = 1;
@@ -189,7 +189,7 @@ function calculateUpgraderQue(room: Room): queData[] {
                 if (room.storage.store.energy > 3e5 && room.energyCapacityAvailable >= 2000)
                     size = 5;
             }
-            else if (roomEne > 4000 && room.memory.controllerStoreDef < 500) {
+            else if (roomEne > 4000 && room.controllerStoreDef < 500) {
                 limit = 2;
             }
 
@@ -205,8 +205,7 @@ function calculateUpgraderQue(room: Room): queData[] {
 
 function calculateBuilderQue(room: Room): queData[] {
     let ret: queData[] = [];
-    let inQue = room.find(FIND_MY_CONSTRUCTION_SITES);
-    if (inQue.length > 0 && room.memory.controllerStoreID) {
+    if (room.constructionSites.length > 0 && room.memory.controllerStoreID) {
         let limit = 0;
         if (room.availEnergy > 2e3)
             limit = 1;
@@ -342,7 +341,6 @@ export function Spawner() {
         let room = Game.rooms[roomID];
         try {
             //let creepsInRoom = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.creationRoom == room.name; });
-            let enemy = room.find(FIND_HOSTILE_CREEPS);
             var spawns = room.find(FIND_MY_SPAWNS);
             if (spawns.length > 0) {
                 isFailedEconomy(room, spawns);
@@ -376,7 +374,7 @@ export function Spawner() {
                     }
                     // }
                     //else {
-                    if (room.controller && (enemy.length > 0 && room.controller.level <= 3)) {
+                    if (room.controller && (room.hostiles.length > 0 && room.controller.level <= 3)) {
                         spawnCreep(calculateDefQue(room), spawns[spawnID]);
                     }
                 }
