@@ -12,15 +12,22 @@ function claimResource(creep: Creep) {
 }
 
 export function Transporter(creep: Creep) {
+    let room = creep.room;
     if (creep.carryAmount == 0 && creep.memory.currentTarget == null) {
         creep.memory.currentTarget = getEnergyTarget(creep);
         if (creep.memory.currentTarget)
             claimResource(creep);
-        else if(creep.room.storage && creep.room.memory.EnergyNeed > 0) {
+        else if (room.storage && room.storage.store.energy > 100 && room.memory.EnergyNeed > 0) {
             creep.memory.currentTarget = {
-                ID: creep.room.storage.id, type: targetT.DROPPED_ENERGY, pos: creep.room.storage.pos, range: 1
+                ID: room.storage.id, type: targetT.DROPPED_ENERGY, pos: room.storage.pos, range: 1
             }
         }
+        if (creep.memory.currentTarget == null && room.storage && room.storage.store.energy <= 100 && room.terminal && room.terminal.store.energy > 1e3) {
+            creep.memory.currentTarget = {
+                ID: room.terminal.id, type: targetT.DROPPED_ENERGY, pos: room.terminal.pos, range: 1
+            }
+        }
+
         if (creep.memory.currentTarget == null) {
             creep.memory.currentTarget = getMineralTarget(creep);
             claimResource(creep);
@@ -41,7 +48,7 @@ export function Transporter(creep: Creep) {
             case targetT.POWERSTORAGE:
             case targetT.POWERUSER: useDeliverTarget(creep, creep.memory.currentTarget); break;
             case targetT.DROPPED_MINERAL:
-            case targetT.DROPPED_ENERGY: useEnergyTarget(creep, creep.memory.currentTarget); creep.memory.currentTarget = null; break;
+            case targetT.DROPPED_ENERGY: useEnergyTarget(creep, creep.memory.currentTarget); break;
             default: console.log("Canceled ", creep.memory.currentTarget.type); creep.memory.currentTarget = null;
     }
     }

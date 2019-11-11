@@ -1,6 +1,8 @@
 import * as targetT from "Types/TargetTypes";
 import { restorePos } from "utils/posHelpers";
 import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
+import * as C from "Types/Constants"; 
+
 
 export function resetDeliverTarget(creep: Creep) {
     if (creep.memory.currentTarget && targetT.RequiresEnergy.includes(creep.memory.currentTarget.type) && creep.carry.energy == 0) {
@@ -45,7 +47,7 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
             }
         }
         else if (findStore) {
-            if (room.terminal && room.terminal.store.energy < 2e4 && room.storage && room.storage.store.energy > 5e4)
+            if (room.terminal && room.terminal.store.energy < C.TERMINAL_STORE && room.storage && room.storage.store.energy > C.TERMINAL_MIN_STORAGE)
                 retT = { ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1 };
             else if (room.storage) {
                 retT = {

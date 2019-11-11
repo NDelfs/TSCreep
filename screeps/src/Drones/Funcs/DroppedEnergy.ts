@@ -1,5 +1,6 @@
 import * as targetT from "Types/TargetTypes";
 import { restorePos, storePos } from "utils/posHelpers";
+import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
 
 function getRandomInt(max : number) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -31,8 +32,11 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
     let freeSpace = creep.carryCapacity- creep.carryAmount;
     let res = workPos.lookFor(LOOK_RESOURCES);
     if (res.length > 0 ) {
-        freeSpace -= res[0].amount;
         retErr = creep.pickup(res[0]);
+        if (retErr == OK)
+            freeSpace -= res[0].amount;
+        else
+            console.log(creep.room.name, "A creep failed to pickup dropped resource", PrettyPrintErr(retErr));
     }
 
     if (freeSpace>0) {
@@ -40,14 +44,23 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
         for (let struct of structs) {
             if (struct.structureType != STRUCTURE_ROAD) {
                 let key: ResourceConstant = RESOURCE_ENERGY;
+                let amount = 0;
                 if (target.type == targetT.DROPPED_MINERAL) {
                     let storageObj = struct as StructureStorage | StructureContainer;
                     key = _.findKey(storageObj.store) as ResourceConstant;
+                    amount = storageObj.store[key]||0;
                 }
-                retErr= creep.withdraw(struct, key, freeSpace);
+                amount = Math.min(freeSpace, amount);
+                retErr = creep.withdraw(struct, key, amount);
+                if (retErr == OK)
+                    freeSpace -= amount;
+                else
+                    console.log(creep.room.name, "A creep failed to pickup from store", PrettyPrintErr(retErr));
             }
         }
     }
+    //reuse target if two times do not work in same action
+    creep.memory.currentTarget = null
     return retErr;
 }
 

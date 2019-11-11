@@ -47,6 +47,8 @@ function buildPrint(err: number, type : string, room : string) {
 
 
 export function baseExpansion() {
+    if (Game.time % 10 != 1)
+        return;
     for (let [id, room] of Object.entries(Game.rooms)) {
         if (room.controller && room.controller.my && room.controller.level > 0) {
             try {

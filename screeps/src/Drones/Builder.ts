@@ -53,7 +53,6 @@ export function Builder(creep: Creep) {
             case targetT.DROPPED_ENERGY:
                 useEnergyTarget(creep, creep.memory.currentTarget);
                 creep.say("withdraw");
-                creep.memory.currentTarget = null;
                 break;
             default: {
                 let type = creep.memory.currentTarget.type;

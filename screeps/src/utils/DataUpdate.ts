@@ -45,8 +45,8 @@ export function DataUpdate(): void {
                     for (let struct of structs) {
                         room.memory.repairQue.push(struct.id);
                     }
-                    if (structs.length > 0)
-                        console.log(room.name, "found", structs.length, "things to repair");
+                    //if (structs.length > 0)
+                        //console.log(room.name, "found", structs.length, "things to repair");
                 }
             }
         }

@@ -84,7 +84,6 @@ export function Starter(creep: Creep) {
             case targetT.DROPPED_ENERGY: {
                 const err = useEnergyTarget(creep, creep.memory.currentTarget);
                 printRes(creep, err, "transf");
-                creep.memory.currentTarget = null;
                 return;
             }
             case targetT.SOURCE: {
