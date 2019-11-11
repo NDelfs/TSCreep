@@ -3,6 +3,7 @@ import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
 import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
+import * as C from "Types/Constants"; 
 
 export function DataUpdate(): void {
     try {
@@ -165,12 +166,15 @@ function updateEnergyDemandAndNrCreeps() : void {
                 if (store) {
                     let ID = store.id;
                     let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
-                    room.memory.controllerStoreDef = store.storeCapacity - store.store.energy;
-                    let transportersTmp = _.filter(transporters, function (creep) {
-                        return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
-                    })
-                    for (let creep of transportersTmp) {
-                        room.memory.controllerStoreDef -= creep.carry.energy;
+                    let def = store.storeCapacity - store.store.energy;
+                    if (def > C.Controler_AllowedDef) {
+                        room.memory.controllerStoreDef = def;
+                        let transportersTmp = _.filter(transporters, function (creep) {
+                            return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
+                        })
+                        for (let creep of transportersTmp) {
+                            room.memory.controllerStoreDef -= creep.carry.energy;
+                        }
                     }
                 }
             }

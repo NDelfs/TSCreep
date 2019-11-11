@@ -89,7 +89,7 @@ export function Market(): void {
                     if (orders.length > 0)
                         console.log(orders[0].price, overR);
                 }
-                if (orders != null) {
+                if (orders != null && orders.length > 0) {
                     //let eCost = Game.market.calcTransactionCost(1000, avail.P, orders[0].roomName);
                     let tradeAmount = Math.min(avail.A - OVERFLOW_EXTERNALTRADE, orders[0].remainingAmount, term.store.energy);
 

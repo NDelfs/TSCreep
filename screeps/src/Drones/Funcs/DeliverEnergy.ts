@@ -37,7 +37,7 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
         room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
-        if (room.memory.controllerStoreID && room.memory.controllerStoreDef > 0 && creep.carry.energy > 0) {
+        if (room.memory.controllerStoreID && room.memory.controllerStoreDef > C.Controler_AllowedDef && creep.carry.energy > 0) {
             let store: StructureContainer | null = Game.getObjectById(room.memory.controllerStoreID);
             if (store) {
                 retT = {

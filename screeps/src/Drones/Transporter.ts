@@ -1,5 +1,5 @@
 import { goToTarget } from "Drones/Funcs/Walk";
-import { getEnergyTarget, useEnergyTarget, getMineralTarget } from "Drones/Funcs/DroppedEnergy";
+import { getEnergyTarget, useEnergyTarget, getMineralTarget, getEnergyStoreTarget } from "Drones/Funcs/DroppedEnergy";
 import { getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import * as targetT from "Types/TargetTypes";
 
@@ -17,16 +17,10 @@ export function Transporter(creep: Creep) {
         creep.memory.currentTarget = getEnergyTarget(creep);
         if (creep.memory.currentTarget)
             claimResource(creep);
-        else if (room.storage && room.storage.store.energy > 100 && room.memory.EnergyNeed > 0) {
-            creep.memory.currentTarget = {
-                ID: room.storage.id, type: targetT.DROPPED_ENERGY, pos: room.storage.pos, range: 1
-            }
+        else if (room.memory.EnergyNeed > 0) { //so that we always fill up the energy need of a room
+            creep.memory.currentTarget = getEnergyStoreTarget(creep);
         }
-        if (creep.memory.currentTarget == null && room.storage && room.storage.store.energy <= 100 && room.terminal && room.terminal.store.energy > 1e3) {
-            creep.memory.currentTarget = {
-                ID: room.terminal.id, type: targetT.DROPPED_ENERGY, pos: room.terminal.pos, range: 1
-            }
-        }
+       
 
         if (creep.memory.currentTarget == null) {
             creep.memory.currentTarget = getMineralTarget(creep);

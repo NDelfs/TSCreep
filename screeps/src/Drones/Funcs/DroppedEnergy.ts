@@ -25,6 +25,16 @@ export function getEnergyTarget(creep: Creep): targetData | null {
     return null;
 }
 
+export function getEnergyStoreTarget(creep: Creep): targetData | null {
+    let room = Game.rooms[creep.memory.creationRoom];
+    if (room.storage && room.storage.store.energy >= creep.carryCapacity) {
+        return {ID: room.storage.id, type: targetT.DROPPED_ENERGY, pos: room.storage.pos, range: 1}
+    }
+    else if (room.terminal && room.terminal.store.energy >= creep.carryCapacity) {
+        return {ID: room.terminal.id, type: targetT.DROPPED_ENERGY, pos: room.terminal.pos, range: 1}
+    }
+    return null;
+}
 
 export function useEnergyTarget(creep: Creep, target: targetData): number {
     let retErr : number = ERR_NOT_FOUND;

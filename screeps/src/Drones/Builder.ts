@@ -1,9 +1,9 @@
 import { goToTarget } from "Drones/Funcs/Walk";
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
-import { resetDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
-import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
+import { resetDeliverTarget, useDeliverTarget } from "Drones/Funcs/DeliverEnergy";
+import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "Drones/Funcs/Build";
 import * as targetT from "Types/TargetTypes";
-import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
+import { getEnergyTarget, useEnergyTarget, getEnergyStoreTarget } from "Drones/Funcs/DroppedEnergy";
 
 export function Builder(creep: Creep) {
     resetDeliverTarget(creep);
@@ -15,12 +15,8 @@ export function Builder(creep: Creep) {
     }
     else if (creep.memory.currentTarget == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
         let target1 = getEnergyTarget(creep);
-        let target2: targetData | null = null;
-        if (creep.room.storage && creep.room.storage.store.energy>0) {
-            target2 = {
-                ID: creep.room.storage.id, type: targetT.DROPPED_ENERGY, pos: creep.room.storage.pos, range: 1
-            }
-        }
+        let target2 = getEnergyStoreTarget(creep);
+       
         if (target1 && target2) {
             let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
