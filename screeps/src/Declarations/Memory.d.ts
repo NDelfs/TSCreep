@@ -28,7 +28,6 @@ interface RoomMemory {
     EnergyNeed: number;
     ExpandedLevel: number;
     controllerStoreID: string | null;
-    //controllerStoreDef: number;
 
     //used by functions
     _repairSites: string[];

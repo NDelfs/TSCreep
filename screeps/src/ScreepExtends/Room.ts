@@ -154,18 +154,18 @@ Object.defineProperty(Room.prototype, 'controllerStoreDef', {
                     let transporters = this.getCreeps(TRANSPORTER).concat(this.getCreeps(STARTER));
                     let def = store.storeCapacity - store.store.energy;
                     if (def > C.Controler_AllowedDef) {
-                        this.memory.controllerStoreDef = def;
+                        this._controllerStoreDef = def;
                         let transportersTmp = _.filter(transporters, function (creep: Creep) {
                             return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
                         }) as Creep[];
                         for (let creep of transportersTmp) {
-                            this.memory.controllerStoreDef -= creep.carry.energy;
+                            this._controllerStoreDef -= creep.carry.energy;
                         }
                     }
                 }
             }
         }
-        return this._controllerStoreDef;
+        return this._controllerStoreDef || 0;
     },
     set(iVal : number) {
         this._controllerStoreDef = iVal;
