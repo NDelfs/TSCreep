@@ -8,6 +8,8 @@ interface CreepMemory {
 
 
 interface Memory {
+    profiler: any;
+
     uuid: number;
     log: any;
     bench: any | null;

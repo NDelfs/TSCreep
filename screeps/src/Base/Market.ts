@@ -84,10 +84,10 @@ export function Market(): void {
             if (term && avail.A > OVERFLOW_EXTERNALTRADE + C.Terminal_Min_Trade) {
                 if (orders == null) {
                     orders = Game.market.getAllOrders({ type: ORDER_BUY, resourceType: overR as ResourceConstant });
-                    orders = orders.filter(function (a) { return a.price > 0.03 });
+                    orders = orders.filter(function (a) { return a.price > 0.03 && a.remainingAmount > C.Terminal_Min_Trade });
                     orders = orders.sort(function (a, b) { return b.price - a.price; });
                     if (orders.length > 0)
-                        console.log(orders[0].price, overR);
+                        console.log("found trade order",orders[0].price, overR, orders[0].remainingAmount);
                 }
                 if (orders != null && orders.length > 0) {
                     //let eCost = Game.market.calcTransactionCost(1000, avail.P, orders[0].roomName);

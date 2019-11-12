@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="screeps.json" />
+    <Content Include="src\Profiler\screeps-profiler.js" />
     <Content Include="tsconfig.json" />
     <Content Include="package.json" />
   </ItemGroup>
@@ -45,6 +46,7 @@
     <Folder Include="src\Base\" />
     <Folder Include="src\Drones\Funcs\" />
     <Folder Include="src\Declarations\" />
+    <Folder Include="src\Profiler\" />
     <Folder Include="src\ScreepExtends\" />
     <Folder Include="src\Types\" />
     <Folder Include="src\Spawners\" />
