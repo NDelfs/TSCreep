@@ -24,10 +24,6 @@ Object.defineProperty(Room.prototype, 'creepsInRoom', {
 
 Object.defineProperty(Room.prototype, 'creepsAll', {
     get() {
-        //if (!this._creepsAll) {
-        //    let roomName = this.name;
-        //    this._creepsAll = _.filter(Game.creeps, (c: Creep) => c.creationRoom == roomName);
-        //}
         return this._creepsAll || [];
     },
     set(iVal) {

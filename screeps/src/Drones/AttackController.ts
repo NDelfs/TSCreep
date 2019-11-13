@@ -8,7 +8,7 @@ export function AttackerController(creep: Creep) {
             creep.memory.currentTarget = { ID: attackFlag[0].name, type: targetT.POSITION, pos: attackFlag[0].pos, range: 5 };
         }
     }
-    if (goToTarget(creep)) {
+    if (creep.inPlace()) {
         if (creep.room.controller) {
             console.log("before con attack ", creep.room.controller.ticksToDowngrade);
             creep.attackController(creep.room.controller);

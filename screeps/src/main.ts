@@ -3,18 +3,17 @@ import { ErrorMapper } from "utils/ErrorMapper";
 //const profiler = require('Profiler/screeps-profiler');
 import './ScreepExtends/Room';
 import './ScreepExtends/Creep';
-import './ScreepExtends/Game';
 //@ts-ignore
-import profiler from "./Profiler/screeps-profiler";
+import profiler from "Profiler/screeps-profiler";
 import { Spawner } from "Spawners/Spawner";
 import { DataUpdate } from "utils/DataUpdate";
 
 import { TowerOperation } from "Base/TowerOperation";
 
-import { baseExpansion } from "./Base/BaseExpansion";
+import { baseExpansion } from "Base/BaseExpansion";
 
-import { Market } from "./Base/Market";
-import { CreepUpdate } from "./Drones/CreepsUpdate";
+import { Market } from "Base/Market";
+import { CreepUpdate } from "Drones/CreepsUpdate";
 
 
 
@@ -51,71 +50,51 @@ function reset() {
 function testeCode() {
    
 }
-let cpuUsed : number;
-function bench(text: string) {
-    if (Memory.bench) {
-        console.log(text, Game.cpu.getUsed() - cpuUsed);
-        cpuUsed = Game.cpu.getUsed();
-    }
-}
-
-function filterCreeps () {
-    let creepsGrouped = _.groupBy(Game.creeps, (c: Creep) => c.creationRoom);
-    for (let roomID in creepsGrouped) {
-        Game.rooms[roomID].creepsAll = creepsGrouped[roomID];
-    }
-}
-let filterCreepsP = profiler.registerFN(filterCreeps);
 
 function main() {
-    filterCreepsP();
-    //console.log("creeps in room",Game.rooms["E49N47"].creepsAll.length);
-    cpuUsed = 0;
+  
     try {
     }
     catch (e) {
         console.log("Testecode failed with : ", e);
     }
     reset();
-    bench("after reset");
     try {
-        DataUpdate();
+        profiler.registerFN(DataUpdate)();
     }
     catch (e) {
         console.log("Failed Data update with: ", e);
     }
-    bench("Data update");
     try {
-        baseExpansion();
+        profiler.registerFN(baseExpansion)();
+        //baseExpansion();
     }
     catch (e) {
         console.log("Failed base expansion update with: ", e);
     }
-    bench("Base expansion");
     try {
-        Spawner();
+        profiler.registerFN(Spawner)();
+        //Spawner();
     }
     catch (e) {
         console.log("Failed spawner update with: ", e);
     }
-    bench("Spawner");
     try {
-        Market();
+        profiler.registerFN(Market)();
+        //Market();
     }
     catch (e) {
         console.log("Failed market with: ", e);
     }
-    bench("Market");
     //console.log(`Current game tick is ${Game.time}`);
     CreepUpdate();
-    bench("Creeps");
     try {
-        TowerOperation();
+        profiler.registerFN(TowerOperation)();
+        //TowerOperation();
     }
     catch (e) {
         console.log("Tower failet to run ", e);
     }
-    bench("Tower operation");
     // Automatically delete memory of missing creeps
     for (const name in Memory.creeps) {
         if (!(name in Game.creeps)) {

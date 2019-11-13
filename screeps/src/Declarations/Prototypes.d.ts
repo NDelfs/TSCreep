@@ -24,4 +24,10 @@ interface Creep {
     creationRoom: string;
     type: CreepConstant;
     carryAmount: number;
+    inPlace: bool;
+    walk: () => void;
+    walkTo: (pos: RoomPosition, rang: number) => void;
+    walkToPos: (x: number, y: number, room: string, rang: number) => void;
+
+    _walk: boolean;
 }

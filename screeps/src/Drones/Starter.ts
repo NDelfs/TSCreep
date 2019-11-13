@@ -79,7 +79,7 @@ export function Starter(creep: Creep) {
         }
     }
     ///////////////use the target///////////
-    if (creep.memory.currentTarget && goToTarget(creep)) {
+    if (creep.memory.currentTarget && creep.inPlace()) {
         switch (creep.memory.currentTarget.type) {
             case targetT.DROPPED_ENERGY: {
                 const err = useEnergyTarget(creep, creep.memory.currentTarget);
@@ -132,12 +132,6 @@ export function Starter(creep: Creep) {
             case targetT.POWERUSER: {
                 const err = useDeliverTarget(creep, creep.memory.currentTarget);
                 printRes(creep, err, "transf");
-                break;
-            }
-            case targetT.POSITION: {
-                const workPos = restorePos(creep.memory.currentTarget.pos);
-                if (creep.pos.getRangeTo(workPos.x, workPos.y) <= creep.memory.currentTarget.range && workPos.roomName == creep.pos.roomName)
-                    creep.memory.currentTarget = null;
                 break;
             }
             default: {

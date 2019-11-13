@@ -5,8 +5,11 @@ import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
 import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
 import * as C from "Types/Constants"; 
 import { Starter } from "../Drones/starter";
+//@ts-ignore
+import profiler from "Profiler/screeps-profiler";
 
 export function DataUpdate(): void {
+    profiler.registerFN(filterCreeps)();
     try {
         levelTimings();//only needed for benchmarking
     }
@@ -14,28 +17,91 @@ export function DataUpdate(): void {
         console.log("Failed levelTimings update with: ", e);
     }
     try {
-        initNewRooms();
+        profiler.registerFN(initNewRooms)();
     }
     catch (e) {
         console.log("Failed initNewRooms update with: ", e);
     }
     try {
-        expand();
+        profiler.registerFN(expand)();
     }
     catch (e) {
         console.log("Failed expand update with: ", e);
     }
     try {
-        updateEnergyDemandAndNrCreeps();
+        //if (Game.time % 3 == 0) {//by having a better tracking of resources we only need to update rarly for thing we didnt foorsee
+            profiler.registerFN(updateEnergyDemand)();
+            profiler.registerFN(updateSources)();
+            profiler.registerFN(updateContainerID)();
+        //}
     }
     catch (e) {
         console.log("Failed updateEnergyDemandAndNrCreeps update with: ", e);
     }
 }
 
+function filterCreeps() {
+    let creepsGrouped = _.groupBy(Game.creeps, (c: Creep) => c.creationRoom);
+    for (let roomID in creepsGrouped) {
+        Game.rooms[roomID].creepsAll = creepsGrouped[roomID];
+    }
+}
+
+
+
+function updateSources() {
+    try {
+        for (let [ID, sMem] of Object.entries(Memory.Resources)) {
+            const pos = restorePos(sMem.workPos);
+            if (Game.rooms[pos.roomName]) {
+                let room = Game.rooms[pos.roomName];
+                sMem.AvailResource = 0;
+                const energys = pos.lookFor(LOOK_RESOURCES);
+                for (let energy of energys) {
+                    sMem.AvailResource += energy.amount;
+                }
+                const structs = pos.lookFor(LOOK_STRUCTURES);
+                for (let struct of structs) {
+                    if (struct.structureType == STRUCTURE_CONTAINER) {
+                        let cont = struct as StructureContainer;
+                        sMem.AvailResource += _.sum(cont.store);
+                    }
+                }
+                let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
+                const transportersTmp = _.filter(transporters, function (creep) {
+                    return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
+                })
+                for (const transp of transportersTmp) {
+                    sMem.AvailResource -= Number(transp.carryCapacity);
+                }
+            }
+        }
+    }
+    catch (e) {
+        console.log("Failed to update sources ", e);
+    }
+}
+
+function updateContainerID() {
+    try {
+        for (let roomName in Game.rooms) {
+            //********all rooms*************//////
+            let room = Game.rooms[roomName];
+            if (room.my && room.controller && room.memory.controllerStoreID == null) {
+                let con = room.controller.pos.findInRange(FIND_STRUCTURES, 2, { filter: { structureType: STRUCTURE_CONTAINER } });
+                if (con.length > 0 && con[0].isActive()) {
+                    room.memory.controllerStoreID = con[0].id;
+                }
+            }
+        }
+    }
+    catch (e) {
+        console.log("Failed to update controller store ", e);
+    }
+}
 
 //updates energy demand and also the nr of creeps
-function updateEnergyDemandAndNrCreeps() : void {
+function updateEnergyDemand() : void {
 
     for (let roomName in Game.rooms) {
         //********all rooms*************//////
@@ -79,56 +145,7 @@ function updateEnergyDemandAndNrCreeps() : void {
             room.memory.EnergyNeedStruct = finalStruct;
         }
     }
-
-    //////update sources//////
-    //_.forEach(Memory.Sources, function (sMem, index, arr) {
-    try {
-        for (let [ID, sMem] of Object.entries(Memory.Resources)) {
-            const pos = restorePos(sMem.workPos);
-            if (Game.rooms[pos.roomName]) {
-                let room = Game.rooms[pos.roomName];
-                sMem.AvailResource = 0;  
-                const energys = pos.lookFor(LOOK_RESOURCES);                        
-                for (let energy of energys) {
-                    sMem.AvailResource += energy.amount;
-                }
-                const structs = pos.lookFor(LOOK_STRUCTURES);  
-                for (let struct of structs) {
-                    if (struct.structureType == STRUCTURE_CONTAINER) {
-                        let cont = struct as StructureContainer;
-                        sMem.AvailResource += _.sum(cont.store);
-                    }
-                }
-                let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
-                const transportersTmp = _.filter(transporters, function (creep) {
-                    return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
-                })
-                for (const transp of transportersTmp) {
-                    sMem.AvailResource -= Number(transp.carryCapacity);
-                }
-            }
-        }
-    }
-    catch (e) {
-        console.log("Failed to update sources ", e);
-    }
-    try {
-        for (let roomName in Game.rooms) {
-            //********all rooms*************//////
-            let room = Game.rooms[roomName];
-            if (room.my && room.controller && room.memory.controllerStoreID == null) {
-                let con = room.controller.pos.findInRange(FIND_STRUCTURES, 2, { filter: { structureType: STRUCTURE_CONTAINER } });
-                if (con.length > 0 && con[0].isActive()) {
-                    room.memory.controllerStoreID = con[0].id;
-                }
-            }
-        }
-    }
-    catch (e) {
-        console.log("Failed to update controller store ", e);
-    }
 }
-
 
 
 

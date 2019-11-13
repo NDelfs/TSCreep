@@ -120,9 +120,6 @@
     <TypeScriptCompile Include="src\ScreepExtends\Creep.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\ScreepExtends\Game.ts">
-      <SubType>Code</SubType>
-    </TypeScriptCompile>
     <TypeScriptCompile Include="src\ScreepExtends\Room.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

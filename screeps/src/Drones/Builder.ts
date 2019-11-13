@@ -37,7 +37,7 @@ export function Builder(creep: Creep) {
         }
     }
 
-    if (creep.memory.currentTarget && goToTarget(creep)) {
+    if (creep.memory.currentTarget && creep.inPlace()) {
         switch (creep.memory.currentTarget.type) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);

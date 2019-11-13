@@ -69,11 +69,14 @@ interface posData {
     y: number;
 }
 
+interface moveData {
+    pos: posData;
+    range: number;
+}
+
 interface targetData {
     ID: string;
     type: TargetConstant;
-    pos: posData;
-    range: number;
 }
 
 interface queData {

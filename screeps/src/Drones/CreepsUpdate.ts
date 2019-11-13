@@ -9,6 +9,9 @@ import { scout } from "Drones/Scout";
 import { Transporter } from "Drones/Transporter";
 import { Upgrader } from "Drones/Upgrader";
 import { PrettyPrintCreep } from "utils/PrettyPrintErr";
+//@ts-ignore
+import profiler from "Profiler/screeps-profiler";
+
 
 export function CreepUpdate() {
     for (let creepID in Game.creeps) {
@@ -16,44 +19,55 @@ export function CreepUpdate() {
             let creep = Game.creeps[creepID];
             if (creep.spawning)
                 continue;
+            creep.walk();
             switch (creep.type) {
                 case creepT.STARTER: {
-                    Starter(creep);
+                    profiler.registerFN(Starter)(creep);
+                    //Starter(creep);
                     break;
                 }
                 case creepT.TRANSPORTER: {
-                    Transporter(creep);
+                    profiler.registerFN(Transporter)(creep);
+                   // Transporter(creep);
                     break;
                 }
                 case creepT.UPGRADER: {
-                    Upgrader(creep);
+                    profiler.registerFN(Upgrader)(creep);
+                   // Upgrader(creep);
                     break;
                 }
                 case creepT.HARVESTER: {
-                    Harvester(creep);
+                    profiler.registerFN(Harvester)(creep);
+                   // Harvester(creep);
                     break;
                 }
                 case creepT.SCOUT: {
-                    scout(creep);
+                    profiler.registerFN(scout)(creep);
+                    //scout(creep);
                     break;
                 }
                 case creepT.DEFENDER: {
-                    Defender(creep);
+                    profiler.registerFN(Defender)(creep);
+                   // Defender(creep);
                     break;
                 }
                 case creepT.BUILDER: {
-                    Builder(creep);
+                    profiler.registerFN(Builder)(creep);
+                   // Builder(creep);
                     break;
                 }
                 case creepT.ATTACKER: {
-                    Attacker(creep);
+                    profiler.registerFN(Attacker)(creep);
+                    //Attacker(creep);
                     break;
                 }
                 case creepT.ATTACKERCONTROLLER: {
-                    AttackerController(creep);
+                    profiler.registerFN(AttackerController)(creep);
+                   // AttackerController(creep);
                     break;
                 }
             }
+            creep.walk();
         }
         catch (e) {
             console.log(Game.creeps[creepID].pos.roomName, " a creep failed, type =", PrettyPrintCreep(Game.creeps[creepID].memory.type), "with err: ", e);

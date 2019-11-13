@@ -3,6 +3,7 @@ interface CreepMemory {
     type: CreepConstant;//found when used from creepType
     creationRoom: string;
     currentTarget: targetData | null;
+    moveTarget: moveData | null;
     permTarget: targetData | null;
 }
 
@@ -10,7 +11,6 @@ interface CreepMemory {
 interface Memory {
     uuid: number;
     log: any;
-    bench: any | null;
     respawncomplete: boolean;
     creepIndex: number;
     Resources: { [name: string]: SourceMemory };

@@ -37,7 +37,7 @@ export function Transporter(creep: Creep) {
     if (creep.memory.currentTarget == null)
         creep.say("zZzZ")
 
-    if (creep.memory.currentTarget && goToTarget(creep)) {
+    if (creep.memory.currentTarget && creep.inPlace()) {
         switch (creep.memory.currentTarget.type) {
             case targetT.POWERSTORAGE:
             case targetT.POWERUSER: useDeliverTarget(creep, creep.memory.currentTarget); break;
