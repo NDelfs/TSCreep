@@ -24,11 +24,14 @@ Object.defineProperty(Room.prototype, 'creepsInRoom', {
 
 Object.defineProperty(Room.prototype, 'creepsAll', {
     get() {
-        if (!this._creepsAll) {
-            let roomName = this.name;
-            this._creepsAll = this.find(FIND_MY_CREEPS, { filter: (c:Creep) => c.creationRoom == roomName });
-        }
-        return this._creepsAll;
+        //if (!this._creepsAll) {
+        //    let roomName = this.name;
+        //    this._creepsAll = _.filter(Game.creeps, (c: Creep) => c.creationRoom == roomName);
+        //}
+        return this._creepsAll || [];
+    },
+    set(iVal) {
+        this._creepsAll = iVal;
     },
     configurable: true,
 });

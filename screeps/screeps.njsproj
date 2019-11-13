@@ -84,6 +84,9 @@
     <TypeScriptCompile Include="src\Drones\Builder.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Drones\CreepsUpdate.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Drones\Defender.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -115,6 +118,9 @@
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\ScreepExtends\Creep.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="src\ScreepExtends\Game.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\ScreepExtends\Room.ts">
