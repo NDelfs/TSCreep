@@ -155,7 +155,7 @@ Object.defineProperty(Room.prototype, 'controllerStoreDef', {
                     if (def > C.Controler_AllowedDef) {
                         this._controllerStoreDef = def;
                         let transportersTmp = _.filter(transporters, function (creep: Creep) {
-                            return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
+                            return creep.memory._currentTarget && creep.memory._currentTarget.ID == ID;
                         }) as Creep[];
                         for (let creep of transportersTmp) {
                             this._controllerStoreDef -= creep.carry.energy;

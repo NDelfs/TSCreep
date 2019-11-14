@@ -21,23 +21,23 @@ export function Builder(creep: Creep) {
             let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
             if (range1 < range2) {
-                creep.memory.currentTarget = target1;
-                Memory.Resources[creep.memory.currentTarget.ID].AvailResource -= creep.carryCapacity;
+                creep.setTargetData(target1);
+                Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
             }
             else {
-                creep.memory.currentTarget = target2;
+                creep.setTargetData(target2);
             }
         }
         else if (target1) {
-            creep.memory.currentTarget = target1;
-            Memory.Resources[creep.memory.currentTarget.ID].AvailResource -= creep.carryCapacity;
+            creep.setTargetData(target1);
+            Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
         }
         else if (target2) {
-            creep.memory.currentTarget = target2;
+            creep.setTargetData(target2);
         }
     }
 
-    if (creep.memory.currentTarget && creep.inPlace()) {
+    if (creep.memory.currentTarget && creep.inPlace) {
         switch (creep.memory.currentTarget.type) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);

@@ -24,6 +24,13 @@ Object.defineProperty(Creep.prototype, 'carryAmount', {
      configurable: true,
 });
 
+Object.defineProperty(Creep.prototype, 'currentTarget', {
+    get() {
+        return this.memory.currentTarget;
+    },
+    configurable: true,
+});
+
 Object.defineProperty(Creep.prototype, 'inPlace', {
     get() {
         return this.memory.moveTarget == null;
@@ -48,7 +55,7 @@ Creep.prototype.walk = function () {
     }
 }
 
-Creep.prototype.walkTo = function (pos: RoomPosition, rang: number): void {
+Creep.prototype.walkTo = function (pos: posData, rang: number): void {
     this.memory.moveTarget = { pos: pos, range: rang };
 };
 Creep.prototype.walkToPos = function (x: number, y: number, room: string, rang: number) {
@@ -57,3 +64,13 @@ Creep.prototype.walkToPos = function (x: number, y: number, room: string, rang: 
     }
 }
 
+Creep.prototype.setTarget = function (id: string, type: TargetConstant, pos: posData, rang: number) {
+    this.walkTo(pos, rang);
+    this.memory._currentTarget = { ID: id, type: type, pos:pos, range:rang};
+}
+
+..this should be a seter instead
+//Creep.prototype.setTargetData = function (iData: targetData) {
+//    this.memory._currentTarget = iData;
+//    this.walkTo(iData.pos, iData.range);
+//}

@@ -12,7 +12,7 @@ export function scout(creep: Creep): void {
         creep.say("done");
         creep.suicide();
     }
-    if (creep.inPlace() && creep.memory.currentTarget) {
+    if (creep.inPlace && creep.memory.currentTarget) {
         //if (creep.memory.currentTarget.type == targetT.POSITION) {
         //    if (creep.room.controller) {
         //        creep.memory.currentTarget = { ID: creep.room.controller.id, type: targetT.CONTROLLER, pos: creep.room.controller.pos, range: 1 }

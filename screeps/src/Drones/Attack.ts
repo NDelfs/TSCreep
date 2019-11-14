@@ -2,15 +2,16 @@ import { goToTarget } from "Drones/Funcs/Walk";
 import * as targetT from "Types/TargetTypes";
 
 export function Attacker(creep: Creep) {
-    if (creep.memory.currentTarget == null) {
+    if (creep.memory.currentTarget == null && creep.inPlace) {
         let attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_BLUE });
         if (attackFlag.length > 0 && attackFlag[0].pos.roomName != creep.pos.roomName) {
-            creep.memory.currentTarget = { ID: attackFlag[0].name, type: targetT.POSITION, pos: attackFlag[0].pos, range: 5 };
+            creep.walkTo(attackFlag[0].pos, 5);
         }
+        if (attackFlag.length > 0 && attackFlag[0].pos.roomName == creep.pos.roomName && creep.room.controller)//we may not see room before the attacking creep is there
+            creep.setTarget(creep.room.controller.id, targetT.DEFEND, creep.room.controller.pos, 1);
     }
-    if (goToTarget(creep)) {
-        creep.memory.currentTarget = null;
-    }
+    else
+      creep.walk();
 
     let spawns = creep.room.find(FIND_HOSTILE_SPAWNS);
     if (spawns.length > 0) {

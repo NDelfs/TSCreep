@@ -140,7 +140,7 @@ function updateEnergyDemand() : void {
                 })
                 //console.log("test of transportersTmp ", transportersTmp.length);
                 if (transportersTmp.length == 0)
-                    finalStruct.push({ ID: struct.id, type: targetT.POWERUSER, pos: struct.pos, range:1 });
+                    finalStruct.push({ ID: struct.id, type: targetT.POWERUSER,pos: struct.pos, range: 1});
             }
             room.memory.EnergyNeedStruct = finalStruct;
         }

@@ -77,6 +77,8 @@ interface moveData {
 interface targetData {
     ID: string;
     type: TargetConstant;
+    pos: posData;
+    range: number;
 }
 
 interface queData {

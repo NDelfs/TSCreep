@@ -79,7 +79,7 @@ export function Starter(creep: Creep) {
         }
     }
     ///////////////use the target///////////
-    if (creep.memory.currentTarget && creep.inPlace()) {
+    if (creep.memory.currentTarget && creep.inPlace) {
         switch (creep.memory.currentTarget.type) {
             case targetT.DROPPED_ENERGY: {
                 const err = useEnergyTarget(creep, creep.memory.currentTarget);

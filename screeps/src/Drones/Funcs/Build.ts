@@ -8,22 +8,20 @@ function getRandomInt(max: number) {
 
 export function getBuildTarget(creep: Creep) : void {
     let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_EXTENSION || STRUCTURE_CONTAINER } });
-    if (inQue.length > 0) {
-        creep.memory.currentTarget = { ID: inQue[0].id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3 };
+    if (inQue.length == 0) {
+        inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
     }
-    else {
-        let inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
-        if (inQue.length > 0) {
-            creep.memory.currentTarget = { ID: _.first(inQue).id, type: targetT.CONSTRUCTION, pos: inQue[0].pos, range: 3 };
-        }
+    if (inQue.length > 0) {
+        creep.setTarget(inQue[0].id, targetT.CONSTRUCTION, inQue[0].pos, 3);
     }
 }
 
 export function getRepairTarget(creep: Creep): void {
-    let inQue = creep.room.find(FIND_STRUCTURES, { filter: function (build) { return build.hits < build.hitsMax * 0.5 && build.hits < 15000; } });
-    if (inQue.length > 0) {
-        let index = getRandomInt(inQue.length);
-        creep.memory.currentTarget = { ID: inQue[index].id, type: targetT.REPAIR, pos: inQue[index].pos, range: 3 };
+    let que = creep.room.repairSites;
+    if (que.length > 0) {
+        let index = getRandomInt(que.length);//insdead shift it if enough energy to repair is on current creep
+        let obj = Game.getObjectById(que[index]) as Structure;
+        creep.setTarget(obj.id, targetT.REPAIR, obj.pos, 3);
     }
 }
 

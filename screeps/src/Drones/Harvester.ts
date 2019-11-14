@@ -3,7 +3,7 @@ import { goToTarget } from "Drones/Funcs/Walk";
 
 
 export function Harvester(creep: Creep): void {
-    if (creep.inPlace() && creep.memory.currentTarget) {      
+    if (creep.inPlace && creep.memory.currentTarget) {      
         let source = Game.getObjectById(creep.memory.currentTarget.ID) as Source | Mineral;
         const resMem = Memory.Resources[creep.memory.currentTarget.ID];
         if (resMem.resourceType != RESOURCE_ENERGY) {

@@ -24,10 +24,12 @@ interface Creep {
     creationRoom: string;
     type: CreepConstant;
     carryAmount: number;
-    inPlace: bool;
+    currentTarget: targetData;
+    inPlace: boolean;
     walk: () => void;
-    walkTo: (pos: RoomPosition, rang: number) => void;
+    walkTo: (pos: posData, rang: number) => void;
     walkToPos: (x: number, y: number, room: string, rang: number) => void;
-
+    setTarget: (id: string, type: TargetConstant, pos: posData, rang: number) => void;
+    setTargetData: (iData: targetData) => void;
     _walk: boolean;
 }
