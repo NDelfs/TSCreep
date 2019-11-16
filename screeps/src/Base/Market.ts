@@ -29,7 +29,7 @@ export function Market(): void {
     let underflow: underflowBalance[] = [];
     for (let roomID in Game.rooms) {
         let room = Game.rooms[roomID];
-        if (room.terminal == null)
+        if (room.terminal == null || !room.my)
             continue;
 
         let keys = Object.keys(room.terminal.store) as ResourceConstant[];
@@ -68,7 +68,7 @@ export function Market(): void {
                 under.A -= amount;
                 if (amount > C.Terminal_Min_Trade) {
                     let err = term.send(under.R, amount, under.P, "Balancing resources");
-                    console.log("Traded", under.R, "from", avail.P, "to", under.P, "with error", PrettyPrintErr(err));
+                    console.log("Traded",amount, under.R, "from", avail.P, "to", under.P, "with error", PrettyPrintErr(err));
                 }
             }
         }

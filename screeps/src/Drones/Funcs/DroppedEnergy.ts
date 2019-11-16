@@ -70,7 +70,7 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
         }
     }
     //reuse target if two times do not work in same action
-    creep.memory.currentTarget = null
+    creep.currentTarget = null
     return retErr;
 }
 

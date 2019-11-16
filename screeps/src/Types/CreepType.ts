@@ -8,3 +8,6 @@ export const SCOUT = 51;
 export const DEFENDER = 61;
 export const ATTACKER = 71;
 export const ATTACKERCONTROLLER = 75;
+
+
+export const Military = [DEFENDER, ATTACKER, ATTACKERCONTROLLER];

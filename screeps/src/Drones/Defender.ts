@@ -1,4 +1,3 @@
-import { goToTarget } from "Drones/Funcs/Walk";
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
 
 export function Defender(creep: Creep) {

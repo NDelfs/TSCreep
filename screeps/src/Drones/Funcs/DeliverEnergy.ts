@@ -5,8 +5,8 @@ import * as C from "Types/Constants";
 
 
 export function resetDeliverTarget(creep: Creep) {
-    if (creep.memory.currentTarget && targetT.RequiresEnergy.includes(creep.memory.currentTarget.type) && creep.carry.energy == 0) {
-        creep.memory.currentTarget = null;
+    if (creep.currentTarget && targetT.RequiresEnergy.includes(creep.currentTarget.type) && creep.carry.energy == 0) {
+        creep.currentTarget = null;
         creep.say("reset");
     }
 }
@@ -88,11 +88,11 @@ export function useDeliverTarget(creep: Creep, target: targetData): number {
             err = creep.transfer(targetObj, key);
         if (err == ERR_FULL || err == OK) {
             if (creep.carry.energy >= 50 && target.type == targetT.POWERUSER) {
-                creep.memory.currentTarget = getCloseDeliverTarget(creep);
+                creep.currentTarget = getCloseDeliverTarget(creep);
             }
             err = OK;
         }
     }
-    creep.memory.currentTarget = null;
+    creep.currentTarget = null;
     return err;
 }

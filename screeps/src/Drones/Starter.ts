@@ -1,11 +1,10 @@
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
-import { goToTarget } from "Drones/Funcs/Walk"
-import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 import { restorePos } from "../utils/posHelpers";
 import { resetDeliverTarget, getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
+import { HARVESTER } from "Types/CreepType";
 
 function printRes(creep: Creep, iErr: number, name: string): void {
     if (iErr == OK)
@@ -18,15 +17,15 @@ export function Starter(creep: Creep) {
     resetDeliverTarget(creep);
 
     //got no energy, find where
-    if (creep.memory.currentTarget == null && creep.carry.energy == 0) {
-        creep.memory.currentTarget = getEnergyTarget(creep);
-        if (creep.memory.currentTarget) {
-            Memory.Resources[creep.memory.currentTarget.ID].AvailResource -= creep.carryCapacity;
+    if (creep.currentTarget == null && creep.carry.energy == 0) {
+        creep.currentTarget = getEnergyTarget(creep);
+        if (creep.currentTarget) {
+            Memory.Resources[creep.currentTarget.ID].AvailResource -= creep.carryCapacity;
             creep.say("Go to source")
         }
 
-        if (creep.memory.currentTarget == null) {
-            const harvesters = _.filter(Game.creeps, function (creepF) { return creepF.memory.type == creepT.HARVESTER && creepF.memory.permTarget && creep.memory.permTarget && creepF.memory.permTarget.ID == creep.memory.permTarget.ID });
+        if (creep.currentTarget == null) {
+            const harvesters = _.filter(creep.room.getCreeps(HARVESTER), function (creepF) { return creepF.memory.permTarget && creep.memory.permTarget && creepF.memory.permTarget.ID == creep.memory.permTarget.ID });
             if (harvesters.length == 0) {
                 if (creep.memory.permTarget == null)
                     throw ("no permanent target on starter");
@@ -34,30 +33,30 @@ export function Starter(creep: Creep) {
                 if (source) {
                     let sourceMem: SourceMemory = Memory.Resources[source.id];
                     creep.say("go mining");
-                    creep.memory.currentTarget = { ID: source.id, type: targetT.SOURCE, pos: sourceMem.pos, range: 1 };
+                    creep.setTarget(source.id, targetT.SOURCE, sourceMem.pos, 1 );
                 }
             }
         }
     }
     else {
-        if (creep.memory.currentTarget == null) {
-            creep.memory.currentTarget = getDeliverTarget(creep, false);
+        if (creep.currentTarget == null) {
+            creep.currentTarget = getDeliverTarget(creep, false);
         }
-        if (creep.memory.currentTarget == null) {
+        if (creep.currentTarget == null) {
             let controller = creep.room.controller;
             if (controller) {//if safe tick run external construction target getter, same used for builder
                 if (controller.ticksToDowngrade > 5000) {
                     getRepairTarget(creep);            
-                    if (creep.memory.currentTarget == null) {
+                    if (creep.currentTarget == null) {
                         getBuildTarget(creep);
                     }
                 }
-                if (creep.memory.currentTarget== null)
-                    creep.memory.currentTarget = { ID: controller.id, type: targetT.CONTROLLER, pos: controller.pos, range: 3 };
+                if (creep.currentTarget == null)
+                    creep.setTarget( controller.id, targetT.CONTROLLER, controller.pos, 3 );
                 
             }
         }
-        if (creep.memory.currentTarget == null) {
+        if (creep.currentTarget == null) {
             console.warn("Harvester could not find a target");
             return;
         }
@@ -79,10 +78,10 @@ export function Starter(creep: Creep) {
         }
     }
     ///////////////use the target///////////
-    if (creep.memory.currentTarget && creep.inPlace) {
-        switch (creep.memory.currentTarget.type) {
+    if (creep.currentTarget && creep.inPlace) {
+        switch (creep.currentTarget.type) {
             case targetT.DROPPED_ENERGY: {
-                const err = useEnergyTarget(creep, creep.memory.currentTarget);
+                const err = useEnergyTarget(creep, creep.currentTarget);
                 printRes(creep, err, "transf");
                 return;
             }
@@ -93,14 +92,14 @@ export function Starter(creep: Creep) {
                 if (source) {
                     const err = creep.harvest(source);
                     if (err == OK && creep.carry.energy == creep.carryCapacity)
-                        creep.memory.currentTarget = null;
+                        creep.currentTarget = null;
                     else
                         printRes(creep, err, "mine");
                     //multi tic action so no reset per defauls
                     return;
                 }
                 else
-                    creep.memory.currentTarget = null
+                    creep.currentTarget = null
                 break;
             }
             case targetT.CONTROLLER: {
@@ -115,7 +114,7 @@ export function Starter(creep: Creep) {
                     printRes(creep, err, "upgrade");
                 }
                 else
-                    creep.memory.currentTarget = null
+                    creep.currentTarget = null
                 break;
             }
             case targetT.CONSTRUCTION: {
@@ -130,13 +129,13 @@ export function Starter(creep: Creep) {
             }
             case targetT.POWERSTORAGE:
             case targetT.POWERUSER: {
-                const err = useDeliverTarget(creep, creep.memory.currentTarget);
+                const err = useDeliverTarget(creep, creep.currentTarget);
                 printRes(creep, err, "transf");
                 break;
             }
             default: {
-                let type = creep.memory.currentTarget.type;
-                creep.memory.currentTarget = null;
+                let type = creep.currentTarget.type;
+                creep.currentTarget = null;
                 throw ("The target type is not handled " + type);
             }
         }

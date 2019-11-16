@@ -2,9 +2,10 @@
 interface CreepMemory {
     type: CreepConstant;//found when used from creepType
     creationRoom: string;
-    _currentTarget: targetData | null;
     moveTarget: moveData | null;
     permTarget: targetData | null;
+
+    _currentTarget?: targetData | null;
 }
 
 
@@ -15,9 +16,18 @@ interface Memory {
     creepIndex: number;
     Resources: { [name: string]: SourceMemory };
     LevelTick: number[];
+
+    PishiMasterMem: PishiMasterMemory;
+    ColonyMem: { [name: string]: ColonyMemory };
 }
 
+interface PishiMasterMemory {
+    
+}
 
+interface ColonyMemory {
+    outposts: string[];
+}
 
 interface RoomMemory {
     inCreepEmergency: number | null;
@@ -28,9 +38,6 @@ interface RoomMemory {
     EnergyNeed: number;
     ExpandedLevel: number;
     controllerStoreID: string | null;
-
-    //used by functions
-    _repairSites: string[];
 }
 interface SpawnMemory {
 

@@ -10,6 +10,9 @@ export function isEqualPos(pos: RoomPosition | posData, pos2: RoomPosition | pos
     return pos.x == pos2.x && pos.y == pos2.y && pos.roomName == pos2.roomName;
 }
 
+export function inRangeTo(pos: RoomPosition, pos2: RoomPosition | posData, range:number): boolean {
+    return pos.roomName == pos2.roomName && pos.getRangeTo(pos2.x, pos2.y) <= range;
+}
 
 export function isBuildable(pos: RoomPosition): number {
     const atPos = pos.look();

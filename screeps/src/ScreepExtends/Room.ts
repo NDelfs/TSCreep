@@ -80,29 +80,6 @@ Object.defineProperty(Room.prototype, 'constructionSites', {
     configurable: true,
 });
 
-Object.defineProperty(Room.prototype, 'repairSites', {
-    get() {
-        try {
-            if (Game.time % 100 == 0 && this._repairUpdate == null) {
-                this._repairUpdate = true;
-                this.memory._repairSites = [];
-                let controller = this.controller;
-                let structs = _.filter(this.structures, function (struct: Structure) {
-                        return (struct.hits < controller.level * 100000) && (struct.hits < struct.hitsMax - 1000);
-                });
-                structs.sort(function (obj: Structure, obj2: Structure): number { return obj.hits - obj2.hits; });
-                for (let struct of structs) {
-                    this.memory._repairSites.push(struct.id);
-                }
-            }
-        } catch (e){ console.log(this.name, "failed repairSites",e); };
-        return this.memory._repairSites || [];
-    },
-    set(iVal : string[]) {
-        this.memory._repairSites = iVal;
-    },
-    configurable: true,
-});
 
 //structures currently in the room
 Object.defineProperty(Room.prototype, 'structures', {

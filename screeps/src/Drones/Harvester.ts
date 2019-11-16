@@ -1,11 +1,12 @@
 import * as targetT from "Types/TargetTypes";
-import { goToTarget } from "Drones/Funcs/Walk";
 
 
 export function Harvester(creep: Creep): void {
-    if (creep.inPlace && creep.memory.currentTarget) {      
-        let source = Game.getObjectById(creep.memory.currentTarget.ID) as Source | Mineral;
-        const resMem = Memory.Resources[creep.memory.currentTarget.ID];
+    //if (creep.room.name == "E48N47")
+        //console.log("in place ", creep.inPlace, creep.currentTarget)
+    if (creep.inPlace && creep.currentTarget) {      
+        let source = Game.getObjectById(creep.currentTarget.ID) as Source | Mineral;
+        const resMem = Memory.Resources[creep.currentTarget.ID];
         if (resMem.resourceType != RESOURCE_ENERGY) {
             let extractor = source.pos.lookFor(LOOK_STRUCTURES) as StructureExtractor[];
             if (extractor[0].cooldown) {

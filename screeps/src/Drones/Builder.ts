@@ -1,4 +1,3 @@
-import { goToTarget } from "Drones/Funcs/Walk";
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import { resetDeliverTarget, useDeliverTarget } from "Drones/Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "Drones/Funcs/Build";
@@ -7,13 +6,13 @@ import { getEnergyTarget, useEnergyTarget, getEnergyStoreTarget } from "Drones/F
 
 export function Builder(creep: Creep) {
     resetDeliverTarget(creep);
-    if (creep.memory.currentTarget == null && creep.carry.energy > 50) {
+    if (creep.currentTarget == null && creep.carry.energy > 50) {
         getRepairTarget(creep);
-        if (creep.memory.currentTarget == null) {
+        if (creep.currentTarget == null) {
             getBuildTarget(creep);
         }
     }
-    else if (creep.memory.currentTarget == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
+    else if (creep.currentTarget == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
         let target1 = getEnergyTarget(creep);
         let target2 = getEnergyStoreTarget(creep);
        
@@ -37,8 +36,8 @@ export function Builder(creep: Creep) {
         }
     }
 
-    if (creep.memory.currentTarget && creep.inPlace) {
-        switch (creep.memory.currentTarget.type) {
+    if (creep.currentTarget && creep.inPlace) {
+        switch (creep.currentTarget.type) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);
                 break;
@@ -47,12 +46,12 @@ export function Builder(creep: Creep) {
                 break;
             }
             case targetT.DROPPED_ENERGY:
-                useEnergyTarget(creep, creep.memory.currentTarget);
+                useEnergyTarget(creep, creep.currentTarget);
                 creep.say("withdraw");
                 break;
             default: {
-                let type = creep.memory.currentTarget.type;
-                creep.memory.currentTarget = null;
+                let type = creep.currentTarget.type;
+                creep.currentTarget = null;
                 throw ("The target type is not handled " + type);
             }
         }

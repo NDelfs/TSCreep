@@ -13,7 +13,6 @@ interface Room {
     structures: Structure[];
     myStructures: Structure[];
     constructionSites: ConstructionSite[];
-    repairSites: string[];
     drops: { [resourceType: string]: Resource[] };
     droppedEnergy: Resource[];
     availEnergy: number;
@@ -24,7 +23,7 @@ interface Creep {
     creationRoom: string;
     type: CreepConstant;
     carryAmount: number;
-    currentTarget: targetData;
+    currentTarget: targetData | null;
     inPlace: boolean;
     walk: () => void;
     walkTo: (pos: posData, rang: number) => void;

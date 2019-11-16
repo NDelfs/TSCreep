@@ -14,10 +14,6 @@ type TargetConstant =
     | FLAG_WHITE
     | DEFEND;
 
-type TargetEnergy =
-    | SOURCE
-    | DROPPED_ENERGY;
-
 type CONTROLLER = 1;
 type POWERUSER = 11;
 type POWERSTORAGE = 12;

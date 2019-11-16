@@ -69,7 +69,7 @@ function updateSources() {
                 }
                 let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
                 const transportersTmp = _.filter(transporters, function (creep) {
-                    return creep.memory.currentTarget && creep.memory.currentTarget.ID == ID;
+                    return creep.currentTarget && creep.currentTarget.ID == ID;
                 })
                 for (const transp of transportersTmp) {
                     sMem.AvailResource -= Number(transp.carryCapacity);
@@ -110,8 +110,8 @@ function updateEnergyDemand() : void {
 
             room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
             let del = _.filter(room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)), function (obj) {
-                if (obj.memory.currentTarget) {
-                    return obj.memory.currentTarget.type == targetT.POWERUSER && obj.carry[RESOURCE_ENERGY];
+                if (obj.currentTarget) {
+                    return obj.currentTarget.type == targetT.POWERUSER && obj.carry[RESOURCE_ENERGY];
                 }
                 return false;
 
@@ -136,7 +136,7 @@ function updateEnergyDemand() : void {
             //console.log("test of struct ", del.length);
             for (let struct of structList) {
                 let transportersTmp = _.filter(del, function (creep) {
-                    return creep.memory.currentTarget &&creep.memory.currentTarget.ID == struct.id;
+                    return creep.currentTarget &&creep.currentTarget.ID == struct.id;
                 })
                 //console.log("test of transportersTmp ", transportersTmp.length);
                 if (transportersTmp.length == 0)
@@ -151,6 +151,8 @@ function updateEnergyDemand() : void {
 
 function addSources(room: Room, homeRoomPos: RoomPosition, findType: FIND_MINERALS | FIND_SOURCES) {
     const sources = room.find(findType);
+    if (sources.length == 0)
+        return;
     if (findType == FIND_MINERALS) {
         console.log("addSource 1", sources.length);
     }

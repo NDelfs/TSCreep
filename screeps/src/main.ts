@@ -5,6 +5,7 @@ import './ScreepExtends/Room';
 import './ScreepExtends/Creep';
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { _PishiMaster } from "PishiMaster";
 import { Spawner } from "Spawners/Spawner";
 import { DataUpdate } from "utils/DataUpdate";
 
@@ -52,8 +53,14 @@ function testeCode() {
 }
 
 function main() {
-  
     try {
+        if (!global.PishiMaster || !global.PishiMaster.ticksAlive) {
+            delete global.PishiMaster;
+            global.PishiMaster = new _PishiMaster();
+        }
+        else {
+            global.PishiMaster.refresh();
+        }
     }
     catch (e) {
         console.log("Testecode failed with : ", e);
