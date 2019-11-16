@@ -1,11 +1,12 @@
 import { Colony } from "Colony"
 import * as Mem from "Memory";
+import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
-
+//@profile
 export class _PishiMaster {
     memory: PishiMasterMemory;
     ticksAlive: number;
@@ -27,4 +28,4 @@ export class _PishiMaster {
         }
     }
 }
-profiler.registerClass(_PishiMaster, "PishiMaster");
+profiler.registerClass(_PishiMaster, '_PishiMaster');

@@ -129,6 +129,9 @@
     <TypeScriptCompile Include="src\PishiMaster.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Profiler\Decorator.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\ScreepExtends\Creep.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

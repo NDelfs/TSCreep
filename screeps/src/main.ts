@@ -3,8 +3,8 @@ import { ErrorMapper } from "utils/ErrorMapper";
 //const profiler = require('Profiler/screeps-profiler');
 import './ScreepExtends/Room';
 import './ScreepExtends/Creep';
-//@ts-ignore
-import profiler from "Profiler/screeps-profiler";
+
+
 import { _PishiMaster } from "PishiMaster";
 import { Spawner } from "Spawners/Spawner";
 import { DataUpdate } from "utils/DataUpdate";
@@ -15,8 +15,8 @@ import { baseExpansion } from "Base/BaseExpansion";
 
 import { Market } from "Base/Market";
 import { CreepUpdate } from "Drones/CreepsUpdate";
-
-
+//@ts-ignore
+import profiler from "Profiler/screeps-profiler";
 
 
 function clearVec(vec: { [name: string]: any }) {
@@ -113,11 +113,10 @@ function main() {
 
 
 let USE_ERROR_MAPPER = false;
-let USE_PROFILER = true;
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 
-
+const USE_PROFILER = true;
 let _loop: () => void;
 if (USE_PROFILER) {
     profiler.enable();

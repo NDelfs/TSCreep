@@ -1,10 +1,13 @@
 import * as Mem from "Memory";
+import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+
 const ColonyMemoryDef: ColonyMemory = {
     outposts: [],
 }
 
+//@profile
 export class Colony {
     memory: ColonyMemory;
     name: string;
@@ -31,13 +34,13 @@ export class Colony {
         this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
     }
 
-    refresh() {
+    public refresh() {
         this.room = Game.rooms[this.name];
         this.computeLists();
     }
 
 
-    computeLists(force?:boolean){
+    private computeLists(force?:boolean){
         try {
             if (Game.time % 100 == 0 || force) {
                 let controller = this.controller;
@@ -52,4 +55,4 @@ export class Colony {
         } catch (e) { console.log(this.name, "failed repairSites", e); };
     }
 }
-profiler.registerClass(Colony,"Colony");
+profiler.registerClass(Colony, 'Colony');
