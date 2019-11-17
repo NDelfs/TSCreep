@@ -6,7 +6,7 @@ import { getEnergyTarget, useEnergyTarget, getEnergyStoreTarget } from "Drones/F
 
 export function Builder(creep: Creep) {
     resetDeliverTarget(creep);
-    if (creep.currentTarget == null && creep.carry.energy > 50) {
+    if (creep.room.name, creep.currentTarget == null && creep.carry.energy > 50) {
         getRepairTarget(creep);
         if (creep.currentTarget == null) {
             getBuildTarget(creep);
@@ -20,19 +20,19 @@ export function Builder(creep: Creep) {
             let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
             if (range1 < range2) {
-                creep.setTargetData(target1);
+                creep.currentTarget =target1;
                 Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
             }
             else {
-                creep.setTargetData(target2);
+                creep.currentTarget = target2;
             }
         }
         else if (target1) {
-            creep.setTargetData(target1);
+            creep.currentTarget= target1;
             Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
         }
         else if (target2) {
-            creep.setTargetData(target2);
+            creep.currentTarget = target2;
         }
     }
 

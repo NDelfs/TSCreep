@@ -29,6 +29,5 @@ interface Creep {
     walkTo: (pos: posData, rang: number) => void;
     walkToPos: (x: number, y: number, room: string, rang: number) => void;
     setTarget: (id: string, type: TargetConstant, pos: posData, rang: number) => void;
-    setTargetData: (iData: targetData) => void;
     _walk: boolean;
 }

@@ -53,6 +53,14 @@ function testeCode() {
 }
 
 function main() {
+    reset();
+    try {
+        profiler.registerFN(DataUpdate)();
+    }
+    catch (e) {
+        console.log("Failed Data update with: ", e);
+    }
+
     try {
         if (!global.PishiMaster || !global.PishiMaster.ticksAlive) {
             delete global.PishiMaster;
@@ -63,15 +71,15 @@ function main() {
         }
     }
     catch (e) {
-        console.log("Testecode failed with : ", e);
+        console.log("pishi master init/refresh failed with : ", e);
     }
-    reset();
     try {
-        profiler.registerFN(DataUpdate)();
+        global.PishiMaster.run();
     }
     catch (e) {
-        console.log("Failed Data update with: ", e);
+        console.log("pishi master run failed with : ", e);
     }
+
     try {
         profiler.registerFN(baseExpansion)();
         //baseExpansion();
@@ -96,7 +104,7 @@ function main() {
     //console.log(`Current game tick is ${Game.time}`);
     CreepUpdate();
     try {
-        profiler.registerFN(TowerOperation)();
+        //profiler.registerFN(TowerOperation)();
         //TowerOperation();
     }
     catch (e) {
@@ -105,6 +113,7 @@ function main() {
     // Automatically delete memory of missing creeps
     for (const name in Memory.creeps) {
         if (!(name in Game.creeps)) {
+            global[Memory.creeps[name].creationRoom].refreshEnergyDemand(true);
             delete Memory.creeps[name];
         }
     }

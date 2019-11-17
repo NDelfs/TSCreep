@@ -27,5 +27,11 @@ export class _PishiMaster {
             this.colonies[colonyID].refresh();
         }
     }
+
+    run() {
+        for (let colonyID in this.colonies) {
+            this.colonies[colonyID].runTowers();
+        }
+    }
 }
 profiler.registerClass(_PishiMaster, '_PishiMaster');

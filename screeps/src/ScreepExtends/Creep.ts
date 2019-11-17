@@ -1,5 +1,6 @@
 import { restorePos, inRangeTo } from "../utils/posHelpers";
-import { DEFENDER, Military } from "../Types/CreepType";
+import { DEFENDER, Military, TRANSPORTER } from "../Types/CreepType";
+import { POWERUSER } from "../Types/TargetTypes";
 
 Object.defineProperty(Creep.prototype, 'type', {
     get() {
@@ -34,6 +35,10 @@ Object.defineProperty(Creep.prototype, 'currentTarget', {
         return this.memory._currentTarget;
     },
     set(iData: targetData) {
+        if ((iData == null || iData.type != POWERUSER) && (this.memory._currentTarget /*&& this.memory._currentTarget == POWERUSER*/))
+            global[this.memory.creationRoom].removeEnergyTran(this);
+        else if (((this.memory._currentTarget == null || this.memory._currentTarget != POWERUSER) && (iData && iData.type == POWERUSER))&& this.carry.energy >0)
+            global[this.memory.creationRoom].addEnergyTran(this);
         this.memory._currentTarget = iData;
         if(iData != null)
           this.walkTo(iData.pos, iData.range);
@@ -99,7 +104,7 @@ Creep.prototype.walkToPos = function (x: number, y: number, room: string, rang: 
 }
 
 Creep.prototype.setTarget = function (id: string, type: TargetConstant, pos: posData, rang: number) {
-    this.walkTo(pos, rang);
-    this.memory._currentTarget = { ID: id, type: type, pos:pos, range:rang};
+    //this.walkTo(pos, rang);
+    this.currentTarget = { ID: id, type: type, pos:pos, range:rang};
 }
 

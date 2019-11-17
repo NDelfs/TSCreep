@@ -74,6 +74,12 @@ function getCloseDeliverTarget(creep: Creep): targetData | null {
             ID: structs[0].id, type: targetT.POWERUSER, pos: structs[0].pos, range: 1
         }
     }
+    else {
+        if (global[creep.memory.creationRoom].energyNeedStruct.lengt > 0) {
+            retT = global[creep.memory.creationRoom].energyNeedStruct[0];
+            global[creep.memory.creationRoom].energyNeedStruct[0].shift();
+        }
+    }
     return retT;
 }
 
@@ -89,6 +95,7 @@ export function useDeliverTarget(creep: Creep, target: targetData): number {
         if (err == ERR_FULL || err == OK) {
             if (creep.carry.energy >= 50 && target.type == targetT.POWERUSER) {
                 creep.currentTarget = getCloseDeliverTarget(creep);
+                return OK;
             }
             err = OK;
         }

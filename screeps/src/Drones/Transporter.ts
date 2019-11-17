@@ -28,8 +28,10 @@ export function Transporter(creep: Creep) {
     }
     else if (creep.currentTarget == null) {
         let targ = getDeliverTarget(creep, true);
-        if(targ)
-          creep.currentTarget = targ;
+        if (targ) {
+            creep.currentTarget = targ;
+            //global[creep.memory.creationRoom].spawnEnergyNeed -= creep.carry.energy;
+        }
     }
     
 

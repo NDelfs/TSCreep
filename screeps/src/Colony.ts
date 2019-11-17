@@ -1,11 +1,20 @@
 import * as Mem from "Memory";
+import { TowerOperation } from "Base/TowerOperation"
+import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
+import * as targetT from "Types/TargetTypes"
 import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { spawn } from "child_process";
 
 const ColonyMemoryDef: ColonyMemory = {
     outposts: [],
 }
+
+function refreshArray(array: any[]) {
+    array = _.compact(_.map(array, obj => Game.getObjectById(obj.id)));
+}
+
 
 //@profile
 export class Colony {
@@ -15,7 +24,26 @@ export class Colony {
     outpostIDs: string[];//all rooms ids;
     outposts: Room[];
     controller: StructureController;
+    spawns: StructureSpawn[];
+    towers: StructureTower[];
+    extensions: StructureExtension[];
 
+    spawnEnergyNeed: number;
+    energyNeedStruct: targetData[];
+    energyTransporters: Creep[];
+    public addEnergyTran(creep: Creep) {
+        let already = _.find(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
+        if (!already && creep.carry.energy>0) {
+            this.energyTransporters.push(creep);
+            this.spawnEnergyNeed -= creep.carry.energy;
+        }
+    }
+    public removeEnergyTran(creep: Creep) {      
+        let removed = _.remove(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
+        if (removed.length > 0)
+            this.spawnEnergyNeed += creep.carry.energy;
+    }
+    
     repairSites: string[];
     constructor(iRoom: Room) {
         if (!Memory.ColonyMem)//this is rare enough that I do ugly fix here
@@ -29,16 +57,44 @@ export class Colony {
         console.log("recreate obj");
         this.outpostIDs = this.memory.outposts;
         this.controller = this.room.controller!;
+        this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
+        this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
+        this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
         this.repairSites = [];
         this.computeLists(true);
+        this.spawnEnergyNeed = 0;
+        this.energyNeedStruct = [];
+        this.energyTransporters = [];
+
+        this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
+            if (obj.currentTarget) {
+                return obj.currentTarget.type == targetT.POWERUSER && obj.carry.energy>0;
+            }
+            return false;
+
+        });
+        this.refreshEnergyDemand(true);
+
         this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
     }
 
     public refresh() {
         this.room = Game.rooms[this.name];
-        this.computeLists();
-    }
+        this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
+        this.controller = this.room.controller!;
+        //refreshArray(this.spawns);
+        this.spawns = _.compact(_.map(this.spawns, obj => Game.getObjectById(obj.id))) as StructureSpawn[]
+        //refreshArray(this.extensions);
+        this.extensions = _.compact(_.map(this.extensions, obj => Game.getObjectById(obj.id))) as StructureExtension[];
+        //refreshArray(this.energyTransporters);
+        this.energyTransporters = _.compact(_.map(this.energyTransporters , obj => Game.creeps[obj.name]));
 
+        this.towers = _.compact(_.map(this.towers, id => Game.getObjectById(id.id))) as StructureTower[];
+        this.computeLists();
+        this.refreshEnergyDemand(true);
+        //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
+            //console.log(this.name, "energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
+    }
 
     private computeLists(force?:boolean){
         try {
@@ -54,5 +110,47 @@ export class Colony {
             }
         } catch (e) { console.log(this.name, "failed repairSites", e); };
     }
+
+    public refreshEnergyDemand(force?: boolean) {
+        if (Game.time % 100 == 0 || force) {
+            this.energyNeedStruct = [];
+            this.spawnEnergyNeed = this.room.energyCapacityAvailable - this.room.energyAvailable;
+
+            let del = this.energyTransporters;
+            for (let creep of del) {
+                this.spawnEnergyNeed -= creep.carry.energy;
+            }
+
+            for (let obj of this.spawns) {
+                if (obj.energy < obj.energyCapacity) {
+                    //this.spawnEnergyNeed -= obj.energyCapacity - obj.energy;
+                    let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
+                    if (!uses)
+                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
+                }
+            }
+            for (let obj of this.extensions) {
+                if (obj.energy < obj.energyCapacity) {
+                    //this.spawnEnergyNeed -= obj.energyCapacity - obj.energy;
+                    let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
+                    if (!uses)
+                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
+                }
+            }
+            for (let obj of this.towers) {
+                if (obj.energy < obj.energyCapacity * 0.7) {
+                    this.spawnEnergyNeed += obj.energyCapacity - obj.energy;
+                    let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
+                    if (!uses)
+                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
+                }
+            }
+        }
+    }
+
+    runTowers() {
+        TowerOperation(this.towers);
+    }
+
 }
 profiler.registerClass(Colony, 'Colony');
