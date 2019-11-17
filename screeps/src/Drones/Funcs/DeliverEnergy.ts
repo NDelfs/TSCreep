@@ -11,19 +11,23 @@ export function resetDeliverTarget(creep: Creep) {
     }
 }
 
-export function getDeliverTarget(creep: Creep, findStore: boolean): targetData | null {
-    let retT : targetData | null = null;
+export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
     let room = Game.rooms[creep.memory.creationRoom];
     let availBuild = room.memory.EnergyNeedStruct;
 
-    if (creep.carry.energy == 0 && room.terminal && creep.carryAmount >0) {
-        retT = {
+    if (creep.carry.energy == 0 && room.terminal && creep.carryAmount > 0) {
+        creep.currentTarget = {
             ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1
         }
-        return retT;
+        return true;
     }
 
     if (availBuild.length > 0 && room.memory.EnergyNeed > 0 && creep.carry.energy > 0) {
+    //if (global[creep.memory.creationRoom].energyNeedStruct.length > 0 && global[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
+    //        creep.currentTarget = global[creep.memory.creationRoom].energyNeedStruct[0];
+    //        global[creep.memory.creationRoom].energyNeedStruct.shift();
+            
+        //}
         let closest = availBuild[0];
         let dist = creep.pos.getRangeTo(closest.pos.x, closest.pos.y)
         for (let building of availBuild) {
@@ -33,14 +37,14 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
                 dist = tmpD;
             }
         }
-        retT = closest;
+        creep.currentTarget = closest;
         room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
         if (room.memory.controllerStoreID && room.controllerStoreDef > C.Controler_AllowedDef && creep.carry.energy > 0) {
             let store: StructureContainer | null = Game.getObjectById(room.memory.controllerStoreID);
             if (store) {
-                retT = {
+                creep.currentTarget = {
                     ID: store.id, type: targetT.POWERSTORAGE, pos: store.pos, range: 1
                 }
                 room.controllerStoreDef -= creep.carry.energy;
@@ -48,15 +52,15 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): targetData |
         }
         else if (findStore) {
             if (room.terminal && room.terminal.store.energy < C.TERMINAL_STORE && room.storage && room.storage.store.energy > C.TERMINAL_MIN_STORAGE)
-                retT = { ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1 };
+                creep.currentTarget = { ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1 };
             else if (room.storage) {
-                retT = {
+                creep.currentTarget = {
                     ID: room.storage.id, type: targetT.POWERSTORAGE, pos: room.storage.pos, range: 1
                 }
             }
         }
     }
-    return retT;
+    return creep.currentTarget!=null;
 }
 
 function getCloseDeliverTarget(creep: Creep): targetData | null {
@@ -75,17 +79,17 @@ function getCloseDeliverTarget(creep: Creep): targetData | null {
         }
     }
     else {
-        if (global[creep.memory.creationRoom].energyNeedStruct.lengt > 0) {
+    if (global[creep.memory.creationRoom].energyNeedStruct.length > 0) {
             retT = global[creep.memory.creationRoom].energyNeedStruct[0];
-            global[creep.memory.creationRoom].energyNeedStruct[0].shift();
+            global[creep.memory.creationRoom].energyNeedStruct.shift();
         }
     }
     return retT;
 }
 
 
-export function useDeliverTarget(creep: Creep, target: targetData): number {
-    let targetObj = Game.getObjectById(target.ID) as StructureStorage | StructureContainer | null;
+export function useDeliverTarget(creep: Creep): number {
+    let targetObj = Game.getObjectById(creep.currentTarget!.ID) as StructureStorage | StructureContainer | null;
     let err: number = ERR_NOT_FOUND;
     if (targetObj) {
         let key = _.findKey(creep.carry) as ResourceConstant;
@@ -93,7 +97,7 @@ export function useDeliverTarget(creep: Creep, target: targetData): number {
         if (key)
             err = creep.transfer(targetObj, key);
         if (err == ERR_FULL || err == OK) {
-            if (creep.carry.energy >= 50 && target.type == targetT.POWERUSER) {
+            if (creep.carry.energy >= 50 && creep.currentTarget!.type == targetT.POWERUSER) {
                 creep.currentTarget = getCloseDeliverTarget(creep);
                 return OK;
             }

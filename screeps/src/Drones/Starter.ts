@@ -39,10 +39,7 @@ export function Starter(creep: Creep) {
         }
     }
     else {
-        if (creep.currentTarget == null) {
-            creep.currentTarget = getDeliverTarget(creep, false);
-        }
-        if (creep.currentTarget == null) {
+        if (!getDeliverTarget(creep, false)) {
             let controller = creep.room.controller;
             if (controller) {//if safe tick run external construction target getter, same used for builder
                 if (controller.ticksToDowngrade > 5000) {
@@ -129,7 +126,7 @@ export function Starter(creep: Creep) {
             }
             case targetT.POWERSTORAGE:
             case targetT.POWERUSER: {
-                const err = useDeliverTarget(creep, creep.currentTarget);
+                const err = useDeliverTarget(creep);
                 printRes(creep, err, "transf");
                 break;
             }

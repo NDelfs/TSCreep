@@ -28,10 +28,7 @@ export function Transporter(creep: Creep) {
     }
     else if (creep.currentTarget == null) {
         let targ = getDeliverTarget(creep, true);
-        if (targ) {
-            creep.currentTarget = targ;
             //global[creep.memory.creationRoom].spawnEnergyNeed -= creep.carry.energy;
-        }
     }
     
 
@@ -41,7 +38,7 @@ export function Transporter(creep: Creep) {
     if (creep.currentTarget && creep.inPlace) {
         switch (creep.currentTarget.type) {
             case targetT.POWERSTORAGE:
-            case targetT.POWERUSER: useDeliverTarget(creep, creep.currentTarget); break;
+            case targetT.POWERUSER: useDeliverTarget(creep); break;
             case targetT.DROPPED_MINERAL:
             case targetT.DROPPED_ENERGY: useEnergyTarget(creep, creep.currentTarget); break;
             default: console.log("Canceled ", creep.currentTarget.type); creep.currentTarget = null;
