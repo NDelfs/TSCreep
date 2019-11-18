@@ -30,7 +30,7 @@ export function DataUpdate(): void {
     }
     try {
         //if (Game.time % 3 == 0) {//by having a better tracking of resources we only need to update rarly for thing we didnt foorsee
-            profiler.registerFN(updateEnergyDemand)();
+            //profiler.registerFN(updateEnergyDemand)();
             profiler.registerFN(updateSources)();
             profiler.registerFN(updateContainerID)();
         //}
@@ -100,52 +100,52 @@ function updateContainerID() {
     }
 }
 
-//updates energy demand and also the nr of creeps
-function updateEnergyDemand() : void {
+////updates energy demand and also the nr of creeps
+//function updateEnergyDemand() : void {
 
-    for (let roomName in Game.rooms) {
-        //********all rooms*************//////
-        let room = Game.rooms[roomName];
-        if (room.my) {//no point going trhour rooms that cant create stuff
+//    for (let roomName in Game.rooms) {
+//        //********all rooms*************//////
+//        let room = Game.rooms[roomName];
+//        if (room.my) {//no point going trhour rooms that cant create stuff
 
-            room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
-            let del = _.filter(room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)), function (obj) {
-                if (obj.currentTarget) {
-                    return obj.currentTarget.type == targetT.POWERUSER && obj.carry[RESOURCE_ENERGY];
-                }
-                return false;
+//            room.memory.EnergyNeed = room.energyCapacityAvailable - room.energyAvailable;
+//            let del = _.filter(room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)), function (obj) {
+//                if (obj.currentTarget) {
+//                    return obj.currentTarget.type == targetT.POWERUSER && obj.carry[RESOURCE_ENERGY];
+//                }
+//                return false;
 
-            });
-            for (let creepName in del) {
-                room.memory.EnergyNeed -= del[creepName].carry[RESOURCE_ENERGY];
-            }
+//            });
+//            for (let creepName in del) {
+//                room.memory.EnergyNeed -= del[creepName].carry[RESOURCE_ENERGY];
+//            }
 
-            let structList: Structure[] = _.filter(room.myStructures, function (str: AnyOwnedStructure) {
-                    return (str.structureType == STRUCTURE_EXTENSION || str.structureType == STRUCTURE_SPAWN) &&
-                        str.energy < str.energyCapacity
-                });
-            let structList2: StructureTower[] = _.filter(room.myStructures, function (str: AnyOwnedStructure) {
-                    return str.structureType == STRUCTURE_TOWER && str.energy < str.energyCapacity * 0.7
-                }) as StructureTower[];
-            for (let tower of structList2) {
-                room.memory.EnergyNeed += tower.energyCapacity - tower.energy;
-            }
+//            let structList: Structure[] = _.filter(room.myStructures, function (str: AnyOwnedStructure) {
+//                    return (str.structureType == STRUCTURE_EXTENSION || str.structureType == STRUCTURE_SPAWN) &&
+//                        str.energy < str.energyCapacity
+//                });
+//            let structList2: StructureTower[] = _.filter(room.myStructures, function (str: AnyOwnedStructure) {
+//                    return str.structureType == STRUCTURE_TOWER && str.energy < str.energyCapacity * 0.7
+//                }) as StructureTower[];
+//            for (let tower of structList2) {
+//                room.memory.EnergyNeed += tower.energyCapacity - tower.energy;
+//            }
 
-            structList = structList.concat(structList2);
-            let finalStruct: targetData[] = [];
-            //console.log("test of struct ", del.length);
-            for (let struct of structList) {
-                let transportersTmp = _.filter(del, function (creep) {
-                    return creep.currentTarget &&creep.currentTarget.ID == struct.id;
-                })
-                //console.log("test of transportersTmp ", transportersTmp.length);
-                if (transportersTmp.length == 0)
-                    finalStruct.push({ ID: struct.id, type: targetT.POWERUSER,pos: struct.pos, range: 1});
-            }
-            room.memory.EnergyNeedStruct = finalStruct;
-        }
-    }
-}
+//            structList = structList.concat(structList2);
+//            let finalStruct: targetData[] = [];
+//            //console.log("test of struct ", del.length);
+//            for (let struct of structList) {
+//                let transportersTmp = _.filter(del, function (creep) {
+//                    return creep.currentTarget &&creep.currentTarget.ID == struct.id;
+//                })
+//                //console.log("test of transportersTmp ", transportersTmp.length);
+//                if (transportersTmp.length == 0)
+//                    finalStruct.push({ ID: struct.id, type: targetT.POWERUSER,pos: struct.pos, range: 1});
+//            }
+//            room.memory.EnergyNeedStruct = finalStruct;
+//        }
+//    }
+//}
 
 
 

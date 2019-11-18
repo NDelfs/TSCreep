@@ -34,8 +34,8 @@ interface RoomMemory {
     sourcesUsed: string[];
     mineralsUsed: string[];
     startSpawnPos: posData | null;
-    EnergyNeedStruct: targetData[];
-    EnergyNeed: number;
+    //EnergyNeedStruct: targetData[];
+    //EnergyNeed: number;
     ExpandedLevel: number;
     controllerStoreID: string | null;
 }

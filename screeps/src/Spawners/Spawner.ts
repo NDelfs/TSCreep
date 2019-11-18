@@ -302,7 +302,7 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
             if (err == OK) {
                 //if (que[0].memory.type == creepT.DEFENDER)
                 console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
-                global[spawner.room.name].refreshEnergyDemand(true);
+                global[spawner.room.name].forceUpdateEnergy = true;
                 que.shift();
                 spawner.room.memory.inCreepEmergency = null;      
                 return 1;

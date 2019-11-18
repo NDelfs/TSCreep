@@ -113,7 +113,8 @@ function main() {
     // Automatically delete memory of missing creeps
     for (const name in Memory.creeps) {
         if (!(name in Game.creeps)) {
-            global[Memory.creeps[name].creationRoom].refreshEnergyDemand(true);
+            console.log("delete creep");
+            global[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
             delete Memory.creeps[name];
         }
     }

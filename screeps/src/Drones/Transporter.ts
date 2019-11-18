@@ -16,7 +16,7 @@ export function Transporter(creep: Creep) {
         creep.currentTarget = getEnergyTarget(creep);
         if (creep.currentTarget)
             claimResource(creep);
-        else if (room.memory.EnergyNeed > 0) { //so that we always fill up the energy need of a room
+        else if (global[creep.memory.creationRoom].spawnEnergyNeed  > 0) { //so that we always fill up the energy need of a room
             creep.currentTarget = getEnergyStoreTarget(creep);
         }
        

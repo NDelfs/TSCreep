@@ -11,9 +11,22 @@ export function resetDeliverTarget(creep: Creep) {
     }
 }
 
+function getClosest(creep: Creep, iTargets: targetData[]): targetData{
+    let index: number = 0;
+    let minDist = 100;
+    for (let i=0; i < iTargets.length; i++) {
+        let target = iTargets[i];
+        let newD = creep.pos.getRangeTo(target.pos.x, target.pos.y);
+        if (newD < minDist) {
+            minDist = newD;
+            index = i;
+        }
+    }
+    return iTargets.splice(index, 1)[0];
+}
+
 export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
     let room = Game.rooms[creep.memory.creationRoom];
-    let availBuild = room.memory.EnergyNeedStruct;
 
     if (creep.carry.energy == 0 && room.terminal && creep.carryAmount > 0) {
         creep.currentTarget = {
@@ -21,24 +34,10 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
         }
         return true;
     }
-
-    if (availBuild.length > 0 && room.memory.EnergyNeed > 0 && creep.carry.energy > 0) {
-    //if (global[creep.memory.creationRoom].energyNeedStruct.length > 0 && global[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
-    //        creep.currentTarget = global[creep.memory.creationRoom].energyNeedStruct[0];
-    //        global[creep.memory.creationRoom].energyNeedStruct.shift();
-            
-        //}
-        let closest = availBuild[0];
-        let dist = creep.pos.getRangeTo(closest.pos.x, closest.pos.y)
-        for (let building of availBuild) {
-            let tmpD = creep.pos.getRangeTo(building.pos.x, building.pos.y);
-            if (tmpD < dist) {
-                closest = building;
-                dist = tmpD;
-            }
-        }
-        creep.currentTarget = closest;
-        room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
+  
+    if (global[creep.memory.creationRoom].energyNeedStruct.length && global[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
+        creep.currentTarget = getClosest(creep, global[creep.memory.creationRoom].energyNeedStruct);
+        //room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
         if (room.memory.controllerStoreID && room.controllerStoreDef > C.Controler_AllowedDef && creep.carry.energy > 0) {
@@ -65,25 +64,24 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
 
 function getCloseDeliverTarget(creep: Creep): targetData | null {
     let retT: targetData | null = null;
-    let room = Game.rooms[creep.memory.creationRoom];
-    let structs = creep.pos.findInRange(FIND_MY_STRUCTURES, 1, {
-        filter: function (str) {
-            return (str.structureType == STRUCTURE_EXTENSION ||
-                str.structureType == STRUCTURE_SPAWN || str.structureType == STRUCTURE_TOWER) &&
-                str.energy < str.energyCapacity;
+    //let room = Game.rooms[creep.memory.creationRoom];
+    //let structs = creep.pos.findInRange(FIND_MY_STRUCTURES, 1, {
+    //    filter: function (str) {
+    //        return (str.structureType == STRUCTURE_EXTENSION ||
+    //            str.structureType == STRUCTURE_SPAWN || str.structureType == STRUCTURE_TOWER) &&
+    //            str.energy < str.energyCapacity;
+    //    }
+    //});
+    //if (structs.length > 0) {
+    //    retT = {
+    //        ID: structs[0].id, type: targetT.POWERUSER, pos: structs[0].pos, range: 1
+    //    }
+    //}
+    //else {
+        if (global[creep.memory.creationRoom].energyNeedStruct.length > 0) {
+            retT = getClosest(creep, global[creep.memory.creationRoom].energyNeedStruct);
         }
-    });
-    if (structs.length > 0) {
-        retT = {
-            ID: structs[0].id, type: targetT.POWERUSER, pos: structs[0].pos, range: 1
-        }
-    }
-    else {
-    if (global[creep.memory.creationRoom].energyNeedStruct.length > 0) {
-            retT = global[creep.memory.creationRoom].energyNeedStruct[0];
-            global[creep.memory.creationRoom].energyNeedStruct.shift();
-        }
-    }
+   // }
     return retT;
 }
 
