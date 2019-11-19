@@ -5,7 +5,6 @@ import * as targetT from "Types/TargetTypes"
 import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
-import { spawn } from "child_process";
 
 const ColonyMemoryDef: ColonyMemory = {
     outposts: [],
@@ -53,8 +52,8 @@ export class Colony {
         this.room = iRoom;
         this.name = iRoom.name;
         this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
-        global[this.name] = this;
-        global[this.name.toLowerCase()] = this;
+        //global[this.name] = this;
+        //global[this.name.toLowerCase()] = this;
         console.log("recreate obj");
         this.outpostIDs = this.memory.outposts;
         this.controller = this.room.controller!;
@@ -155,7 +154,7 @@ export class Colony {
     }
 
     runTowers() {
-        TowerOperation(this.towers);
+        TowerOperation(this.towers,this);
     }
 
 }

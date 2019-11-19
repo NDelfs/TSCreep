@@ -2,7 +2,7 @@ import * as targetT from "Types/TargetTypes";
 import { restorePos } from "utils/posHelpers";
 import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
 import * as C from "Types/Constants"; 
-
+import { PM } from "PishiMaster";
 
 export function resetDeliverTarget(creep: Creep) {
     if (creep.currentTarget && targetT.RequiresEnergy.includes(creep.currentTarget.type) && creep.carry.energy == 0) {
@@ -34,9 +34,9 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
         }
         return true;
     }
-  
-    if (global[creep.memory.creationRoom].energyNeedStruct.length && global[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
-        creep.currentTarget = getClosest(creep, global[creep.memory.creationRoom].energyNeedStruct);
+
+    if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length && PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
+        creep.currentTarget = getClosest(creep, PM.colonies[creep.memory.creationRoom].energyNeedStruct);
         //room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
@@ -72,14 +72,9 @@ function getCloseDeliverTarget(creep: Creep): targetData | null {
     //            str.energy < str.energyCapacity;
     //    }
     //});
-    //if (structs.length > 0) {
-    //    retT = {
-    //        ID: structs[0].id, type: targetT.POWERUSER, pos: structs[0].pos, range: 1
-    //    }
-    //}
     //else {
-        if (global[creep.memory.creationRoom].energyNeedStruct.length > 0) {
-            retT = getClosest(creep, global[creep.memory.creationRoom].energyNeedStruct);
+    if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length > 0) {
+        retT = getClosest(creep, PM.colonies[creep.memory.creationRoom].energyNeedStruct);
         }
    // }
     return retT;

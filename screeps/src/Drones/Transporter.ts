@@ -1,6 +1,7 @@
 import { getEnergyTarget, useEnergyTarget, getMineralTarget, getEnergyStoreTarget } from "Drones/Funcs/DroppedEnergy";
 import { getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import * as targetT from "Types/TargetTypes";
+import { PM } from "PishiMaster";
 
 function claimResource(creep: Creep) {
     if (creep.currentTarget) {
@@ -16,7 +17,7 @@ export function Transporter(creep: Creep) {
         creep.currentTarget = getEnergyTarget(creep);
         if (creep.currentTarget)
             claimResource(creep);
-        else if (global[creep.memory.creationRoom].spawnEnergyNeed  > 0) { //so that we always fill up the energy need of a room
+        else if (PM.colonies[creep.memory.creationRoom].spawnEnergyNeed  > 0) { //so that we always fill up the energy need of a room
             creep.currentTarget = getEnergyStoreTarget(creep);
         }
        

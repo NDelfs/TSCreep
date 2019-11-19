@@ -1,6 +1,7 @@
 import { restorePos, inRangeTo } from "../utils/posHelpers";
 import { DEFENDER, Military, TRANSPORTER } from "../Types/CreepType";
 import { POWERUSER } from "../Types/TargetTypes";
+import {PM} from "PishiMaster";
 
 Object.defineProperty(Creep.prototype, 'type', {
     get() {
@@ -36,9 +37,9 @@ Object.defineProperty(Creep.prototype, 'currentTarget', {
     },
     set(iData: targetData) {
         if ((iData == null || iData.type != POWERUSER) && (this.memory._currentTarget /*&& this.memory._currentTarget == POWERUSER*/))
-            global[this.memory.creationRoom].removeEnergyTran(this);
+            PM.colonies[this.memory.creationRoom].removeEnergyTran(this);
         else if (((this.memory._currentTarget == null || this.memory._currentTarget != POWERUSER) && (iData && iData.type == POWERUSER))&& this.carry.energy >0)
-            global[this.memory.creationRoom].addEnergyTran(this);
+            PM.colonies[this.memory.creationRoom].addEnergyTran(this);
         this.memory._currentTarget = iData;
         if(iData != null)
           this.walkTo(iData.pos, iData.range);

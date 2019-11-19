@@ -35,3 +35,10 @@ export class _PishiMaster {
     }
 }
 profiler.registerClass(_PishiMaster, '_PishiMaster');
+
+
+export function createNewMaster() {
+    PM = new _PishiMaster();
+}
+
+export var PM: _PishiMaster;

@@ -5,18 +5,18 @@ import './ScreepExtends/Room';
 import './ScreepExtends/Creep';
 
 
-import { _PishiMaster } from "PishiMaster";
+import {PM, createNewMaster } from "PishiMaster";
 import { Spawner } from "Spawners/Spawner";
 import { DataUpdate } from "utils/DataUpdate";
-
-import { TowerOperation } from "Base/TowerOperation";
 
 import { baseExpansion } from "Base/BaseExpansion";
 
 import { Market } from "Base/Market";
 import { CreepUpdate } from "Drones/CreepsUpdate";
+//import PishiMaster from "PishiMaster"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+
 
 
 function clearVec(vec: { [name: string]: any }) {
@@ -62,19 +62,20 @@ function main() {
     }
 
     try {
-        if (!global.PishiMaster || !global.PishiMaster.ticksAlive) {
-            delete global.PishiMaster;
-            global.PishiMaster = new _PishiMaster();
+        if (!PM || !PM.ticksAlive) {
+            //delete PishiMaster;
+            //PishiMaster = new _PishiMaster();
+            createNewMaster();
         }
         else {
-            global.PishiMaster.refresh();
+            PM.refresh();
         }
     }
     catch (e) {
         console.log("pishi master init/refresh failed with : ", e);
     }
     try {
-        global.PishiMaster.run();
+        PM.run();
     }
     catch (e) {
         console.log("pishi master run failed with : ", e);
@@ -103,18 +104,10 @@ function main() {
     }
     //console.log(`Current game tick is ${Game.time}`);
     CreepUpdate();
-    try {
-        //profiler.registerFN(TowerOperation)();
-        //TowerOperation();
-    }
-    catch (e) {
-        console.log("Tower failet to run ", e);
-    }
     // Automatically delete memory of missing creeps
     for (const name in Memory.creeps) {
         if (!(name in Game.creeps)) {
-            console.log("delete creep");
-            global[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
+            PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
             delete Memory.creeps[name];
         }
     }
@@ -122,7 +115,7 @@ function main() {
 
 
 
-let USE_ERROR_MAPPER = false;
+let USE_ERROR_MAPPER = true;
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 

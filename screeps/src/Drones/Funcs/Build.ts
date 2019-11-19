@@ -1,6 +1,7 @@
 import * as targetT from "Types/TargetTypes";
 import { restorePos } from "utils/posHelpers";
 import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
+import { PM } from "PishiMaster";
 
 function getRandomInt(max: number) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -16,8 +17,8 @@ export function getBuildTarget(creep: Creep) : void {
     }
 }
 
-export function getRepairTarget(creep: Creep): void {   
-    let que = global[creep.memory.creationRoom].repairSites;
+export function getRepairTarget(creep: Creep): void {
+    let que = PM.colonies[creep.memory.creationRoom].repairSites;
     if (que.length > 0) {
         let index = getRandomInt(que.length);//insdead shift it if enough energy to repair is on current creep
         let obj = Game.getObjectById(que[index]) as Structure;
