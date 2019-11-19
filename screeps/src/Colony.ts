@@ -14,6 +14,19 @@ function refreshArray(array: any[]) {
     array = _.compact(_.map(array, obj => Game.getObjectById(obj.id)));
 }
 
+interface resourceRequest {
+    id: string;
+    resource: ResourceConstant;
+    ThreshouldAmount: number;
+    creeps: string[];
+}
+
+//interface resourcePush {
+//    id: string;
+//    resource: ResourceConstant;
+//    MaxAmount: number
+//    creeps: string[];
+//}
 
 //@profile
 export class Colony {
@@ -31,6 +44,10 @@ export class Colony {
     spawnEnergyNeed: number;
     energyNeedStruct: targetData[];
     energyTransporters: Creep[];
+
+    resourceRequests: resourceRequest[];
+    resourcePush: resourceRequest[];
+
     public addEnergyTran(creep: Creep) {
         let already = _.find(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
         if (!already && creep.carry.energy>0) {
@@ -65,6 +82,9 @@ export class Colony {
         this.spawnEnergyNeed = 0;
         this.energyNeedStruct = [];
         this.energyTransporters = [];
+
+        this.resourceRequests = [];
+        this.resourcePush = [];
 
         this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
             if (obj.currentTarget) {
