@@ -14,11 +14,33 @@ function refreshArray(array: any[]) {
     array = _.compact(_.map(array, obj => Game.getObjectById(obj.id)));
 }
 
-interface resourceRequest {
+export class resourceRequest {
     id: string;
     resource: ResourceConstant;
     ThreshouldAmount: number;
     creeps: string[];
+    resOnWay: number;
+
+    constructor(ID: string, iResource: ResourceConstant, iThreshould: number) {
+        this.id = ID;
+        this.resource = iResource;
+        this.ThreshouldAmount = iThreshould;
+        this.resOnWay = 0;
+        this.creeps = [];
+    }
+
+    public addEnergyTran(creep: Creep) {
+        let already = _.find(this.creeps, (mCreep) => mCreep == creep.name);
+    if (!already && creep.carry.energy > 0) {
+        this.creeps.push(creep.name);
+        this.resOnWay += creep.carry.energy;
+    }
+}
+    public removeEnergyTran(creep: Creep) {
+        let removed = _.remove(this.creeps, (mCreep) => mCreep == creep.name);
+        if (removed.length > 0)
+            this.resOnWay -= creep.carry.energy;
+}
 }
 
 //interface resourcePush {
@@ -45,8 +67,8 @@ export class Colony {
     energyNeedStruct: targetData[];
     energyTransporters: Creep[];
 
-    resourceRequests: resourceRequest[];
-    resourcePush: resourceRequest[];
+    resourceRequests: { [id: string]: resourceRequest };
+    resourcePush: { [id: string]: resourceRequest };
 
     public addEnergyTran(creep: Creep) {
         let already = _.find(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
@@ -83,8 +105,8 @@ export class Colony {
         this.energyNeedStruct = [];
         this.energyTransporters = [];
 
-        this.resourceRequests = [];
-        this.resourcePush = [];
+        this.resourceRequests = {};
+        this.resourcePush = {};
 
         this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
             if (obj.currentTarget) {
@@ -96,6 +118,11 @@ export class Colony {
         this.refreshEnergyDemand(true);
 
         this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
+
+
+        if (this.room.memory.controllerStoreID && !this.resourceRequests[this.room.memory.controllerStoreID]) {
+            this.resourceRequests[this.room.memory.controllerStoreID] = new resourceRequest(this.room.memory.controllerStoreID, RESOURCE_ENERGY, 2000);
+        }
     }
 
     public refresh() {
@@ -165,6 +192,8 @@ export class Colony {
                         this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
                 }
             }
+            
+            
             //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
             //    console.log(this.name, "Total energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
         }
