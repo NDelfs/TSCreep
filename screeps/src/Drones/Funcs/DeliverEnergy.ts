@@ -31,14 +31,13 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
     if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length && PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
         creep.currentTarget = getClosest(creep, PM.colonies[creep.memory.creationRoom].energyNeedStruct);
         PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
-        //room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
         for (let [id, req] of Object.entries(PM.colonies[creep.memory.creationRoom].resourceRequests)) {
             if (creep.carry[req.resource] > 0) {
                 let obj = Game.getObjectById(id) as AnyStoreStructure;
                 if (obj.store[req.resource] + req.resOnWay < req.ThreshouldAmount) {
-                    console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
+                    //console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
                     creep.currentTarget = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1 };
                     req.addTran(creep);
                     
@@ -88,20 +87,19 @@ export function useDeliverTarget(creep: Creep): number {
     let err: number = ERR_NOT_FOUND;
     if (targetObj) {
         let key = _.findKey(creep.carry) as ResourceConstant;
-        //creep.say(key);
         if (key)
             err = creep.transfer(targetObj, key);
 
         if (err == OK && creep.currentTarget!.type == targetT.TRANSPORT) {
             let req = PM.colonies[creep.memory.creationRoom].resourceRequests[targetObj.id];
             if (req.creeps.length == 1 && targetObj.store[req.resource] + req.resOnWay > req.ThreshouldMax) {
-                console.log(creep.room.name, targetObj.structureType, "deleted new target (store, onWay, Threshold, max)", targetObj.store[req.resource], req.resOnWay, req.ThreshouldAmount, req.ThreshouldMax);
+                //console.log(creep.room.name, targetObj.structureType, "deleted new target (store, onWay, Threshold, max)", targetObj.store[req.resource], req.resOnWay, req.ThreshouldAmount, req.ThreshouldMax);
                 delete PM.colonies[creep.memory.creationRoom].resourceRequests[targetObj.id];
                 
             }
             else {
                 req.removeTran(creep);
-                console.log(creep.room.name, targetObj.structureType, "removed creep from new target");
+                //console.log(creep.room.name, targetObj.structureType, "removed creep from new target");
             }
         }
         else {

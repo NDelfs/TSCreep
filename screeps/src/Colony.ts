@@ -236,7 +236,6 @@ export class Colony {
                 if (struct.hits > struct.hitsMax - 100 || room.controller && (struct.hits >= room.controller.level * 100000))
                     this.repairSites.shift();
             }
-
             if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceRequests[tower.id] == null) {
                 this.resourceRequests[tower.id] = new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room);
             }
