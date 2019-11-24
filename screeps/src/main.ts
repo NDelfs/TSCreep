@@ -107,7 +107,14 @@ function main() {
     // Automatically delete memory of missing creeps
     for (const name in Memory.creeps) {
         if (!(name in Game.creeps)) {
-            PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
+            let targ = Memory.creeps[name]._currentTarget;
+            if (targ) {
+                PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
+                let creepMis = PM.colonies[Memory.creeps[name].creationRoom].resourceRequests[targ.ID];
+                if (creepMis) {
+                    creepMis.updateCreepD();
+                }
+            }
             delete Memory.creeps[name];
         }
     }

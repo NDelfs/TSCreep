@@ -39,6 +39,7 @@ export function Transporter(creep: Creep) {
     if (creep.currentTarget && creep.inPlace) {
         switch (creep.currentTarget.type) {
             case targetT.POWERSTORAGE:
+            case targetT.TRANSPORT:
             case targetT.POWERUSER: useDeliverTarget(creep); break;
             case targetT.DROPPED_MINERAL:
             case targetT.DROPPED_ENERGY: useEnergyTarget(creep, creep.currentTarget); break;

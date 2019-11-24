@@ -1,7 +1,8 @@
 import * as Mem from "Memory";
-import { TowerOperation } from "Base/TowerOperation"
+
 import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
 import * as targetT from "Types/TargetTypes"
+import * as C from "Types/Constants"; 
 import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
@@ -18,30 +19,47 @@ export class resourceRequest {
     id: string;
     resource: ResourceConstant;
     ThreshouldAmount: number;
+    ThreshouldMax: number;
     creeps: string[];
     resOnWay: number;
 
-    constructor(ID: string, iResource: ResourceConstant, iThreshould: number) {
+    constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax : number, room:Room) {
         this.id = ID;
         this.resource = iResource;
         this.ThreshouldAmount = iThreshould;
+        this.ThreshouldMax = iThreshouldMax
         this.resOnWay = 0;
-        this.creeps = [];
+        //this.creeps = [];
+        this.creeps = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
+            return obj.currentTarget && obj.currentTarget.ID == ID;
+        }).map((obj) => { return obj.name; });
+        this.updateCreepD();
     }
 
-    public addEnergyTran(creep: Creep) {
+    public updateCreepD() {
+        this.resOnWay = 0;
+        let creepsTmp = _.compact(_.map(this.creeps, obj => Game.creeps[obj]));
+        this.creeps = [];
+        for (let creep of creepsTmp) {
+            this.resOnWay += creep.carry[this.resource];
+            this.creeps.push(creep.name);
+        }
+    }
+
+    public addTran(creep: Creep) {
         let already = _.find(this.creeps, (mCreep) => mCreep == creep.name);
     if (!already && creep.carry.energy > 0) {
         this.creeps.push(creep.name);
-        this.resOnWay += creep.carry.energy;
+        this.resOnWay += creep.carry[this.resource];
     }
 }
-    public removeEnergyTran(creep: Creep) {
+    public removeTran(creep: Creep) {
         let removed = _.remove(this.creeps, (mCreep) => mCreep == creep.name);
         if (removed.length > 0)
-            this.resOnWay -= creep.carry.energy;
+            this.resOnWay -= creep.carry[this.resource];
 }
 }
+profiler.registerClass(resourceRequest, 'resourceRequest');
 
 //interface resourcePush {
 //    id: string;
@@ -61,6 +79,7 @@ export class Colony {
     spawns: StructureSpawn[];
     towers: StructureTower[];
     extensions: StructureExtension[];
+    labs: StructureLab[];
 
     forceUpdateEnergy: boolean;
     spawnEnergyNeed: number;
@@ -104,6 +123,7 @@ export class Colony {
         this.spawnEnergyNeed = 0;
         this.energyNeedStruct = [];
         this.energyTransporters = [];
+        this.labs = [];
 
         this.resourceRequests = {};
         this.resourcePush = {};
@@ -118,11 +138,6 @@ export class Colony {
         this.refreshEnergyDemand(true);
 
         this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
-
-
-        if (this.room.memory.controllerStoreID && !this.resourceRequests[this.room.memory.controllerStoreID]) {
-            this.resourceRequests[this.room.memory.controllerStoreID] = new resourceRequest(this.room.memory.controllerStoreID, RESOURCE_ENERGY, 2000);
-        }
     }
 
     public refresh() {
@@ -137,6 +152,7 @@ export class Colony {
         this.energyTransporters = _.compact(_.map(this.energyTransporters , obj => Game.creeps[obj.name]));
 
         this.towers = _.compact(_.map(this.towers, id => Game.getObjectById(id.id))) as StructureTower[];
+        this.labs = _.compact(_.map(this.labs, id => Game.getObjectById(id.id))) as StructureLab[];
         this.computeLists();
         this.refreshEnergyDemand(this.forceUpdateEnergy);
         this.forceUpdateEnergy = false;
@@ -184,15 +200,21 @@ export class Colony {
                         this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
                 }
             }
-            for (let obj of this.towers) {
-                if (obj.energy < obj.energyCapacity * 0.7) {
-                    this.spawnEnergyNeed += obj.energyCapacity - obj.energy;
-                    let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
-                    if (!uses)
-                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
-                }
+            //for (let obj of this.towers) {
+            //    if (obj.energy < obj.energyCapacity * 0.7) {
+            //        this.spawnEnergyNeed += obj.energyCapacity - obj.energy;
+            //        let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
+            //        if (!uses)
+            //            this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
+            //    }
+            //}
+
+            if (this.room.memory.controllerStoreID && this.resourceRequests[this.room.memory.controllerStoreID] == null && !this.resourceRequests[this.room.memory.controllerStoreID]) {
+                this.resourceRequests[this.room.memory.controllerStoreID] = new resourceRequest(this.room.memory.controllerStoreID, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room);
             }
-            
+            if (this.room.terminal && this.resourceRequests[this.room.terminal.id] == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
+                this.resourceRequests[this.room.terminal.id] = new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room);
+            }
             
             //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
             //    console.log(this.name, "Total energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
@@ -203,7 +225,22 @@ export class Colony {
     }
 
     runTowers() {
-        TowerOperation(this.towers,this);
+        let room = this.room;
+        for (let tower of this.towers) {
+            if (room.hostiles.length > 0) {
+                tower.attack(room.hostiles[0]);
+            }
+            else if (this.repairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
+                let struct = Game.getObjectById(this.repairSites[0]) as Structure;
+                tower.repair(struct);
+                if (struct.hits > struct.hitsMax - 100 || room.controller && (struct.hits >= room.controller.level * 100000))
+                    this.repairSites.shift();
+            }
+
+            if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceRequests[tower.id] == null) {
+                this.resourceRequests[tower.id] = new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room);
+            }
+        }
     }
 
 }

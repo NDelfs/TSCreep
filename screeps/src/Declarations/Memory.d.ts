@@ -4,7 +4,7 @@ interface CreepMemory {
     creationRoom: string;
     moveTarget: moveData | null;
     permTarget: targetData | null;
-
+    targetQue: targetData[];
     _currentTarget?: targetData | null;
 }
 

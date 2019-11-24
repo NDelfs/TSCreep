@@ -1,6 +1,7 @@
 export const CONTROLLER = 1;
 export const POWERUSER = 11;
 export const POWERSTORAGE = 12;
+export const TRANSPORT = 15;
 export const SOURCE = 21;
 export const DROPPED_ENERGY = 31;
 export const DROPPED_MINERAL = 35;

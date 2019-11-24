@@ -27,35 +27,37 @@ function getClosest(creep: Creep, iTargets: targetData[]): targetData{
 
 export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
     let room = Game.rooms[creep.memory.creationRoom];
-
-    if (creep.carry.energy == 0 && room.terminal && creep.carryAmount > 0) {
-        creep.currentTarget = {
-            ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1
-        }
-        return true;
-    }
-
+    //first prio colony energy
     if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length && PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
         creep.currentTarget = getClosest(creep, PM.colonies[creep.memory.creationRoom].energyNeedStruct);
+        PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
         //room.memory.EnergyNeed -= creep.carry[RESOURCE_ENERGY];
     }
     else {
-        if (room.memory.controllerStoreID && room.controllerStoreDef > C.Controler_AllowedDef && creep.carry.energy > 0) {
-            let store: StructureContainer | null = Game.getObjectById(room.memory.controllerStoreID);
-            if (store) {
-                creep.currentTarget = {
-                    ID: store.id, type: targetT.POWERSTORAGE, pos: store.pos, range: 1
+        for (let [id, req] of Object.entries(PM.colonies[creep.memory.creationRoom].resourceRequests)) {
+            if (creep.carry[req.resource] > 0) {
+                let obj = Game.getObjectById(id) as AnyStoreStructure;
+                if (obj.store[req.resource] + req.resOnWay < req.ThreshouldAmount) {
+                    console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
+                    creep.currentTarget = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1 };
+                    req.addTran(creep);
+                    
+                    return true;
                 }
-                room.controllerStoreDef -= creep.carry.energy;
             }
         }
-        else if (findStore) {
-            if (room.terminal && room.terminal.store.energy < C.TERMINAL_STORE && room.storage && room.storage.store.energy > C.TERMINAL_MIN_STORAGE)
-                creep.currentTarget = { ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1 };
-            else if (room.storage) {
-                creep.currentTarget = {
-                    ID: room.storage.id, type: targetT.POWERSTORAGE, pos: room.storage.pos, range: 1
-                }
+
+        //base dump mineral
+        if (creep.carry.energy == 0 && room.terminal && creep.carryAmount > 0) {
+            creep.currentTarget = {
+                ID: room.terminal.id, type: targetT.POWERSTORAGE, pos: room.terminal.pos, range: 1
+            }
+            return true;
+        }
+        //base dump energy
+        if (findStore && room.storage) {
+            creep.currentTarget = {
+                ID: room.storage.id, type: targetT.POWERSTORAGE, pos: room.storage.pos, range: 1
             }
         }
     }
@@ -82,19 +84,35 @@ function getCloseDeliverTarget(creep: Creep): targetData | null {
 
 
 export function useDeliverTarget(creep: Creep): number {
-    let targetObj = Game.getObjectById(creep.currentTarget!.ID) as StructureStorage | StructureContainer | null;
+    let targetObj = Game.getObjectById(creep.currentTarget!.ID) as AnyStoreStructure | null;
     let err: number = ERR_NOT_FOUND;
     if (targetObj) {
         let key = _.findKey(creep.carry) as ResourceConstant;
         //creep.say(key);
         if (key)
             err = creep.transfer(targetObj, key);
-        if (err == ERR_FULL || err == OK) {
-            if (creep.carry.energy >= 50 && creep.currentTarget!.type == targetT.POWERUSER) {
-                creep.currentTarget = getCloseDeliverTarget(creep);
-                return OK;
+
+        if (err == OK && creep.currentTarget!.type == targetT.TRANSPORT) {
+            let req = PM.colonies[creep.memory.creationRoom].resourceRequests[targetObj.id];
+            if (req.creeps.length == 1 && targetObj.store[req.resource] + req.resOnWay > req.ThreshouldMax) {
+                console.log(creep.room.name, targetObj.structureType, "deleted new target (store, onWay, Threshold, max)", targetObj.store[req.resource], req.resOnWay, req.ThreshouldAmount, req.ThreshouldMax);
+                delete PM.colonies[creep.memory.creationRoom].resourceRequests[targetObj.id];
+                
             }
-            err = OK;
+            else {
+                req.removeTran(creep);
+                console.log(creep.room.name, targetObj.structureType, "removed creep from new target");
+            }
+        }
+        else {
+            if (err == ERR_FULL || err == OK) {
+                if (creep.carry.energy >= 50 && creep.currentTarget!.type == targetT.POWERUSER) {
+                    creep.currentTarget = getCloseDeliverTarget(creep);
+                    return OK;
+                }
+                PM.colonies[creep.memory.creationRoom].removeEnergyTran(creep);
+                err = OK;
+            }
         }
     }
     creep.currentTarget = null;

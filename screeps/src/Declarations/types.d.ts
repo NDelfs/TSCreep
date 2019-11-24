@@ -4,6 +4,7 @@ type TargetConstant =
     | CONTROLLER
     | POWERUSER
     | POWERSTORAGE
+    | TRANSPORT
     | SOURCE
     | DROPPED_ENERGY
     | DROPPED_MINERAL
@@ -17,6 +18,7 @@ type TargetConstant =
 type CONTROLLER = 1;
 type POWERUSER = 11;
 type POWERSTORAGE = 12;
+type TRANSPORT = 15;
 type SOURCE = 21;
 type DROPPED_ENERGY = 31;
 type DROPPED_MINERAL = 35;

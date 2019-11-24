@@ -202,6 +202,34 @@ export function baseExpansion() {
 }
 
 
+export function findAndBuildLab(room: Room, labs: StructureLab[]) {
+    let level = room.controller!.level - 5;
+    let maxLab = (level * 3 + Number(level == 3));
+    if (labs.length < maxLab) {
+        let buildFlag = room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_BROWN && flag.secondaryColor == COLOR_BROWN } });
+        if (buildFlag.length == 1) {
+            let positions: { x: number; y: number }[] = [{ x: -1, y: -1 }, { x: 0, y: 0 }, { x: 1, y: 1 },
+            { x: 0, y: -1 }, { x: 1, y: 0 },
+            { x: 0, y: -2 }, { x: 1, y: -1 }, { x: 2, y: 0 },
+            { x: 1, y: -2 }, { x: 2, y: -1 }];
+
+            let fPos = buildFlag[0].pos;
+            for (let i = labs.length; i < maxLab; i++) {
+                let pos = new RoomPosition(fPos.x + positions[i].x, fPos.y + positions[i].y, fPos.roomName);
+                console.log(i, pos.x, pos.y)
+                let structs = pos.lookFor(LOOK_STRUCTURES);
+                for (let struct of structs) {
+                    if (struct.structureType == STRUCTURE_LAB)
+                        labs.push(struct as StructureLab);
+                }
+                if (labs.length < i + 1) {
+                    pos.createConstructionSite(STRUCTURE_LAB);
+                }
+            }
+        }
+    }
+}
+
 function findAndBuildLink(workPos: RoomPosition): number {
     console.log("in build link");
     for (let xd = -1; xd <= 1; xd++) {

@@ -125,6 +125,7 @@ export function Starter(creep: Creep) {
                 break;
             }
             case targetT.POWERSTORAGE:
+            case targetT.TRANSPORT:
             case targetT.POWERUSER: {
                 const err = useDeliverTarget(creep);
                 printRes(creep, err, "transf");

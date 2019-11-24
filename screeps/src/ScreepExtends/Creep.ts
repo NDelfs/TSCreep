@@ -17,6 +17,13 @@ Object.defineProperty(Creep.prototype, 'creationRoom', {
     configurable: true,
 });
 
+//Object.defineProperty(Creep.prototype, 'Colony', {
+//    get() {
+//        return PM.colonies[this.creationRoom];
+//    },
+//    configurable: true,
+//});
+
 Object.defineProperty(Creep.prototype, 'carryAmount', {
     get() {
         if (!this._carryAmount) {
@@ -29,17 +36,9 @@ Object.defineProperty(Creep.prototype, 'carryAmount', {
 
 Object.defineProperty(Creep.prototype, 'currentTarget', {
     get() {
-        //if (this.memory._currentTarget == null && this.memory.currentTarget) {
-            //this.memory._currentTarget = this.memory.currentTarget;
-            //this.memory.currentTarget = null;
-        //}
         return this.memory._currentTarget;
     },
     set(iData: targetData) {
-        if ((iData == null || iData.type != POWERUSER) && (this.memory._currentTarget /*&& this.memory._currentTarget == POWERUSER*/))
-            PM.colonies[this.memory.creationRoom].removeEnergyTran(this);
-        else if (((this.memory._currentTarget == null || this.memory._currentTarget != POWERUSER) && (iData && iData.type == POWERUSER))&& this.carry.energy >0)
-            PM.colonies[this.memory.creationRoom].addEnergyTran(this);
         this.memory._currentTarget = iData;
         if(iData != null)
           this.walkTo(iData.pos, iData.range);
@@ -58,10 +57,6 @@ Creep.prototype.walk = function () {
     if (this._walk) {
         return;
     }
-    //if (this.memory.moveTarget == null && this.currentTarget && !inRangeTo(this.pos, this.currentTarget.pos, this.currentTarget.range)) {
-      //  console.log(this.room.name, "the creep was not in range");
-    //}
-
     if (this.room.controller && this.room.controller.level<3&& this.room.hostiles.length > 0 && !Military.includes(this.type)) {
         let enemy = this.pos.findInRange(FIND_HOSTILE_CREEPS, 10);
         if (enemy.length>0) {

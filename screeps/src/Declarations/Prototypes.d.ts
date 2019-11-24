@@ -1,3 +1,22 @@
+type Sink = StructureSpawn |
+    StructureExtension |
+    StructureLab |
+    StructurePowerSpawn |
+    StructureNuker |
+    StructureTower |
+    StructureContainer;
+
+type StorageUnit = StructureContainer | StructureTerminal | StructureStorage;
+
+type rechargeObjectType = StructureStorage
+    | StructureTerminal
+    | StructureContainer
+    | StructureLink
+    | Tombstone
+    | Resource;
+
+
+
 interface getCreepsType {
     (creepType: CreepConstant): Creep[];
 }

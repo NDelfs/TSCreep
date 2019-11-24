@@ -1,5 +1,6 @@
 import { Colony } from "Colony"
 import * as Mem from "Memory";
+import { findAndBuildLab } from "Base/BaseExpansion"
 import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
@@ -31,6 +32,15 @@ export class _PishiMaster {
     run() {
         for (let colonyID in this.colonies) {
             this.colonies[colonyID].runTowers();
+        }
+        if (Game.time % 10 == 9)
+            this.LabMaster();
+    }
+
+    private LabMaster() {
+        for (let col in this.colonies) {
+            let colony = this.colonies[col];
+            findAndBuildLab(colony.room, colony.labs);
         }
     }
 }
