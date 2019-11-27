@@ -1,4 +1,4 @@
-import { Colony } from "Colony"
+import { Colony, resourceRequest } from "Colony"
 import { findAndBuildLab } from "Base/BaseExpansion"
 
 interface IReaction {
@@ -51,7 +51,7 @@ export class LabMaster {
 
     constructor(iColonies: { [name: string]: Colony }) {
         this.colonies = iColonies;
-        this.reactionsToAdd = [REACTION_CHAIN["G"], REACTION_CHAIN["XGH2O"]];
+        this.reactionsToAdd = [REACTION_CHAIN["G"]/*, REACTION_CHAIN["XGH2O"]*/];
         this.resources = {};
         this.colLabs = [];
         this.nrLabs = 0;
@@ -87,8 +87,42 @@ export class LabMaster {
         }
     }
 
+    private resourceResetLab(colony: Colony, lab: StructureLab, res: ResourceConstant, created: boolean) {
+        if (colony.resourcePush[lab.id] != null)
+            return;
+
+        let key = _.find(Object.keys(lab.store), (key) => { return key != RESOURCE_ENERGY && key != res; });
+        if (key) {
+            colony.resourcePush[lab.id] = new resourceRequest(lab.id, key as ResourceConstant, 0, 0, colony.room);
+            console.log(colony.name, "push wrong resource from lab", key);
+            return;
+        }
+
+        if (created) {
+            if (lab.store[res] > 1000) {
+                colony.resourcePush[lab.id] = new resourceRequest(lab.id, res, 1000, 0, colony.room);
+                console.log(colony.name, "push created resource from lab", res);
+            }
+        }
+        else {
+            if (lab.store[res] < 200) {
+                colony.resourceRequests[lab.id] = new resourceRequest(lab.id, res, 200, 800, colony.room);
+                console.log(colony.name, "request resource to lab", res);
+            }
+        }
+        return;
+    }
+
     private resourceRequests() {
-        ,,,
+        for (let colLab of this.colLabs) {
+            let colony = this.colonies[colLab.colony];
+            let labs = this.colonies[colLab.colony].labs;
+            for (let reaction of colLab.roomReaction) {
+                this.resourceResetLab(colony, labs[reaction.resultIdx], reaction.react.r as ResourceConstant, true);
+                this.resourceResetLab(colony, labs[reaction.res1.idx], reaction.react.needs[0] as ResourceConstant, !reaction.res1.bring);
+                this.resourceResetLab(colony, labs[reaction.res2.idx], reaction.react.needs[1] as ResourceConstant, !reaction.res2.bring);
+            }
+        }
     }
 
     private updateLabInfo(){//maybe run distributeReaction when nrLabs change alot and reactions left to distribute
