@@ -216,7 +216,7 @@ export function findAndBuildLab(room: Room, labs: StructureLab[]) {
             let fPos = buildFlag[0].pos;
             for (let i = labs.length; i < maxLab; i++) {
                 let pos = new RoomPosition(fPos.x + positions[i].x, fPos.y + positions[i].y, fPos.roomName);
-                console.log(i, pos.x, pos.y)
+                //console.log(i, pos.x, pos.y)
                 let structs = pos.lookFor(LOOK_STRUCTURES);
                 for (let struct of structs) {
                     if (struct.structureType == STRUCTURE_LAB)
