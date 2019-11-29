@@ -13,7 +13,7 @@ export function getBuildTarget(creep: Creep) : void {
         inQue = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
     }
     if (inQue.length > 0) {
-        creep.setTarget(inQue[0].id, targetT.CONSTRUCTION, inQue[0].pos, 3);
+        creep.addTarget(inQue[0].id, targetT.CONSTRUCTION, inQue[0].pos, 3);
     }
 }
 
@@ -22,7 +22,7 @@ export function getRepairTarget(creep: Creep): void {
     if (que.length > 0) {
         let index = getRandomInt(que.length);//insdead shift it if enough energy to repair is on current creep
         let obj = Game.getObjectById(que[index]) as Structure;
-        creep.setTarget(obj.id, targetT.REPAIR, obj.pos, 3);
+        creep.addTarget(obj.id, targetT.REPAIR, obj.pos, 3);
     }
 }
 

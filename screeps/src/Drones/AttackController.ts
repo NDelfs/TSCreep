@@ -7,7 +7,7 @@ export function AttackerController(creep: Creep) {
             creep.walkTo(attackFlag[0].pos,  5);
         }
         if (attackFlag.length > 0 && attackFlag[0].pos.roomName == creep.pos.roomName && creep.room.controller)//we may not see room before the attacking creep is there
-            creep.setTarget(creep.room.controller.id, targetT.CONTROLLER, creep.room.controller.pos, 1);
+            creep.addTarget(creep.room.controller.id, targetT.CONTROLLER, creep.room.controller.pos, 1);
     }
     if (creep.inPlace) {
         if (creep.room.controller) {

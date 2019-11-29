@@ -35,18 +35,20 @@ interface Room {
     drops: { [resourceType: string]: Resource[] };
     droppedEnergy: Resource[];
     availEnergy: number;
-    controllerStoreDef: number;
 }
 
 interface Creep {
     creationRoom: string;
     type: CreepConstant;
     carryAmount: number;
-    currentTarget: targetData | null;
+    //currentTarget: targetData | null;
+    //targetQue: targetData[];
     inPlace: boolean;
     walk: () => void;
     walkTo: (pos: posData, rang: number) => void;
     walkToPos: (x: number, y: number, room: string, rang: number) => void;
-    setTarget: (id: string, type: TargetConstant, pos: posData, rang: number) => void;
+    addTarget: (id: string, type: TargetConstant, pos: posData, rang: number) => void;
+    addTargetT: (iTarget: targetData) => void;
+    completeTarget: () => void;
     _walk: boolean;
 }

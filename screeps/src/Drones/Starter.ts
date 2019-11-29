@@ -33,7 +33,7 @@ export function Starter(creep: Creep) {
                 if (source) {
                     let sourceMem: SourceMemory = Memory.Resources[source.id];
                     creep.say("go mining");
-                    creep.setTarget(source.id, targetT.SOURCE, sourceMem.pos, 1 );
+                    creep.addTarget(source.id, targetT.SOURCE, sourceMem.pos, 1 );
                 }
             }
         }
@@ -49,7 +49,7 @@ export function Starter(creep: Creep) {
                     }
                 }
                 if (creep.currentTarget == null)
-                    creep.setTarget( controller.id, targetT.CONTROLLER, controller.pos, 3 );
+                    creep.addTarget( controller.id, targetT.CONTROLLER, controller.pos, 3 );
                 
             }
         }

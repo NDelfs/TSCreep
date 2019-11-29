@@ -36,12 +36,9 @@ Object.defineProperty(Creep.prototype, 'carryAmount', {
 
 Object.defineProperty(Creep.prototype, 'currentTarget', {
     get() {
-        return this.memory._currentTarget;
-    },
-    set(iData: targetData) {
-        this.memory._currentTarget = iData;
-        if(iData != null)
-          this.walkTo(iData.pos, iData.range);
+        if(this.memory.targetQue.length > 0)
+            return this.memory.targetQue[0];
+        return null;
     },
     configurable: true,
 });
@@ -99,8 +96,20 @@ Creep.prototype.walkToPos = function (x: number, y: number, room: string, rang: 
     }
 }
 
-Creep.prototype.setTarget = function (id: string, type: TargetConstant, pos: posData, rang: number) {
-    //this.walkTo(pos, rang);
-    this.currentTarget = { ID: id, type: type, pos:pos, range:rang};
+Creep.prototype.addTarget = function (id: string, type: TargetConstant, pos: posData, rang: number) {
+    this.addTargetT({ ID: id, type: type, pos: pos, range: rang });
 }
 
+Creep.prototype.addTargetT = function (iTarget: targetData) {
+    this.memory.targetQue.push(iTarget);
+    if (this.memory.targetQue.length == 1) {//special case to init when beeing lazy before
+        this.walkTo(this.memory.targetQue[0].pos, this.memory.targetQue[0].range)
+    }
+}
+
+Creep.prototype.completeTarget = function (): void {
+    this.memory.targetQue.shift();
+    if (this.memory.targetQue.length > 0) {
+        this.walkTo(this.memory.targetQue[0].pos, this.memory.targetQue[0].range)
+    }
+}

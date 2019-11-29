@@ -120,34 +120,6 @@ Object.defineProperty(Room.prototype, 'availEnergy', {
     configurable: true,
 });
 
-Object.defineProperty(Room.prototype, 'controllerStoreDef', {
-    get() {
-        if (!this._controllerStoreDef) {
-            if (this.memory.controllerStoreID) {
-                let store: StructureContainer | null = Game.getObjectById(this.memory.controllerStoreID);
-                if (store) {
-                    let ID = store.id;
-                    let transporters = this.getCreeps(TRANSPORTER).concat(this.getCreeps(STARTER));
-                    let def = store.storeCapacity - store.store.energy;
-                    if (def > C.Controler_AllowedDef) {
-                        this._controllerStoreDef = def;
-                        let transportersTmp = _.filter(transporters, function (creep: Creep) {
-                            return creep.memory._currentTarget && creep.memory._currentTarget.ID == ID;
-                        }) as Creep[];
-                        for (let creep of transportersTmp) {
-                            this._controllerStoreDef -= creep.carry.energy;
-                        }
-                    }
-                }
-            }
-        }
-        return this._controllerStoreDef || 0;
-    },
-    set(iVal : number) {
-        this._controllerStoreDef = iVal;
-    },
-    configurable: true,
-});
 
 Object.defineProperty(Room.prototype, 'drops', {
     get() {

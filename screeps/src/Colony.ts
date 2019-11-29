@@ -36,6 +36,14 @@ export class resourceRequest {
         this.updateCreepD();
     }
 
+    public amount(): number {
+        let obj = Game.getObjectById(this.id) as AnyStoreStructure;
+        if (obj)
+            return obj.store[this.resource] - this.resOnWay;
+        else
+            return 0;
+    }
+
     public updateCreepD() {
         this.resOnWay = 0;
         let creepsTmp = _.compact(_.map(this.creeps, obj => Game.creeps[obj]));
