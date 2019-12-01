@@ -1,6 +1,6 @@
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import * as targetT from "Types/TargetTypes";
-import { getEnergyTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
+import { getSourceTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 import { restorePos } from "../utils/posHelpers";
 import { resetDeliverTarget, getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
@@ -18,7 +18,7 @@ export function Starter(creep: Creep) {
 
     //got no energy, find where
     if (creep.getTarget() == null && creep.carry.energy == 0) {
-        let target = getEnergyTarget(creep);
+        let target = getSourceTarget(creep, RESOURCE_ENERGY);
         if (target) {
             creep.addTargetT(target);
             Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;

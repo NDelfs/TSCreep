@@ -26,24 +26,24 @@ function getClosest(roomPos: RoomPosition, iTargets: targetData[]): targetData{
     return iTargets.splice(index, 1)[0];
 }
 
-export function getNewDeliverTarget(roomPos: RoomPosition, resourceType?: ResourceConstant): targetData | null {
+export function getNewDeliverTarget(roomPos: RoomPosition, resourceType?: ResourceConstant | null): targetData | null {
     let colony = PM.colonies[roomPos.roomName];
     if ((resourceType == null || resourceType == RESOURCE_ENERGY) && colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0) {
-        if (roomPos.roomName == "E49N47")
-            console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
+        //if (roomPos.roomName == "E49N47")
+            //console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
         return getClosest(roomPos, colony.energyNeedStruct);
         //PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
     }
-    if (roomPos.roomName == "E49N47")
-        console.log("looking for resource reg")
+    //if (roomPos.roomName == "E49N47")
+        //console.log("looking for resource reg")
     for (let [id, req] of Object.entries(colony.resourceRequests)) {
         if (resourceType == null || req.resource == resourceType) {
             let obj = Game.getObjectById(id) as AnyStoreStructure;
             if (roomPos.roomName == "E49N47")
-                console.log("found resource reg", obj, req.amount(), "amount in transport", req.resOnWay);
+                console.log("found resource reg", obj, req.amount(), "amount in transport", req.ThreshouldAmount);
             if (obj && req.amount() < req.ThreshouldAmount) {
-                if (roomPos.roomName == "E49N47")
-                    console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
+                //if (roomPos.roomName == "E49N47")
+                    //console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
                 let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1 };
                 target.resType = req.resource;
                 //req.addTran(creep);
@@ -51,8 +51,21 @@ export function getNewDeliverTarget(roomPos: RoomPosition, resourceType?: Resour
             }
         }
     }
-    if (roomPos.roomName == "E49N47")
-        console.log("failed to find resource req")
+    //if (roomPos.roomName == "E49N47")
+        //console.log("failed to find resource req")
+    return null;
+}
+
+export function getStorageDeliverTarget(room: Room, resourceType: ResourceConstant): targetData | null {
+    //base dump mineral
+    if (resourceType != RESOURCE_ENERGY && room.terminal) {
+        return { ID: room.terminal.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.terminal.pos, range: 1 };
+    }
+    //base dump energy
+    if (room.storage) {
+        return { ID: room.storage.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.storage.pos, range: 1};
+    }
+
     return null;
 }
 
@@ -126,8 +139,8 @@ export function useDeliverTarget(creep: Creep): number {
     
     let targetObj = Game.getObjectById(target.ID) as AnyStoreStructure | null;
     let err: number = ERR_NOT_FOUND;
-    if (creep.room.name == "E49N47" && targetObj)
-        console.log("in use deliver", creep.memory.targetQue.length, targetObj!.pos.x, targetObj!.pos.y)
+    //if (creep.room.name == "E49N47" && targetObj)
+        //console.log("in use deliver", creep.memory.targetQue.length, targetObj!.pos.x, targetObj!.pos.y)
     if (targetObj) {
         let key = _.findKey(creep.carry) as ResourceConstant;
         if (key)
@@ -164,7 +177,7 @@ export function useDeliverTarget(creep: Creep): number {
     }
    
     creep.completeTarget();
-    if (creep.room.name == "E49N47")
-        console.log("should delete", creep.memory.targetQue.length)
+    //if (creep.room.name == "E49N47")
+        //console.log("should delete", creep.memory.targetQue.length)
     return err;
 }

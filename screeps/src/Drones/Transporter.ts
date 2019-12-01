@@ -1,7 +1,9 @@
-import { getEnergyTarget, useEnergyTarget, getMineralTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
-import { getDeliverTarget, useDeliverTarget, getNewDeliverTarget } from "./Funcs/DeliverEnergy";
+import { getSourceTarget, useEnergyTarget, getMineralTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
+import { getDeliverTarget, useDeliverTarget, getNewDeliverTarget, getStorageDeliverTarget } from "./Funcs/DeliverEnergy";
 import * as targetT from "Types/TargetTypes";
 import { PM } from "PishiMaster";
+import { TRANSPORT, DROPPED_ENERGY, DROPPED_MINERAL, POWERUSER } from "Types/TargetTypes";
+import { Colony } from "../Colony";
 
 function claimResource(creep: Creep, target: targetData | null) {
     if (target) {
@@ -11,67 +13,114 @@ function claimResource(creep: Creep, target: targetData | null) {
     
 }
 
+function claimDeliver(creep: Creep, target: targetData) {
+    if (target.type == DROPPED_ENERGY || target.type == DROPPED_MINERAL) {
+        Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
+        return;
+    }
+    let colony = PM.colonies[creep.memory.creationRoom];
+    if (target.type == TRANSPORT) {
+        colony.resourceRequests[target.ID].addTran(creep);
+        console.log("claiming", colony.resourceRequests[target.ID].amount(), colony.resourceRequests[target.ID].resOnWay);
+        return;
+    }
+    if (target.type == POWERUSER) {
+        colony.addEnergyTran(creep);
+        return;
+    }
+    console.log("claiming unknown", target.type);
+}
+
 export function Transporter(creep: Creep) {
     let room = creep.room;
-    //if (creep.getTarget() == null) {
-    //    //get key of already resources
-    //    let keys = Object.keys(creep.store);
-    //    let key: ResourceConstant | null = null;
-    //    for (let tmpKey of keys) {
-
-    //    }
-
-    //    let delTarget = getNewDeliverTarget(creep.pos);
-    //    if (delTarget) {
-    //        let getTarget = getFromStoreTarget(creep, delTarget.resType!)
-    //        if (getTarget) {//no need to have del target if no res excist
-    //            creep.addTargetT(getTarget);
-    //            creep.addTargetT(delTarget);
-    //        }
-    //    }
-    //    else {
-
-    //    }
-    //}
-    
-    if (creep.carryAmount == 0 && creep.getTarget() == null) {
-        try {
-            let target = getEnergyTarget(creep);
-            if (target) {
-                creep.addTargetT(target);
-                claimResource(creep, target);
+    if (room.name == "E49N47") {
+        if (creep.getTarget() == null) {
+            //get key of already resources
+            let key: ResourceConstant | null = null;
+            for (let tmpKey of Object.keys(creep.store)) {
+                if (creep.store[tmpKey as ResourceConstant] > 0) {
+                    key = tmpKey as ResourceConstant;
+                    break;
+                }
             }
-            else if (PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 || (room.memory.controllerStoreID && PM.colonies[creep.memory.creationRoom].resourceRequests[room.memory.controllerStoreID] && PM.colonies[creep.memory.creationRoom].resourceRequests[room.memory.controllerStoreID].amount() < 1500)) { //so that we always fill up the energy need of a room
-                target = getFromStoreTarget(creep, RESOURCE_ENERGY);
-                if (target)
-                    creep.addTargetT(target);
+
+            //find if resource are nedded, if so then pick up from storage
+            let delTarget = getNewDeliverTarget(creep.pos, key);
+            if (delTarget) {
+                if (key) {
+                    creep.addTargetT(delTarget);
+                    claimDeliver(creep, delTarget);
+                    console.log("added one del target");
+                }
+                else {
+                    let getTarget = getFromStoreTarget(creep, delTarget.resType!)
+                    if (getTarget) {//no need to have del target if no res excist
+                        creep.addTargetT(getTarget);
+                        creep.addTargetT(delTarget);
+                        claimDeliver(creep, delTarget);
+                        console.log("added two target with deliver from storage");
+                    }
+                }
+            }
+            else {
+                if (key == null) {
+                    let target = getSourceTarget(creep, null);
+                    if (target) {
+                        creep.addTargetT(target);
+                        claimDeliver(creep, target);
+                        key = target.resType!;
+                        console.log("added source target", target.ID, target.type);
+                    }
+                }
+                if (key) {
+                    let target = getStorageDeliverTarget(room, key);
+                    if (target) {
+                        creep.addTargetT(target);
+                        console.log("added deliver to storage");
+                    }
+                }
             }
         }
-        catch (e) {
-            console.log("CRASH: Could not get energy target", e);
-        }
-        try {
-            if (creep.getTarget() == null) {
-                let target = getMineralTarget(creep);
+    }
+    else {
+        if (creep.carryAmount == 0 && creep.getTarget() == null) {
+            try {
+                let target = getSourceTarget(creep, RESOURCE_ENERGY);
                 if (target) {
                     creep.addTargetT(target);
                     claimResource(creep, target);
                 }
+                else if (PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 || (room.memory.controllerStoreID && PM.colonies[creep.memory.creationRoom].resourceRequests[room.memory.controllerStoreID] && PM.colonies[creep.memory.creationRoom].resourceRequests[room.memory.controllerStoreID].amount() < 1500)) { //so that we always fill up the energy need of a room
+                    target = getFromStoreTarget(creep, RESOURCE_ENERGY);
+                    if (target)
+                        creep.addTargetT(target);
+                }
+            }
+            catch (e) {
+                console.log("CRASH: Could not get energy target", e);
+            }
+            try {
+                if (creep.getTarget() == null) {
+                    let target = getMineralTarget(creep);
+                    if (target) {
+                        creep.addTargetT(target);
+                        claimResource(creep, target);
+                    }
+                }
+            }
+            catch{
+                console.log("CRASH: could not get mineral target")
             }
         }
-        catch{
-            console.log("CRASH: could not get mineral target")
+        else if (creep.getTarget() == null) {
+            getDeliverTarget(creep, true);
         }
     }
-    else if (creep.getTarget() == null) {
-       getDeliverTarget(creep, true);
-    }
-    
     let target = creep.getTarget();
     if (target == null) {
         creep.say("zZzZ")
     }
-    else if (target && creep.inPlace) {
+    else if (creep.inPlace) {
         switch (target.type) {
             case targetT.POWERSTORAGE:
             case targetT.TRANSPORT:
