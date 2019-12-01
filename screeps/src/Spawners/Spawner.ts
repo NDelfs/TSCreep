@@ -105,7 +105,7 @@ function calculateTransportQue(room: Room): queData[] {
         }
         let controllerNeed = 0;
         if (room.memory.controllerStoreID && PM.colonies[room.name].resourceRequests[room.memory.controllerStoreID]) {
-            controllerNeed = PM.colonies[room.name].resourceRequests[room.memory.controllerStoreID!].amount();
+            controllerNeed = 2000 - PM.colonies[room.name].resourceRequests[room.memory.controllerStoreID!].amount();
         }
 
         if (roomEne > transportSize * 4 && (controllerNeed > 500 || room.storage))
@@ -187,7 +187,7 @@ function calculateUpgraderQue(room: Room): queData[] {
             }
             let controllerNeed = 0;
             if (room.memory.controllerStoreID && PM.colonies[room.name].resourceRequests[room.memory.controllerStoreID]) {
-                controllerNeed = PM.colonies[room.name].resourceRequests[room.memory.controllerStoreID!].amount();
+                controllerNeed = 2000 - PM.colonies[room.name].resourceRequests[room.memory.controllerStoreID!].amount();
             }
    
             if (room.storage) {
@@ -234,7 +234,7 @@ function calculateScoutQue(room: Room): queData[] {
     let ret: queData[] = [];
     const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
     for (let flag of wflags) {
-        const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.currentTarget && creep.currentTarget.ID == flag.name; });
+        const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.alreadyTarget(flag.name); });
         if (creeps.length == 0 && flag.room == null) {
             const targ: targetData = { ID: flag.name, type: targetT.CONTROLLER, pos: flag.pos, range: 1 };
             const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, permTarget: null, moveTarget: { pos: flag.pos, range: 2 }, targetQue: [targ]};           
@@ -243,7 +243,7 @@ function calculateScoutQue(room: Room): queData[] {
     }
     if (room.controller && room.controller.my && room.controller.level > 2) {
         if (room.controller.sign == null || (room.controller.sign.username != "Gorgar")) {
-            const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.currentTarget && creep.currentTarget.ID == "controller"; });
+            const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.alreadyTarget("controller"); });
             if (creeps.length == 0) {
                 const targ: targetData = { ID: "controller", type: targetT.CONTROLLER, pos: room.controller.pos, range: 1 };
                 const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, permTarget: targ, moveTarget: { pos: room.controller.pos, range: 1 }, targetQue: [targ]  };

@@ -49,6 +49,8 @@ interface Creep {
     walkToPos: (x: number, y: number, room: string, rang: number) => void;
     addTarget: (id: string, type: TargetConstant, pos: posData, rang: number) => void;
     addTargetT: (iTarget: targetData) => void;
+    getTarget: () => targetData | null;
+    alreadyTarget: (iID: string) => boolean;
     completeTarget: () => void;
     _walk: boolean;
 }

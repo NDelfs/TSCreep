@@ -2,42 +2,41 @@ import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import { resetDeliverTarget, useDeliverTarget } from "Drones/Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "Drones/Funcs/Build";
 import * as targetT from "Types/TargetTypes";
-import { getEnergyTarget, useEnergyTarget, getEnergyStoreTarget } from "Drones/Funcs/DroppedEnergy";
+import { getEnergyTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
 
 export function Builder(creep: Creep) {
     resetDeliverTarget(creep);
-    if (creep.room.name, creep.currentTarget == null && creep.carry.energy > 50) {
-        getRepairTarget(creep);
-        if (creep.currentTarget == null) {
+    if (creep.room.name, creep.getTarget() == null && creep.carry.energy > 50) {
+        if (!getRepairTarget(creep)) {
             getBuildTarget(creep);
         }
     }
-    else if (creep.currentTarget == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
+    else if (creep.getTarget() == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
         let target1 = getEnergyTarget(creep);
-        let target2 = getEnergyStoreTarget(creep);
+        let target2 = getFromStoreTarget(creep, RESOURCE_ENERGY);
        
         if (target1 && target2) {
             let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
             if (range1 < range2) {
-                creep.currentTarget =target1;
+                creep.addTargetT(target1);
                 Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
             }
             else {
-                creep.currentTarget = target2;
+                creep.addTargetT(target2);
             }
         }
         else if (target1) {
-            creep.currentTarget= target1;
+            creep.addTargetT(target1);
             Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
         }
         else if (target2) {
-            creep.currentTarget = target2;
+            creep.addTargetT(target2);
         }
     }
-
-    if (creep.currentTarget && creep.inPlace) {
-        switch (creep.currentTarget.type) {
+    let target = creep.getTarget();
+    if (target && creep.inPlace) {
+        switch (target.type) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);
                 break;
@@ -46,12 +45,12 @@ export function Builder(creep: Creep) {
                 break;
             }
             case targetT.DROPPED_ENERGY:
-                useEnergyTarget(creep, creep.currentTarget);
+                useEnergyTarget(creep, target);
                 creep.say("withdraw");
                 break;
             default: {
-                let type = creep.currentTarget.type;
-                creep.currentTarget = null;
+                let type = target.type;
+                creep.completeTarget();
                 throw ("The target type is not handled " + type);
             }
         }

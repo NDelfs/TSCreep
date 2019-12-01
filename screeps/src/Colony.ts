@@ -31,7 +31,7 @@ export class resourceRequest {
         this.resOnWay = 0;
         //this.creeps = [];
         this.creeps = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
-            return obj.currentTarget && obj.currentTarget.ID == ID;
+            return obj.alreadyTarget(ID);
         }).map((obj) => { return obj.name; });
         this.updateCreepD();
     }
@@ -39,7 +39,7 @@ export class resourceRequest {
     public amount(): number {
         let obj = Game.getObjectById(this.id) as AnyStoreStructure;
         if (obj)
-            return obj.store[this.resource] - this.resOnWay;
+            return obj.store[this.resource] + this.resOnWay;
         else
             return 0;
     }
@@ -120,7 +120,7 @@ export class Colony {
         this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
         //global[this.name] = this;
         //global[this.name.toLowerCase()] = this;
-        console.log("recreate obj");
+        console.log(this.room.name,"recreate obj");
         this.outpostIDs = this.memory.outposts;
         this.controller = this.room.controller!;
         this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
@@ -137,8 +137,9 @@ export class Colony {
         this.resourcePush = {};
 
         this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
-            if (obj.currentTarget) {
-                return obj.currentTarget.type == targetT.POWERUSER && obj.carry.energy>0;
+            let ret = false;
+            for (let target of obj.memory.targetQue) {//would be nice to have the same system for extensions as every thing else. Maybe with new que its possible to just que them up?
+                ret = ret || target.type == targetT.POWERUSER && obj.carry.energy > 0;
             }
             return false;
 
@@ -195,17 +196,17 @@ export class Colony {
             for (let obj of this.spawns) {
                 if (obj.energy < obj.energyCapacity) {
                     //this.spawnEnergyNeed -= obj.energyCapacity - obj.energy;
-                    let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
+                    let uses = _.find(del, (creep) => creep.alreadyTarget(obj.id));
                     if (!uses)
-                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
+                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, resType: RESOURCE_ENERGY, pos: obj.pos, range: 1 });
                 }
             }
             for (let obj of this.extensions) {
                 if (obj.energy < obj.energyCapacity) {
                     //this.spawnEnergyNeed -= obj.energyCapacity - obj.energy;
-                    let uses = _.find(del, (creep) => creep.currentTarget && creep.currentTarget.ID == obj.id);
+                    let uses = _.find(del, (creep) => creep.alreadyTarget(obj.id));
                     if (!uses)
-                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
+                        this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, resType: RESOURCE_ENERGY, pos: obj.pos, range: 1 });
                 }
             }
             //for (let obj of this.towers) {
@@ -216,9 +217,9 @@ export class Colony {
             //            this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
             //    }
             //}
-
-            if (this.room.memory.controllerStoreID && this.resourceRequests[this.room.memory.controllerStoreID] == null && !this.resourceRequests[this.room.memory.controllerStoreID]) {
-                this.resourceRequests[this.room.memory.controllerStoreID] = new resourceRequest(this.room.memory.controllerStoreID, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room);
+            let conStore = Game.getObjectById(this.room.memory.controllerStoreID!);
+            if (conStore && this.resourceRequests[this.room.memory.controllerStoreID!] == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
+                this.resourceRequests[this.room.memory.controllerStoreID!] = new resourceRequest(this.room.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room);
             }
             if (this.room.terminal && this.resourceRequests[this.room.terminal.id] == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
                 this.resourceRequests[this.room.terminal.id] = new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room);
@@ -235,17 +236,28 @@ export class Colony {
     runTowers() {
         let room = this.room;
         for (let tower of this.towers) {
-            if (room.hostiles.length > 0) {
-                tower.attack(room.hostiles[0]);
+            try {
+                if (room.hostiles.length > 0) {
+                    tower.attack(room.hostiles[0]);
+                }
+                else if (this.repairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
+                    let struct = Game.getObjectById(this.repairSites[0]) as Structure;
+                    if (struct) {
+                        tower.repair(struct);
+                        if (struct.hits > struct.hitsMax - 100 || room.controller && (struct.hits >= room.controller.level * 100000))
+                            this.repairSites.shift();
+                    }
+                    else {
+                        console.log(room.name, "failed to find building, removing it");
+                        this.repairSites.shift();
+                    }
+                }
+                if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceRequests[tower.id] == null) {
+                    this.resourceRequests[tower.id] = new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room);
+                }
             }
-            else if (this.repairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
-                let struct = Game.getObjectById(this.repairSites[0]) as Structure;
-                tower.repair(struct);
-                if (struct.hits > struct.hitsMax - 100 || room.controller && (struct.hits >= room.controller.level * 100000))
-                    this.repairSites.shift();
-            }
-            if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceRequests[tower.id] == null) {
-                this.resourceRequests[tower.id] = new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room);
+            catch (e) {
+                console.log("CRASH",room.name,e)
             }
         }
     }

@@ -17,36 +17,36 @@ export function getBuildTarget(creep: Creep) : void {
     }
 }
 
-export function getRepairTarget(creep: Creep): void {
+export function getRepairTarget(creep: Creep): boolean {
     let que = PM.colonies[creep.memory.creationRoom].repairSites;
     if (que.length > 0) {
         let index = getRandomInt(que.length);//insdead shift it if enough energy to repair is on current creep
         let obj = Game.getObjectById(que[index]) as Structure;
         creep.addTarget(obj.id, targetT.REPAIR, obj.pos, 3);
+        return true;
     }
+    return false;
 }
 
 export function useBuildTarget(creep: Creep): number {
-    if (creep.currentTarget) {
-        let con: ConstructionSite | null = Game.getObjectById(creep.currentTarget.ID);
-        if (con) {
-            const err = creep.build(con);
-            return err;
-        }
+
+    let con: ConstructionSite | null = Game.getObjectById(creep.getTarget()!.ID);
+    if (con) {
+        const err = creep.build(con);
+        return err;
     }
-    creep.currentTarget = null;
+    creep.completeTarget();
     return ERR_INVALID_TARGET;
 }
 export function useRepairTarget(creep: Creep): number {
-    if (creep.currentTarget) {
-        let con: Structure | null = Game.getObjectById(creep.currentTarget.ID);
+    let con: Structure | null = Game.getObjectById(creep.getTarget()!.ID);
         if (con) {
             const err = creep.repair(con);
-            if (!(con.hits < con.hitsMax * 0.7 && con.hits < 15000))
-                creep.currentTarget = null;
+            if (con.hits > con.hitsMax - 100 || creep.room.controller && (con.hits >= creep.room.controller.level * 100000))
+                creep.completeTarget();
             return err;
         }
-    }
-    creep.currentTarget = null;
+
+    creep.completeTarget();
     return ERR_INVALID_TARGET;
 }

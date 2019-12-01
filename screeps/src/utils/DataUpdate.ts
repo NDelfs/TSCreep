@@ -69,7 +69,7 @@ function updateSources() {
                 }
                 let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
                 const transportersTmp = _.filter(transporters, function (creep) {
-                    return creep.currentTarget && creep.currentTarget.ID == ID;
+                    return creep.alreadyTarget(ID);
                 })
                 for (const transp of transportersTmp) {
                     sMem.AvailResource -= Number(transp.carryCapacity);

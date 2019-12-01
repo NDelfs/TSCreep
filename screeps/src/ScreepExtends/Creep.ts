@@ -34,14 +34,14 @@ Object.defineProperty(Creep.prototype, 'carryAmount', {
      configurable: true,
 });
 
-Object.defineProperty(Creep.prototype, 'currentTarget', {
-    get() {
-        if(this.memory.targetQue.length > 0)
-            return this.memory.targetQue[0];
-        return null;
-    },
-    configurable: true,
-});
+//Object.defineProperty(Creep.prototype, 'currentTarget', {
+//    get() {
+//        if(this.memory.targetQue.length > 0)
+//            return this.memory.targetQue[0];
+//        return null;
+//    },
+//    configurable: true,
+//});
 
 Object.defineProperty(Creep.prototype, 'inPlace', {
     get() {
@@ -61,8 +61,9 @@ Creep.prototype.walk = function () {
                 return { pos: enemy.pos, range: 10 };
             });
             let path = PathFinder.search(this.pos, goals, { flee: true }).path;
-            if (this.currentTarget)
-                this.memory.moveTarget = { pos: this.currentTarget.pos, range: this.currentTarget.range };
+            let target = this.getTarget();
+            if (target)
+                this.memory.moveTarget = { pos: target.pos, range: target.range };
             this.moveByPath(path);
             this._walk = true;
             return;
@@ -107,9 +108,22 @@ Creep.prototype.addTargetT = function (iTarget: targetData) {
     }
 }
 
+Creep.prototype.getTarget = function (): targetData | null{
+    if (this.memory.targetQue.length > 0)
+        return this.memory.targetQue[0];
+    return null;
+}
+
 Creep.prototype.completeTarget = function (): void {
     this.memory.targetQue.shift();
     if (this.memory.targetQue.length > 0) {
         this.walkTo(this.memory.targetQue[0].pos, this.memory.targetQue[0].range)
     }
+}
+
+Creep.prototype.alreadyTarget = function (iID: string): boolean {
+    let ret = false;
+    for (let target of this.memory.targetQue)
+        ret = ret || target.ID == iID;
+    return ret;
 }

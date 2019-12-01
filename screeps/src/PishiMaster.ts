@@ -15,7 +15,7 @@ export class _PishiMaster {
     memory: PishiMasterMemory;
     ticksAlive: number;
     colonies: { [name: string]: Colony };
-    labMaster: LabMaster;
+    //labMaster: LabMaster;
     constructor() {
         this.memory = Mem.wrap(Memory, "PishiMasterMem", PishiMasterMemoryDef);
         this.ticksAlive = 1;
@@ -25,7 +25,7 @@ export class _PishiMaster {
             if (room.controller && room.controller.my && room.controller.level>0)
               this.colonies[roomID] = new Colony(Game.rooms[roomID]);
         }    
-        this.labMaster = new LabMaster(this.colonies);
+        //this.labMaster = new LabMaster(this.colonies);
     }
     refresh() {
         this.ticksAlive++;
@@ -40,7 +40,7 @@ export class _PishiMaster {
             this.colonies[colonyID].runTowers();
         }
        
-       this.labMaster.run();
+       //this.labMaster.run();
        
     }
 

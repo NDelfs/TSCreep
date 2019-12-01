@@ -11,13 +11,14 @@ export function scout(creep: Creep): void {
         creep.say("done");
         creep.suicide();
     }
-    if (creep.inPlace && creep.currentTarget) {
+    let target = creep.getTarget();
+    if (creep.inPlace && target) {
         //if (creep.memory.currentTarget.type == targetT.POSITION) {
         //    if (creep.room.controller) {
         //        creep.memory.currentTarget = { ID: creep.room.controller.id, type: targetT.CONTROLLER, pos: creep.room.controller.pos, range: 1 }
         //    }
         //}
-        if (creep.currentTarget.type == targetT.CONTROLLER) {
+        if (target.type == targetT.CONTROLLER) {
             if (creep.room.controller && !creep.room.controller.my) {
                 let err = creep.claimController(creep.room.controller);
                 if (err == ERR_NOT_IN_RANGE)
@@ -29,7 +30,7 @@ export function scout(creep: Creep): void {
             }
             else if (creep.room.controller) {
                 creep.signController(creep.room.controller, "IMO the chocolate bar");
-                creep.currentTarget = null;
+                creep.completeTarget();
             }
         }
     }
