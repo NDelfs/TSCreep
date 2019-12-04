@@ -5,6 +5,7 @@ import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 import { Market } from "./Base/Market";
+import { Spawner } from "./Spawners/Spawner";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
@@ -24,7 +25,7 @@ export class _PishiMaster {
         this.colonies = {};
         for (let roomID in Game.rooms) {
             let room = Game.rooms[roomID];
-            if (room.controller && room.controller.my && room.controller.level>0)
+            if (room.controller && room.controller.my/* && room.controller.level>0*/)
               this.colonies[roomID] = new Colony(Game.rooms[roomID]);
         }    
         this.labMaster = new LabMaster(this.colonies);
@@ -40,7 +41,9 @@ export class _PishiMaster {
 
     run() {
         for (let colonyID in this.colonies) {
-            this.colonies[colonyID].runTowers();
+            let colony = this.colonies[colonyID];
+            Spawner(colony);
+            colony.runTowers();
         }
        
         this.labMaster.run();

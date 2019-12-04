@@ -2,6 +2,7 @@ import { ExtensionFlagPlacement } from "./ExtensionFlagPlacement";
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
 import { restorePos, storePos, isBuildable } from "utils/posHelpers";
+import { Colony } from "Colony"
 
 function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange:number) {
     let goal = { pos: goalPos, range: iRange };
@@ -46,75 +47,75 @@ function buildPrint(err: number, type : string, room : string) {
 }
 
 
-export function baseExpansion() {
+export function baseExpansion(colony : Colony) {
     if (Game.time % 10 != 1)
         return;
-    for (let [id, room] of Object.entries(Game.rooms)) {
-        if (room.controller && room.controller.my && room.controller.level > 0) {
+    let cRoom = colony.room;
+    
             try {
-                ExtensionFlagPlacement(room);
+                ExtensionFlagPlacement(colony.room);
             }
             catch (e) {
-                console.log("flag expansion failed in ", room.name, " with ", e);
+                console.log("flag expansion failed in ", colony.name, " with ", e);
             }
             try {
-                if (room.controller.level > room.memory.ExpandedLevel) {
-                    let buildFlag = room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
-                    let spawns = room.find(FIND_MY_SPAWNS);
-                    if (room.memory.ExpandedLevel == 0) {
+                if (colony.controller.level > colony.memory.ExpandedLevel) {
+                    let buildFlag = cRoom.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
+                    let spawns = cRoom.find(FIND_MY_SPAWNS);
+                    if (colony.memory.ExpandedLevel == 0) {
                         if (spawns.length == 0) {
-                            let spawnscons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_SPAWN } });
+                            let spawnscons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_SPAWN } });
                             if (spawnscons.length == 0) {
-                                let flags = room.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
+                                let flags = cRoom.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
                                 if (flags.length > 0) {
                                     let middle = flags[0].pos;
                                     middle.y += -2;
                                     let err = middle.createConstructionSite(STRUCTURE_SPAWN);
-                                    buildPrint(err, "spawn", room.name);
+                                    buildPrint(err, "spawn", colony.name);
                                 }
                             }
                         }
-                        room.memory.ExpandedLevel = 2;
+                        colony.memory.ExpandedLevel = 2;
 
                     }
-                    else if (room.memory.ExpandedLevel == 2) {
-                        let towers = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
-                        let towercons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
+                    else if (colony.memory.ExpandedLevel == 2) {
+                        let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
+                        let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                         if (towers.length == 0 && towercons.length == 0) {
                             let pos = spawns[0].pos;
                             pos.x += 1;
                             pos.y += 5;
                             let err = pos.createConstructionSite(STRUCTURE_TOWER);
                             if (err == OK) {
-                                console.log("built Tower in ", room.name);
-                                let flags = room.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
+                                console.log("built Tower in ", colony.name);
+                                let flags = cRoom.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
                                 if (flags.length > 0)
                                     flags[0].remove();
                             }
                             else {
-                                console.log("failed to build Tower in ", room.name, PrettyPrintErr(err));
+                                console.log("failed to build Tower in ", colony.name, PrettyPrintErr(err));
                                 return;
                             }
                         }
                         let goal = { pos: spawns[0].pos, range: 1 };
-                        let pathObj = PathFinder.search(room.controller.pos, goal);//ignore object need something better later. cant use for desirialize
+                        let pathObj = PathFinder.search(colony.controller.pos, goal);//ignore object need something better later. cant use for desirialize
                         if (pathObj.path.length < 2)
                             throw ("Could not place controller stuff due to short distance");
                         pathObj.path[1].createConstructionSite(STRUCTURE_CONTAINER);
 
-                        room.memory.ExpandedLevel = 3;
-                    } else if (room.memory.ExpandedLevel == 3) {
-                        let storagecons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
-                        if (room.storage == null && storagecons.length == 0) {
+                        colony.memory.ExpandedLevel = 3;
+                    } else if (colony.memory.ExpandedLevel == 3) {
+                        let storagecons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
+                        if (cRoom.storage == null && storagecons.length == 0) {
                             let pos = spawns[0].pos;
                             pos.x += 0;
                             pos.y += 3;
                             let err = pos.createConstructionSite(STRUCTURE_STORAGE);
-                            buildPrint(err, "storage", room.name);
+                            buildPrint(err, "storage", colony.name);
                         }
-                        if (room.storage) {
-                            let sStoreP = room.storage.pos;
-                            for (let sourceID of room.memory.sourcesUsed) {
+                        if (cRoom.storage) {
+                            let sStoreP = cRoom.storage.pos;
+                            for (let sourceID of colony.memory.sourcesUsed) {
                                 let goal = restorePos(Memory.Resources[sourceID].workPos);
                                 buildRoad(goal, sStoreP, 5);
                                 goal.createConstructionSite(STRUCTURE_CONTAINER);
@@ -134,23 +135,23 @@ export function baseExpansion() {
                             (new RoomPosition(sStoreP.x - 1, sStoreP.y - 3, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-2
                             (new RoomPosition(sStoreP.x + 1, sStoreP.y - 3, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-2
                             //-3
-                            room.memory.ExpandedLevel = 4;
+                            colony.memory.ExpandedLevel = 4;
                         }
-                    } else if (room.memory.ExpandedLevel == 4) {
-                        let towers = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
-                        let towercons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
+                    } else if (colony.memory.ExpandedLevel == 4) {
+                        let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
+                        let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
                         if (towers.length == 1 && towercons.length == 0) {
                             let pos = spawns[0].pos;
                             pos.x -= 1;
                             pos.y += 5;
                             let err = pos.createConstructionSite(STRUCTURE_TOWER);
-                            buildPrint(err, "tower", room.name);
+                            buildPrint(err, "tower", colony.name);
                         }
-                        room.memory.ExpandedLevel = 5;
+                        colony.memory.ExpandedLevel = 5;
                     }
-                    else if (room.memory.ExpandedLevel == 5 && room.storage) {
-                        let link = room.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_LINK } });
-                        let linkcons = room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_LINK } });
+                    else if (colony.memory.ExpandedLevel == 5 && cRoom.storage) {
+                        let link = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_LINK } });
+                        let linkcons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_LINK } });
                         if (link.length + linkcons.length < 3) {
                             let pos = spawns[0].pos; //for the 7 one
                             pos.y += 2;
@@ -159,26 +160,26 @@ export function baseExpansion() {
                                 console.log("something else is built on link main spot", pos.x, pos.y, pos.roomName);
                             else {
                                 let err = pos.createConstructionSite(STRUCTURE_LINK);
-                                buildPrint(err, "linkMain ", room.name);
+                                buildPrint(err, "linkMain ", colony.name);
                             }
                             //put close to harvesters
-                            for (let sourceID of room.memory.sourcesUsed) {
+                            for (let sourceID of colony.memory.sourcesUsed) {
                                 let source = Memory.Resources[sourceID];
                                 let err2 = findAndBuildLink(restorePos(source.workPos));
-                                buildPrint(err2, "link", room.name);
+                                buildPrint(err2, "link", colony.name);
                             }
                         }
-                        for (let sourceID of room.memory.mineralsUsed) {
+                        for (let sourceID of colony.memory.mineralsUsed) {
                             if (restorePos(Memory.Resources[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
                                 let goal = restorePos(Memory.Resources[sourceID].workPos);
                                 restorePos(Memory.Resources[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
-                                let sStoreP = room.storage.pos;
+                                let sStoreP = cRoom.storage.pos;
                                 buildRoad(goal, sStoreP, 5);
                             }
                         }
 
                         if (link.length == 3) {
-                            for (let sourceID of room.memory.sourcesUsed) {
+                            for (let sourceID of colony.memory.sourcesUsed) {
                                 let source = Memory.Resources[sourceID];
                                 let pos = restorePos(source.workPos);
                                 let structures: StructureLink[] = pos.findInRange(FIND_MY_STRUCTURES, 1, { filter: { structuceType: STRUCTURE_LINK } }) as StructureLink[];
@@ -186,9 +187,9 @@ export function baseExpansion() {
                                     source.linkID = structures[0].id;
                                 }
                             }
-                            room.memory.ExpandedLevel = 6
+                            colony.memory.ExpandedLevel = 6
                         }
-                    } if (room.memory.ExpandedLevel == 6 && room.storage) {
+                    } if (colony.memory.ExpandedLevel == 6 && cRoom.storage) {
 
                     }
                 } 
@@ -196,8 +197,8 @@ export function baseExpansion() {
             catch (e) {
                 console.log("base expansion failed with", e);
             }
-        }
-    }
+        
+    
 
 }
 

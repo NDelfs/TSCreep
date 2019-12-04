@@ -10,7 +10,7 @@ function getRandomInt(max : number) {
 export function getSourceTarget(creep: Creep, resource: ResourceConstant | null): targetData | null {
     let avail: string[] = [];
     if (resource == null || resource == RESOURCE_ENERGY) {
-        for (let ID of Game.rooms[creep.creationRoom].memory.sourcesUsed) {
+        for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
             let sourceMem: SourceMemory = Memory.Resources[ID];
             if (sourceMem.AvailResource > creep.carryCapacity * 0.8) {
                 avail.push(ID);
@@ -25,8 +25,8 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
             return target;
         }
     }
-    
-    for (let ID of Game.rooms[creep.creationRoom].memory.mineralsUsed) {
+
+    for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
         let min = Memory.Resources[ID];
 
         if (min.AvailResource > creep.carryCapacity && (min.resourceType == resource || resource == null)) {
@@ -126,7 +126,7 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
 }
 
 export function getMineralTarget(creep: Creep): targetData | null {// depricated
-    for (let ID of Game.rooms[creep.creationRoom].memory.mineralsUsed) {
+    for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
         let min = Memory.Resources[ID];
         if (min.AvailResource > creep.carryCapacity) {
             let target: targetData = {

@@ -6,9 +6,16 @@ import * as C from "Types/Constants";
 import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { restorePos } from "./utils/posHelpers";
 
 const ColonyMemoryDef: ColonyMemory = {
     outposts: [],
+    inCreepEmergency : null,
+    sourcesUsed: [],
+    mineralsUsed: [],
+    startSpawnPos: null, 
+    ExpandedLevel: 0,
+    controllerStoreID: null,
 }
 
 function refreshArray(array: any[]) {
@@ -128,8 +135,11 @@ export class Colony {
         if (removed.length > 0)
             this.spawnEnergyNeed += creep.carry.energy;
     }
-    
+
+    mRepairTargets: { ID: string, healtTarget: number}[];
+
     repairSites: string[];
+
     constructor(iRoom: Room) {
         if (!Memory.ColonyMem)//this is rare enough that I do ugly fix here
             Memory.ColonyMem = {};
@@ -137,6 +147,16 @@ export class Colony {
         this.room = iRoom;
         this.name = iRoom.name;
         this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
+
+        if (this.memory.startSpawnPos == null) {//move data over to colony
+            this.memory.controllerStoreID = this.room.memory.controllerStoreID;
+            this.memory.ExpandedLevel = this.room.memory.ExpandedLevel;
+            this.memory.inCreepEmergency = this.room.memory.inCreepEmergency;
+            this.memory.mineralsUsed = this.room.memory.mineralsUsed;
+            this.memory.sourcesUsed = this.room.memory.sourcesUsed;
+            this.memory.startSpawnPos = this.room.memory.startSpawnPos;
+        }
+
         //global[this.name] = this;
         //global[this.name.toLowerCase()] = this;
         console.log(this.room.name,"recreate obj");
@@ -146,6 +166,7 @@ export class Colony {
         this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
         this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
         this.repairSites = [];
+        this.mRepairTargets = [];
         this.computeLists(true);
         this.spawnEnergyNeed = 0;
         this.energyNeedStruct = [];
@@ -167,6 +188,8 @@ export class Colony {
         this.refreshEnergyDemand(true);
 
         this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
+        if (this.memory.startSpawnPos)
+          expandResources(this, restorePos(this.memory.startSpawnPos));
     }
 
     public refresh() {
@@ -185,7 +208,13 @@ export class Colony {
         this.computeLists();
         this.refreshEnergyDemand(this.forceUpdateEnergy);
         this.forceUpdateEnergy = false;
-        
+
+        if (this.memory.controllerStoreID == null) {//maybe can be done more rarely?
+            let con = this.controller.pos.findInRange(FIND_STRUCTURES, 2, { filter: { structureType: STRUCTURE_CONTAINER } });
+            if (con.length > 0 && con[0].isActive()) {
+                this.memory.controllerStoreID = con[0].id;
+            }
+        }
     }
 
     private computeLists(force?:boolean){
@@ -237,9 +266,9 @@ export class Colony {
             //            this.energyNeedStruct.push({ ID: obj.id, type: targetT.POWERUSER, pos: obj.pos, range: 1 });
             //    }
             //}
-            let conStore = Game.getObjectById(this.room.memory.controllerStoreID!);
-            if (conStore && this.resourceRequests[this.room.memory.controllerStoreID!] == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
-                this.resourceRequests[this.room.memory.controllerStoreID!] = new resourceRequest(this.room.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room);
+            let conStore = Game.getObjectById(this.memory.controllerStoreID!);
+            if (conStore && this.resourceRequests[this.memory.controllerStoreID!] == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
+                this.resourceRequests[this.memory.controllerStoreID!] = new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room);
             }
             if (this.room.terminal && this.resourceRequests[this.room.terminal.id] == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
                 this.resourceRequests[this.room.terminal.id] = new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room);
@@ -289,3 +318,57 @@ export class Colony {
 
 }
 profiler.registerClass(Colony, 'Colony');
+
+
+
+
+function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MINERALS | FIND_SOURCES) {
+    const sources = colony.room.find(findType);
+    if (sources.length == 0)
+        return;
+    if (findType == FIND_MINERALS) {
+        console.log("addSource 1", sources.length);
+    }
+    for (const source of sources) {
+        let pos = source.pos;
+        let nrNeig = 0;
+        let res = colony.room.lookForAtArea(LOOK_TERRAIN, pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true);
+        for (let [ind, spot] of Object.entries(res)) {
+            nrNeig += Number(spot.terrain != "wall");
+        }
+        let goal = { pos: pos, range: 1 };
+        let pathObj = PathFinder.search(homeRoomPos, goal);//ignore object need something better later. cant use for desirialize
+        let newWorkPos = _.last(pathObj.path);
+        let mem: SourceMemory = {
+            pos: source.pos,
+            usedByRoom: homeRoomPos.roomName,
+            maxUser: nrNeig,
+            workPos: newWorkPos,
+            container: null,
+            linkID: null,
+            AvailResource: 0,
+            nrUsers: 0,
+            resourceType: RESOURCE_ENERGY,
+        };
+
+        if (findType == FIND_SOURCES) {
+            Memory.Resources[source.id] = mem;
+            colony.memory.sourcesUsed.push(source.id);
+        }
+        else if (findType == FIND_MINERALS) {
+            let min = source as Mineral;
+            mem.resourceType = min.mineralType;
+            Memory.Resources[source.id] = mem;
+            colony.memory.mineralsUsed.push(source.id);
+        }
+    }
+}
+
+function expandResources(homeRoom: Colony, centrePos: RoomPosition) {//should loop through outposts also
+    if (homeRoom.memory.sourcesUsed.length == 0) {
+        addSources(homeRoom, centrePos, FIND_SOURCES);
+    }
+    if (homeRoom.memory.mineralsUsed.length == 0) {
+        addSources(homeRoom, centrePos, FIND_MINERALS);
+    }
+}

@@ -84,7 +84,7 @@ export class Market {
                 for (let req of this.colonies[roomID].resourceExternal) {
                     if ((globalRes[req]|0) + Terminal_Min_Trade < UNDERFLOW_EXTERNALTRADE && REACTION_CHAIN[req].needs.length == 0) {
                         buyOrder[req] = roomID;
-                        console.log("added buy order", req, roomID);
+                        console.log("added buy order", req, roomID, this.colonies[roomID].resourceExternal);
                     }
 
                     let res = terminal.store[req] || 0;

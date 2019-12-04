@@ -8,7 +8,6 @@ interface CreepMemory {
     //_currentTarget?: targetData | null;
 }
 
-
 interface Memory {
     uuid: number;
     log: any;
@@ -27,6 +26,14 @@ interface PishiMasterMemory {
 
 interface ColonyMemory {
     outposts: string[];
+
+    inCreepEmergency: number | null;
+    sourcesUsed: string[];
+    mineralsUsed: string[];
+    startSpawnPos: posData | null;
+
+    ExpandedLevel: number;
+    controllerStoreID: string | null;
 }
 
 interface RoomMemory {
@@ -34,8 +41,7 @@ interface RoomMemory {
     sourcesUsed: string[];
     mineralsUsed: string[];
     startSpawnPos: posData | null;
-    //EnergyNeedStruct: targetData[];
-    //EnergyNeed: number;
+
     ExpandedLevel: number;
     controllerStoreID: string | null;
 }

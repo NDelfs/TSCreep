@@ -188,6 +188,7 @@ export class LabMaster {
     private resourceRequests() {
         for (let colLab of this.colLabs) {
             let colony = this.colonies[colLab.colony];
+            colony.resourceExternal = [];
             let labs = this.colonies[colLab.colony].labs;
             let usedLabs: boolean[] = Array(labs.length).fill(false);
             for (let reaction of colLab.roomReaction) {
