@@ -95,13 +95,6 @@ function main() {
     catch (e) {
         console.log("Failed spawner update with: ", e);
     }
-    try {
-        profiler.registerFN(Market)();
-        //Market();
-    }
-    catch (e) {
-        console.log("Failed market with: ", e);
-    }
     //console.log(`Current game tick is ${Game.time}`);
     CreepUpdate();
     // Automatically delete memory of missing creeps

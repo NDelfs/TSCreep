@@ -19,7 +19,7 @@ export class resourceRequest {
     id: string;
     resource: ResourceConstant;
     ThreshouldAmount: number;
-    ThreshouldMax: number;
+    ThreshouldHard: number;
     creeps: string[];
     resOnWay: number;
 
@@ -27,7 +27,7 @@ export class resourceRequest {
         this.id = ID;
         this.resource = iResource;
         this.ThreshouldAmount = iThreshould;
-        this.ThreshouldMax = iThreshouldMax
+        this.ThreshouldHard = iThreshouldMax
         this.resOnWay = 0;
         //this.creeps = [];
         this.creeps = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
@@ -38,8 +38,12 @@ export class resourceRequest {
 
     public amount(): number {
         let obj = Game.getObjectById(this.id) as AnyStoreStructure;
-        if (obj)
-            return obj.store[this.resource] + this.resOnWay;
+        if (obj) {
+            if (this.ThreshouldHard > this.ThreshouldAmount)
+                return obj.store[this.resource] + this.resOnWay;
+            else
+                return obj.store[this.resource] - this.resOnWay;
+        }
         else
             return 0;
     }
@@ -49,22 +53,36 @@ export class resourceRequest {
         let creepsTmp = _.compact(_.map(this.creeps, obj => Game.creeps[obj]));
         this.creeps = [];
         for (let creep of creepsTmp) {
-            this.resOnWay += creep.carry[this.resource];
-            this.creeps.push(creep.name);
+            let found = false;
+            for (let targ of creep.memory.targetQue) {
+                if (targ.ID == this.id) {
+                    this.resOnWay += creep.carry[this.resource];
+                    this.creeps.push(creep.name);
+                    found = true;
+                }
+            }
+            if (!found) {
+                console.log(creep.room.name, creep.name, "where not activly working for resource anymore", this.resource, this.id);
+            }
         }
     }
 
-    public addTran(creep: Creep) {
-        let already = _.find(this.creeps, (mCreep) => mCreep == creep.name);
-    if (!already && creep.carry.energy > 0) {
+    public addTran(creep: Creep, preknownAmount? : number) {
+        let already = _.find(this.creeps, (mCreep) => mCreep == creep.name) || false;
+        if (!already) {
         this.creeps.push(creep.name);
-        this.resOnWay += creep.carry[this.resource];
+        this.resOnWay += preknownAmount || creep.carry[this.resource];
     }
 }
-    public removeTran(creep: Creep) {
+    public removeTran(creep: Creep, preknownAmount?: number) {
         let removed = _.remove(this.creeps, (mCreep) => mCreep == creep.name);
-        if (removed.length > 0)
-            this.resOnWay -= creep.carry[this.resource];
+        if (removed.length > 0) {
+            this.resOnWay -= preknownAmount || creep.carry[this.resource];
+            if (this.resOnWay < 0) {
+                console.log(creep.room.name, "res on way went negative, carry", creep.carry[this.resource], preknownAmount || creep.carry[this.resource]);
+                this.resOnWay = Math.max(this.resOnWay, 0);
+            }
+        }
 }
 }
 profiler.registerClass(resourceRequest, 'resourceRequest');
@@ -96,12 +114,13 @@ export class Colony {
 
     resourceRequests: { [id: string]: resourceRequest };
     resourcePush: { [id: string]: resourceRequest };
+    resourceExternal: ResourceConstant[];
 
-    public addEnergyTran(creep: Creep) {
+    public addEnergyTran(creep: Creep, preknownAmount?: number) {
         let already = _.find(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
-        if (!already && creep.carry.energy>0) {
+        if (!already) {
             this.energyTransporters.push(creep);
-            this.spawnEnergyNeed -= creep.carry.energy;
+            this.spawnEnergyNeed -= preknownAmount || creep.carry.energy;
         }
     }
     public removeEnergyTran(creep: Creep) {      
@@ -135,6 +154,7 @@ export class Colony {
 
         this.resourceRequests = {};
         this.resourcePush = {};
+        this.resourceExternal = [];
 
         this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
             let ret = false;
@@ -238,9 +258,14 @@ export class Colony {
         for (let tower of this.towers) {
             try {
                 if (room.hostiles.length > 0) {
-                    tower.attack(room.hostiles[0]);
+                    for (let creep of room.hostiles) {
+                        //if (creep.owner.username != "Invader" || this.controller.level < 6) {
+                        tower.attack(room.hostiles[0]);
+                        continue;
+                        //}
+                    }
                 }
-                else if (this.repairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
+               if (this.repairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
                     let struct = Game.getObjectById(this.repairSites[0]) as Structure;
                     if (struct) {
                         tower.repair(struct);

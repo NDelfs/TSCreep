@@ -44,7 +44,7 @@ export function Builder(creep: Creep) {
                 useRepairTarget(creep);
                 break;
             }
-            case targetT.DROPPED_ENERGY:
+            case targetT.DROPPED_RESOURCE:
                 useEnergyTarget(creep, target);
                 creep.say("withdraw");
                 break;

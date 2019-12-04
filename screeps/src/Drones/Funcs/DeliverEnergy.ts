@@ -1,6 +1,6 @@
 import * as targetT from "Types/TargetTypes";
 import { restorePos } from "utils/posHelpers";
-import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
+import { PrettyPrintErr, PrettyPrintCreep } from "../../utils/PrettyPrintErr";
 import * as C from "Types/Constants"; 
 import { PM } from "PishiMaster";
 
@@ -39,9 +39,10 @@ export function getNewDeliverTarget(roomPos: RoomPosition, resourceType?: Resour
     for (let [id, req] of Object.entries(colony.resourceRequests)) {
         if (resourceType == null || req.resource == resourceType) {
             let obj = Game.getObjectById(id) as AnyStoreStructure;
-            if (roomPos.roomName == "E49N47")
-                console.log("found resource reg", obj, req.amount(), "amount in transport", req.ThreshouldAmount);
-            if (obj && req.amount() < req.ThreshouldAmount) {
+            //if (roomPos.roomName == "E49N47")
+            //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
+            let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.store[req.resource!] != 0);
+            if (obj && haveRes && req.amount() < req.ThreshouldAmount) {
                 //if (roomPos.roomName == "E49N47")
                     //console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
                 let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1 };
@@ -69,30 +70,30 @@ export function getStorageDeliverTarget(room: Room, resourceType: ResourceConsta
     return null;
 }
 
-export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
+export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//depricadet
     let room = Game.rooms[creep.memory.creationRoom];
     //first prio colony energy
 
-    if (room.name == "E49N47")
-        console.log("in get deliver")
+    //if (room.name == "E49N47")
+        //console.log("in get deliver")
 
     if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length && PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
-        if (room.name == "E49N47")
-            console.log(room.name, "found energy demand", PM.colonies[creep.memory.creationRoom].energyNeedStruct.length, PM.colonies[creep.memory.creationRoom].spawnEnergyNeed);
+        //if (room.name == "E49N47")
+            //console.log(room.name, "found energy demand", PM.colonies[creep.memory.creationRoom].energyNeedStruct.length, PM.colonies[creep.memory.creationRoom].spawnEnergyNeed);
         creep.addTargetT(getClosest(creep.pos, PM.colonies[creep.memory.creationRoom].energyNeedStruct));
         PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
         return true;
     }
     else {
-        if (room.name == "E49N47")
-            console.log("looking for resource reg")
+        //if (room.name == "E49N47")
+            //console.log("looking for resource reg")
         for (let [id, req] of Object.entries(PM.colonies[creep.memory.creationRoom].resourceRequests)) {
             if (creep.carry[req.resource] > 0) {
                 let obj = Game.getObjectById(id) as AnyStoreStructure;
-                if (room.name == "E49N47")
-                    console.log("found resource reg", obj, req.amount(), "amount in transport", req.resOnWay);
+                //if (room.name == "E49N47")
+                    //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
                 if (obj && obj.store[req.resource] + req.resOnWay < req.ThreshouldAmount) {
-                    if (room.name == "E49N47")
+                    //if (room.name == "E49N47")
                       console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
                     creep.addTarget(id, targetT.TRANSPORT, obj.pos, 1);
                     req.addTran(creep);
@@ -100,8 +101,8 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {
                 }
             }
         }
-        if (room.name == "E49N47")
-            console.log("failed to find resource req")
+        //if (room.name == "E49N47")
+            //console.log("failed to find resource req")
         //base dump mineral
         if (findStore && creep.carry.energy == 0 && room.terminal && creep.carryAmount > 0) {
             creep.addTarget(room.terminal.id, targetT.POWERSTORAGE, room.terminal.pos, 1);
@@ -145,13 +146,16 @@ export function useDeliverTarget(creep: Creep): number {
         let key = _.findKey(creep.carry) as ResourceConstant;
         if (key)
             err = creep.transfer(targetObj, key);
-        if (creep.room.name == "E49N47")
-            console.log("transfered", PrettyPrintErr(err), targetObj, targetObj.pos.x, targetObj.pos.y)
+        //if (creep.room.name == "E49N47")
+            //console.log("transfered", PrettyPrintErr(err), targetObj, targetObj.pos.x, targetObj.pos.y)
         if (err == OK && target.type == targetT.TRANSPORT) {
             let req = PM.colonies[creep.memory.creationRoom].resourceRequests[targetObj.id];
             if (req) {
-                if (req.creeps.length == 1 && targetObj.store[req.resource] + req.resOnWay > req.ThreshouldMax) {
-                    //console.log(creep.room.name, targetObj.structureType, "deleted new target (store, onWay, Threshold, max)", targetObj.store[req.resource], req.resOnWay, req.ThreshouldAmount, req.ThreshouldMax);
+                //if (creep.room.name == "E49N47")
+                    //console.log(creep.room.name, targetObj.structureType, "found req (store, onWay, Threshold, max)", targetObj.store[req.resource], req.resOnWay, req.ThreshouldAmount, req.ThreshouldHard);
+                if (req.creeps.length == 1 && targetObj.store[req.resource] + req.resOnWay >= req.ThreshouldHard) {
+                    //if (creep.room.name == "E49N47")
+                      //console.log(creep.room.name, targetObj.structureType, "deleted new target (store, onWay, Threshold, max)", targetObj.store[req.resource], req.resOnWay, req.ThreshouldAmount, req.ThreshouldHard);
                     delete PM.colonies[creep.memory.creationRoom].resourceRequests[targetObj.id];
 
                 }

@@ -310,8 +310,8 @@ function spawnCreep(que: queData[], spawner: StructureSpawn): number {
         if (err == OK) {
             let err = spawner.spawnCreep(que[0].body, PrettyPrintCreep(que[0].memory.type) + " " + getRandomName(), { memory: que[0].memory });
             if (err == OK) {
-                //if (que[0].memory.type == creepT.DEFENDER)
-                console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
+                if (que[0].memory.type != creepT.HARVESTER&& que[0].memory.type != creepT.TRANSPORTER&& que[0].memory.type != creepT.UPGRADER)
+                  console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
                 PM.colonies[spawner.room.name].forceUpdateEnergy = true;
                 que.shift();
                 spawner.room.memory.inCreepEmergency = null;      

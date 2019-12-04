@@ -7,7 +7,7 @@ type TargetConstant =
     | TRANSPORT
     | SOURCE
     | DROPPED_ENERGY
-    | DROPPED_MINERAL
+    | TRANSPORT_PICKUP
     | CONSTRUCTION
     | REPAIR
     | POSITION
@@ -21,7 +21,7 @@ type POWERSTORAGE = 12;
 type TRANSPORT = 15;
 type SOURCE = 21;
 type DROPPED_ENERGY = 31;
-type DROPPED_MINERAL = 35;
+type TRANSPORT_PICKUP = 35;
 type CONSTRUCTION = 41;
 type REPAIR = 45;
 type POSITION = 51;
