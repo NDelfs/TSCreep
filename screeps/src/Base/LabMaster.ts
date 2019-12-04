@@ -1,13 +1,9 @@
 import { Colony, resourceRequest } from "Colony"
 import { findAndBuildLab } from "Base/BaseExpansion"
+import { REACTION_CHAIN, IReaction } from "Types/Constants"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 
-interface IReaction {
-    r: ResourceConstant,
-    needs: ResourceConstant[],
-    reacts?: string[],
-}
 
 interface IRoomReactions {
     react: IReaction,
@@ -23,28 +19,7 @@ interface IRoomLabs {
     roomReaction: IRoomReactions[],
 }
 
-const REACTION_CHAIN: { [name: string]: IReaction } = {
-    /*....*/
-    UL: { r: "UL", needs: ["U", "L"] },
-    ZK: { r: "ZK", needs: ["Z", "K"] },
-    G: { r: "G", needs: ["ZK", "UL"], reacts: ["GO", "GH"] },//nuclear and base min
-    GO: { r: "GO", needs: ["G", "O"], reacts: ["GHO2"] },
-    GH: { r: "GH", needs: ["G", "H"], reacts: ["GH2O"] },
-    GH2O: { r: "GH2O", needs: ["GH", "OH"], reacts: ["XGH2O"] },
-    GHO2: { r: "GHO2", needs: ["GO", "OH"], reacts: ["XGHO2"] },
-    XGH2O: { r: "XGH2O", needs: ["GH2O", "X"] },
-    XGHO2: { r: "XGHO2", needs: ["GHO2", "X"] },
-    UO: { r: "UO", needs: ["U", "O"] },//200% harvest speed
-    LH: { r: "LH", needs: ["L", "H"]},//repair/build 50%
-    OH: { r: "OH", needs: ["O", "H"], reacts: ["UH2O", "UHO2", "ZH2O", "ZHO2", "KH2O", "KHO2", "LH2O", "LHO2", "GH2O", "GHO2"] },
-    Z: { r: "Z", needs: [] },
-    K: { r: "K", needs: [] },
-    U: { r: "U", needs: [] },
-    L: { r: "L", needs: [] },
-    H: { r: "H", needs: [] },
-    O: { r: "O", needs: [] },
-    X: { r: "X", needs: [] },
-}
+
 
 interface MineralReq {
     r: IReaction;
@@ -55,9 +30,10 @@ interface MineralReq {
 
 const REACTION_TIME_TYPED = REACTION_TIME as { [react: string]: number };
 
-const reactionsWanted = [
+const reactionsWanted: { r: IReaction, perRoom:number, global:number, perTick: number }[]= [//half global init a restart of prod
     { r: REACTION_CHAIN["G"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
-    { r: REACTION_CHAIN["LH"], perRoom: 1000, global: 5000, perTick: 0.04 }//cheap boost for building
+    { r: REACTION_CHAIN["LH"], perRoom: 1000, global: 5000, perTick: 0.04 },//cheap boost for building
+    { r: REACTION_CHAIN["UO"], perRoom: 1000, global: 5000, perTick: 0.1 }
     /*, REACTION_CHAIN["XGH2O"]*/
 ];
 
@@ -134,10 +110,20 @@ export class LabMaster {
 
     private filterReactions(): boolean{
         this.countResources();
+
+        let newList = this.reactionsToAdd;
         for (let react of reactionsWanted) {
+            if (react.global / 2 + react.perRoom * this.colLabs.length > (this.resources[react.r.r] | 0)) {
+                let already = this.reactionsToAdd.find((tmp) => { return tmp.r.r == react.r.r; });
+                if (already == null) {
+                    newList.push(react);
+                    console.log("rebotet reaction", react.r.r);
+                }
+            }
             console.log("reaction", react.r.r, "wants/have", react.global + react.perRoom * this.colLabs.length, this.resources[react.r.r]);
         }
-        let newList = _.filter(reactionsWanted, (react) => {
+    
+        newList = _.filter(newList, (react) => {
             return react.global + react.perRoom * this.colLabs.length > (this.resources[react.r.r]|0);
         });
         let diff = newList != this.reactionsToAdd;
@@ -150,6 +136,7 @@ export class LabMaster {
     }
 
     private countResources() {
+        this.resources = {};
         for (let col in this.colonies) {
             let colony = this.colonies[col];
             let storage = colony.room.storage;
@@ -167,11 +154,11 @@ export class LabMaster {
         }
     }
 
-    private resourceResetLab(colony: Colony, lab: StructureLab, res: ResourceConstant, created: boolean) {
+    private resourceResetLab(colony: Colony, lab: StructureLab, res: ResourceConstant|null, created: boolean) {
         if (colony.resourcePush[lab.id] != null)
             return;
 
-        let key = _.find(Object.keys(lab.store), (key) => { return key != RESOURCE_ENERGY && key != res; });
+        let key = _.find(Object.keys(lab.store), (key) => { return key != RESOURCE_ENERGY && (key != res || res == null); });
         if (key) {
             if (colony.resourcePush[lab.id] == null) {
                 colony.resourcePush[lab.id] = new resourceRequest(lab.id, key as ResourceConstant, 0, 0, colony.room);
@@ -180,17 +167,19 @@ export class LabMaster {
             return;
         }
 
-        if (created) {
-            if (lab.store[res] >= 2000 && colony.resourcePush[lab.id] == null) {
-                colony.resourcePush[lab.id] = new resourceRequest(lab.id, res, 1000, 0, colony.room);
-                console.log(colony.name, "push created resource from lab", res);
+        if (res != null) {
+            if (created) {
+                if (lab.store[res] >= 2000 && colony.resourcePush[lab.id] == null) {
+                    colony.resourcePush[lab.id] = new resourceRequest(lab.id, res, 1000, 0, colony.room);
+                    console.log(colony.name, "push created resource from lab", res);
+                }
             }
-        }
-        else {
-            colony.resourceExternal.push(res);
-            if (lab.store[res] < 200 && colony.resourceRequests[lab.id] == null) {
-                colony.resourceRequests[lab.id] = new resourceRequest(lab.id, res, 200, 800, colony.room);
-                console.log(colony.name, "request resource to lab", res, lab.store[res]);
+            else {
+                colony.resourceExternal.push(res);
+                if (lab.store[res] < 200 && colony.resourceRequests[lab.id] == null) {
+                    colony.resourceRequests[lab.id] = new resourceRequest(lab.id, res, 200, 800, colony.room);
+                    console.log(colony.name, "request resource to lab", res, lab.store[res]);
+                }
             }
         }
         return;
@@ -200,17 +189,28 @@ export class LabMaster {
         for (let colLab of this.colLabs) {
             let colony = this.colonies[colLab.colony];
             let labs = this.colonies[colLab.colony].labs;
+            let usedLabs: boolean[] = Array(labs.length).fill(false);
             for (let reaction of colLab.roomReaction) {
                 for (let idx of reaction.result.idxs) {
                     this.resourceResetLab(colony, labs[idx], reaction.react.r, true);
+                    usedLabs[idx] = true;
                 }
                 this.resourceResetLab(colony, labs[reaction.res1.idx], reaction.react.needs[0], !reaction.res1.bring);
+                usedLabs[reaction.res1.idx] = true;
                 this.resourceResetLab(colony, labs[reaction.res2.idx], reaction.react.needs[1], !reaction.res2.bring);
+                usedLabs[reaction.res2.idx] = true;
+            }
+            for (let i = 0; i < usedLabs.length; i++) {
+                if (!usedLabs[i]) {
+                    this.resourceResetLab(colony, labs[i], null, false);
+                }
             }
         }
     }
 
-    private updateLabInfo(){//maybe run distributeReaction when nrLabs change alot and reactions left to distribute
+    private updateLabInfo() {//maybe run distributeReaction when nrLabs change alot and reactions left to distribute
+        this.colLabs = [];
+        this.nrLabs = 0;
         for (let col in this.colonies) {
             let colony = this.colonies[col];
             findAndBuildLab(colony.room, colony.labs);
@@ -258,8 +258,8 @@ export class LabMaster {
                         console.log("nr labs needed for ", rect.r.r, nrLabs, rect.perTick * this.colLabs.length * 5 / reactT)
                         if (nrLabs > 1) {
                             console.log("more reactors needed but not implemented");
-                            if (labInfo.nrLabUsed != 1)
-                                continue;
+                            //if (labInfo.nrLabUsed != 1)
+                                //continue;
 
                         }
 

@@ -1,6 +1,7 @@
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { Colony, resourceRequest } from "Colony"
 import * as C from "Types/Constants";
+import { REACTION_CHAIN, IReaction, Terminal_Min_Trade } from "Types/Constants"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 interface overflowBalance {
@@ -18,10 +19,32 @@ interface sendTrans {
 
 }
 
+function countResources(colonies: { [name: string]: Colony }): { [name: string]: number } {
+    let ret: { [name: string]: number } = {};
+    for (let col in colonies) {
+        let colony = colonies[col];
+        let storage = colony.room.storage;
+        let terminal = colony.room.terminal;
+        if (storage && terminal) {
+            let keys = Object.keys(storage.store)
+            for (let key of keys) {
+                ret[key] = (ret[key] | 0) + storage.store[key as ResourceConstant];
+            }
+            let tKeys = Object.keys(terminal.store);
+            for (let key of tKeys) {
+                ret[key] = (ret[key] | 0) + terminal.store[key as ResourceConstant];
+            }
+        }
+    }
+    return ret;
+}
+
+export const BaseMineral = ["H","O","U","K","L","Z","X"];
 
 const OVERFLOW_THRESHOLD = 3000;
 const OVERFLOW_INTERNALTRADE = 3000;
 const OVERFLOW_EXTERNALTRADE = 50000;
+const UNDERFLOW_EXTERNALTRADE = 10000;
 const UNDERFLOW_THRESHOLD = 2000;
 export class Market {
     colonies: { [name: string]: Colony };
@@ -34,8 +57,10 @@ export class Market {
         if (Game.time % 10 != 2)
             return;
         try {
+            let globalRes = countResources(this.colonies);
             let overflow: { [R: string]: overflowBalance[] } = {};
             let underflow: underflowBalance[] = [];
+            let buyOrder: { [key: string]: string } = {}; //name for one of the colonies needing the resource
             for (let roomID in this.colonies) {
                 let terminal = this.colonies[roomID].room.terminal;
                 if (terminal == null)
@@ -57,13 +82,18 @@ export class Market {
                 }
 
                 for (let req of this.colonies[roomID].resourceExternal) {
+                    if ((globalRes[req]|0) + Terminal_Min_Trade < UNDERFLOW_EXTERNALTRADE && REACTION_CHAIN[req].needs.length == 0) {
+                        buyOrder[req] = roomID;
+                        console.log("added buy order", req, roomID);
+                    }
+
                     let res = terminal.store[req] || 0;
                     if (res < UNDERFLOW_THRESHOLD) {
                         underflow.push({ R: req, A: UNDERFLOW_THRESHOLD - res, P: roomID });
                     }
                 }
             }
-
+            
             for (let under of underflow) {
                 let avails = overflow[under.R] || [];
                 for (let avail of avails) {
@@ -108,10 +138,29 @@ export class Market {
                     }
                 }
             }
+            for (let req in buyOrder) {
+                let term = Game.rooms[buyOrder[req]].terminal;
+                if (term) {
+                    let orders: Order[] | null = Game.market.getAllOrders({ type: ORDER_SELL, resourceType: req as ResourceConstant });
+                    orders = orders.filter(function (a) { return a.price <= 0.03 && a.remainingAmount > C.Terminal_Min_Trade });
+                    orders = orders.sort(function (a, b) { return a.price - b.price; });
+                    if (orders.length > 0) {
+                        let tradeAmount = Math.min(UNDERFLOW_EXTERNALTRADE - (globalRes[req]|0), orders[0].remainingAmount , term.store.energy);
+                        console.log("found trade order", orders[0].price, req, orders[0].remainingAmount, tradeAmount, "last in list", _.last(orders).price);
+                        if (tradeAmount > C.Terminal_Min_Trade) {
+                            let err = Game.market.deal(orders[0].id, tradeAmount, buyOrder[req]);
+                            console.log("bought", tradeAmount, req, "from", buyOrder[req], "at price", orders[0].price, "with error", PrettyPrintErr(err));
+                        }
+                    }
+                }
+            }
         }
         catch (e) {
             console.log("CRASH: Market failed,", e);
         }
     }
+
+
+
 }
 profiler.registerClass(Market, 'Market');
