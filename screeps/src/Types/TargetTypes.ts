@@ -4,6 +4,7 @@ export const POWERSTORAGE = 12;
 export const TRANSPORT = 15;
 export const SOURCE = 21;
 export const DROPPED_RESOURCE = 31;
+export const STORAGE_RESOURCE = 32;
 export const TRANSPORT_PICKUP = 35;
 export const CONSTRUCTION = 41;
 export const REPAIR = 45;

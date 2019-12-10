@@ -2,61 +2,65 @@ import * as targetT from "Types/TargetTypes";
 import { restorePos, storePos } from "utils/posHelpers";
 import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
 import { PM } from "PishiMaster";
-import { DROPPED_RESOURCE } from "Types/TargetTypes";
+import { DROPPED_RESOURCE, STORAGE_RESOURCE } from "Types/TargetTypes";
 function getRandomInt(max : number) {
     return Math.floor(Math.random() * Math.floor(max));
 }
 
 export function getSourceTarget(creep: Creep, resource: ResourceConstant | null): targetData | null {
   let avail: string[] = [];
-
-    if (resource == null || resource == RESOURCE_ENERGY) {
-        for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
-            let sourceMem: SourceMemory = Memory.Resources[ID];
-            if (sourceMem.AvailResource > creep.carryCapacity * 0.8) {
-                avail.push(ID);
-            }
-        }
-      //if (creep.room.name == "E47N45") {
-      //  console.log('in getSourceTarget, found avail', avail.length);
-      //}
-        if (avail.length > 0) {
-            const index = getRandomInt(avail.length);
-            let target: targetData = {
-                ID: avail[index], type: targetT.DROPPED_RESOURCE, resType: RESOURCE_ENERGY, pos: Memory.Resources[avail[index]].workPos, range: 1
-            }
-            return target;
-        }
-    }
-
-    for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
-        let min = Memory.Resources[ID];
-
-        if (min.AvailResource > creep.carryCapacity && (min.resourceType == resource || resource == null)) {
-            let target: targetData = {
-                ID: ID, type: targetT.DROPPED_RESOURCE, resType: min.resourceType, pos: min.workPos, range: 1
-            }
-            console.log(creep.room, "transport mineral");
-            return target;
-        }
-    }
-
-    let colony = PM.colonies[creep.creationRoom];   
-    for (let pushID in colony.resourcePush) {
-        let resD = colony.resourcePush[pushID];
-        let targetObj = Game.getObjectById(pushID) as AnyStoreStructure;
-        if (targetObj) {
-            //if (creep.room.name == "E49N47")
-            //    console.log(creep.room.name, targetObj.structureType, "found resource push (store, onWay, amount, Threshold, max)", targetObj.store[resD.resource], resD.resOnWay, resD.amount(), resD.ThreshouldAmount, resD.ThreshouldHard);
-            if ((resource == null || resD.resource == resource) && resD.amount() >= resD.ThreshouldAmount) {
-            
-            let target: targetData = {
-                ID: pushID, type: targetT.TRANSPORT_PICKUP, resType: resD.resource, pos: targetObj.pos, range: 1
+    try {
+        if (resource == null || resource == RESOURCE_ENERGY) {
+            for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
+                let sourceMem: SourceMemory = Memory.Resources[ID];
+                if (sourceMem.AvailResource > creep.carryCapacity * 0.8) {
+                    avail.push(ID);
                 }
-                console.log(colony.name, "new push target", resD.amount(), resD.resOnWay, resD.resource);
+            }
+            //if (creep.room.name == "E47N45") {
+            //  console.log('in getSourceTarget, found avail', avail.length);
+            //}
+            if (avail.length > 0) {
+                const index = getRandomInt(avail.length);
+                let target: targetData = {
+                    ID: avail[index], type: targetT.DROPPED_RESOURCE, resType: RESOURCE_ENERGY, pos: Memory.Resources[avail[index]].workPos, range: 1
+                }
                 return target;
             }
         }
+
+        for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
+            let min = Memory.Resources[ID];
+
+            if (min.AvailResource > creep.carryCapacity && (min.resourceType == resource || resource == null)) {
+                let target: targetData = {
+                    ID: ID, type: targetT.DROPPED_RESOURCE, resType: min.resourceType, pos: min.workPos, range: 1
+                }
+                console.log(creep.room, "transport mineral");
+                return target;
+            }
+        }
+
+        let colony = PM.colonies[creep.creationRoom];
+        for (let pushID in colony.resourcePush) {
+            let resD = colony.resourcePush[pushID];
+            let targetObj = Game.getObjectById(pushID) as AnyStoreStructure;
+            if (targetObj) {
+                //if (creep.room.name == "E49N47")
+                //    console.log(creep.room.name, targetObj.structureType, "found resource push (store, onWay, amount, Threshold, max)", targetObj.store[resD.resource], resD.resOnWay, resD.amount(), resD.ThreshouldAmount, resD.ThreshouldHard);
+                if ((resource == null || resD.resource == resource) && resD.amount() >= resD.ThreshouldAmount) {
+
+                    let target: targetData = {
+                        ID: pushID, type: targetT.TRANSPORT_PICKUP, resType: resD.resource, pos: targetObj.pos, range: 1
+                    }
+                    console.log(colony.name, "new push target", resD.amount(), resD.resOnWay, resD.resource);
+                    return target;
+                }
+            }
+        }
+    }
+    catch (e) {
+        console.log("find dropped failed", e);
     }
     return null;
 }
@@ -64,10 +68,10 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
 export function getFromStoreTarget(creep: Creep, resource: ResourceConstant): targetData | null {
     let room = Game.rooms[creep.memory.creationRoom];
     if (room.storage && room.storage.store[resource] >= creep.carryCapacity) {
-        return { ID: room.storage.id, type: targetT.DROPPED_RESOURCE, resType: resource, pos: room.storage.pos, range: 1 }
+        return { ID: room.storage.id, type: targetT.STORAGE_RESOURCE, resType: resource, pos: room.storage.pos, range: 1 }
     }
     else if (room.terminal && room.terminal.store[resource] >= creep.carryCapacity) {
-        return { ID: room.terminal.id, type: targetT.DROPPED_RESOURCE, resType: resource, pos: room.terminal.pos, range: 1 }
+        return { ID: room.terminal.id, type: targetT.STORAGE_RESOURCE, resType: resource, pos: room.terminal.pos, range: 1 }
     }
     return null;
 }
@@ -86,7 +90,7 @@ function structWithdraw(creep: Creep, struct: AnyStoreStructure, resType: Resour
 export function useEnergyTarget(creep: Creep, target: targetData): number {
     let retErr : number = ERR_NOT_FOUND; 
     let freeSpace = creep.carryCapacity - creep.carryAmount;
-    if (target.type == DROPPED_RESOURCE) {
+    if (target.type == DROPPED_RESOURCE || target.type == STORAGE_RESOURCE) {
         const workPos = restorePos(target.pos);
         let res = workPos.lookFor(LOOK_RESOURCES);
         if (res.length > 0) {

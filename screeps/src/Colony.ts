@@ -222,7 +222,7 @@ export class Colony {
             if (Game.time % 100 == 0 || force) {
                 let controller = this.controller;
                 let structs = _.filter(this.room.structures, function (struct: Structure) {
-                    return (struct.hits < controller.level * 100000) && (struct.hits < struct.hitsMax - 1000);
+                    return (struct.hits < controller.level * 100000) && (struct.hits < struct.hitsMax - 2000 && struct.hits < 0.8 * struct.hitsMax);
                 });
                 structs.sort(function (obj: Structure, obj2: Structure): number { return obj.hits - obj2.hits; });
                 for (let struct of structs) {

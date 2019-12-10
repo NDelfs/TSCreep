@@ -78,6 +78,7 @@ export function Starter(creep: Creep) {
     let target = creep.getTarget();
     if (target && creep.inPlace) {
         switch (target.type) {
+            case targetT.STORAGE_RESOURCE:
             case targetT.DROPPED_RESOURCE: {
                 const err = useEnergyTarget(creep, target);
                 printRes(creep, err, "transf");

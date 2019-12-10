@@ -1,7 +1,8 @@
 import * as targetT from "Types/TargetTypes";
 import { restorePos } from "utils/posHelpers";
 import { PrettyPrintErr, PrettyPrintCreep } from "../../utils/PrettyPrintErr";
-import * as C from "Types/Constants"; 
+import * as C from "Types/Constants";
+import { getSourceTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
 import { PM } from "PishiMaster";
 
 export function resetDeliverTarget(creep: Creep) {
@@ -25,36 +26,54 @@ function getClosest(roomPos: RoomPosition, iTargets: targetData[]): targetData{
     }
     return iTargets.splice(index, 1)[0];
 }
+function getMatchingSource(creep: Creep, target: targetData, alreadyresourceType: ResourceConstant | null | undefined): targetData[] {
+    if (alreadyresourceType != null)//already have res
+        return [target];
+    let sourceT = getSourceTarget(creep, target.resType!);
+    if (sourceT == null)
+        sourceT = getFromStoreTarget(creep, target.resType!);
+    if (sourceT) {
+        return [sourceT, target];
+    }
+    return [];
+}
 
-export function getNewDeliverTarget(roomPos: RoomPosition, resourceType?: ResourceConstant | null): targetData | null {
+export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstant | null): targetData[] {
+    let roomPos: RoomPosition = creep.pos;
     let colony = PM.colonies[roomPos.roomName];
     if ((resourceType == null || resourceType == RESOURCE_ENERGY) && colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0) {
         if (roomPos.roomName == "E47N45")
             console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
-        return getClosest(roomPos, colony.energyNeedStruct);
+        let target = getClosest(roomPos, colony.energyNeedStruct);
+        let targets = getMatchingSource(creep, target, resourceType);
+        return targets;
         //PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
     }
     //if (roomPos.roomName == "E49N47")
         //console.log("looking for resource reg")
-    for (let [id, req] of Object.entries(colony.resourceRequests)) {
-        if (resourceType == null || req.resource == resourceType) {
-            let obj = Game.getObjectById(id) as AnyStoreStructure;
-            //if (roomPos.roomName == "E49N47")
-            //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
-            let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.store[req.resource!] != 0);
-            if (obj && haveRes && req.amount() < req.ThreshouldAmount) {
+    
+        for (let [id, req] of Object.entries(colony.resourceRequests)) {
+            if (resourceType == null || req.resource == resourceType) {
+                let obj = Game.getObjectById(id) as AnyStoreStructure;
                 //if (roomPos.roomName == "E49N47")
+                //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
+                let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.store[req.resource!] != 0);
+                if (obj && haveRes && req.amount() < req.ThreshouldAmount) {
+                    //if (roomPos.roomName == "E49N47")
                     //console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
-                let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1 };
-                target.resType = req.resource;
-                //req.addTran(creep);
-                return target;
+                    let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1, resType: req.resource };
+                    let targets = getMatchingSource(creep, target, resourceType);
+                    if (targets.length > 0)
+                      return targets;
+                    //req.addTran(creep);
+                }
             }
         }
-    }
+    
+
     //if (roomPos.roomName == "E49N47")
         //console.log("failed to find resource req")
-    return null;
+    return [];
 }
 
 export function getStorageDeliverTarget(room: Room, resourceType: ResourceConstant): targetData | null {

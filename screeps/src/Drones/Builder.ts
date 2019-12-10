@@ -34,8 +34,26 @@ export function Builder(creep: Creep) {
             creep.addTargetT(target2);
         }
     }
+    let inPlace = creep.inPlace;
+    //repair roads
+    if (!inPlace && creep.carry.energy > 0) {
+        let road = creep.pos.lookFor(LOOK_STRUCTURES);
+        if (road.length > 0 && road[0].hits < road[0].hitsMax) {
+            let err = creep.repair(road[0]);
+            if (err == OK)
+                creep.say("repaired");
+        }
+        let roadCon = creep.pos.lookFor(LOOK_CONSTRUCTION_SITES);
+        if (roadCon.length > 0) {
+            const err = creep.build(roadCon[0]);
+            if (err == OK)
+                creep.say("built");
+        }
+    }
+
+
     let target = creep.getTarget();
-    if (target && creep.inPlace) {
+    if (target && inPlace) {
         switch (target.type) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);
@@ -44,6 +62,7 @@ export function Builder(creep: Creep) {
                 useRepairTarget(creep);
                 break;
             }
+            case targetT.STORAGE_RESOURCE:
             case targetT.DROPPED_RESOURCE:
                 useEnergyTarget(creep, target);
                 creep.say("withdraw");
