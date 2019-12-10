@@ -38,7 +38,9 @@ function claimDeliver(creep: Creep, target: targetData) {
 
 export function Transporter(creep: Creep) {
     let room = creep.room;
-    //if (room.name == "E49N47") {
+  //if (room.name == "E47N45") {
+  //  console.log('in transporter');
+  //}
         if (creep.getTarget() == null) {
             //get key of already resources
             let key: ResourceConstant | null = null;
@@ -51,25 +53,33 @@ export function Transporter(creep: Creep) {
 
             //find if resource are nedded, if so then pick up from storage
             let delTarget = getNewDeliverTarget(creep.pos, key);
-            if (delTarget) {
+          if (delTarget) {
+            if (room.name == "E47N45") {
+              console.log('in transporter, tried to get delTarget', delTarget.pos.x, delTarget.pos.y, key);
+            }
                 if (key) {
                     creep.addTargetT(delTarget);
-                    claimDeliver(creep, delTarget);
-                    //console.log("added one del target", delTarget.pos.x, delTarget.pos.y);
+                  claimDeliver(creep, delTarget);
+                  if (room.name == "E47N45")
+                    console.log("added one del target", delTarget.pos.x, delTarget.pos.y);
                 }
                 else {
                     let getTarget = getFromStoreTarget(creep, delTarget.resType!)
                     if (getTarget) {//no need to have del target if no res excist
                         creep.addTargetT(getTarget);
                         creep.addTargetT(delTarget);
-                        claimDeliver(creep, delTarget);
-                        //console.log("added two target with deliver from storage", delTarget.pos.x, delTarget.pos.y);
+                      claimDeliver(creep, delTarget);
+                      if (room.name == "E47N45")
+                        console.log("added two target with deliver from storage", delTarget.pos.x, delTarget.pos.y);
                     }
                 }
-            }
-            else {
+          }
+          if (creep.getTarget()== null) {//there is the case when do recource could be found for a deliver target above. A lab require a super rare resource, the creep would go into last if but not get a target
                 if (key == null) {
-                    let target = getSourceTarget(creep, null);
+                  let target = getSourceTarget(creep, null);
+                  if (room.name == "E47N45") {
+                    console.log('in transporter, tried to get source', target,key);
+                  }
                     if (target) {
                         creep.addTargetT(target);
                         claimDeliver(creep, target);
@@ -78,7 +88,10 @@ export function Transporter(creep: Creep) {
                     }
                 }
                 if (key) {
-                    let target = getStorageDeliverTarget(room, key);
+                  let target = getStorageDeliverTarget(room, key);
+                  if (room.name == "E47N45") {
+                    console.log('in transporter, tried to get store',target,key);
+                  }
                     if (target) {
                         creep.addTargetT(target);
                         //console.log("added deliver to storage");

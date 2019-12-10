@@ -29,8 +29,8 @@ function getClosest(roomPos: RoomPosition, iTargets: targetData[]): targetData{
 export function getNewDeliverTarget(roomPos: RoomPosition, resourceType?: ResourceConstant | null): targetData | null {
     let colony = PM.colonies[roomPos.roomName];
     if ((resourceType == null || resourceType == RESOURCE_ENERGY) && colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0) {
-        //if (roomPos.roomName == "E49N47")
-            //console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
+        if (roomPos.roomName == "E47N45")
+            console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
         return getClosest(roomPos, colony.energyNeedStruct);
         //PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
     }

@@ -2,6 +2,7 @@ import { Colony } from "Colony"
 import * as Mem from "Memory";
 import { LabMaster } from "Base/LabMaster"
 import { profile } from "profiler/decorator";
+import { baseExpansion } from "Base/BaseExpansion"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 import { Market } from "./Base/Market";
@@ -42,8 +43,9 @@ export class _PishiMaster {
     run() {
         for (let colonyID in this.colonies) {
             let colony = this.colonies[colonyID];
-            Spawner(colony);
-            colony.runTowers();
+            Spawner(colony,this.colonies);
+          colony.runTowers();
+          baseExpansion(colony);
         }
        
         this.labMaster.run();

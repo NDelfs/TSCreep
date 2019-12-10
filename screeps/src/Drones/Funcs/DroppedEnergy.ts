@@ -8,7 +8,10 @@ function getRandomInt(max : number) {
 }
 
 export function getSourceTarget(creep: Creep, resource: ResourceConstant | null): targetData | null {
-    let avail: string[] = [];
+  let avail: string[] = [];
+  if (creep.room.name == "E47N45") {
+    console.log('in getSourceTarget', resource);
+  }
     if (resource == null || resource == RESOURCE_ENERGY) {
         for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
             let sourceMem: SourceMemory = Memory.Resources[ID];
@@ -16,7 +19,9 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
                 avail.push(ID);
             }
         }
-
+      if (creep.room.name == "E47N45") {
+        console.log('in getSourceTarget, found avail', avail.length);
+      }
         if (avail.length > 0) {
             const index = getRandomInt(avail.length);
             let target: targetData = {

@@ -81,20 +81,20 @@ function main() {
         console.log("pishi master run failed with : ", e);
     }
 
-    try {
-        profiler.registerFN(baseExpansion)();
-        //baseExpansion();
-    }
-    catch (e) {
-        console.log("Failed base expansion update with: ", e);
-    }
-    try {
-        profiler.registerFN(Spawner)();
-        //Spawner();
-    }
-    catch (e) {
-        console.log("Failed spawner update with: ", e);
-    }
+    //try {
+    //    profiler.registerFN(baseExpansion)();
+    //    //baseExpansion();
+    //}
+    //catch (e) {
+    //    console.log("Failed base expansion update with: ", e);
+    //}
+    //try {
+    //    profiler.registerFN(Spawner)();
+    //    //Spawner();
+    //}
+    //catch (e) {
+    //    console.log("Failed spawner update with: ", e);
+    //}
     //console.log(`Current game tick is ${Game.time}`);
     CreepUpdate();
     // Automatically delete memory of missing creeps
