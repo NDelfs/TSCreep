@@ -9,9 +9,7 @@ function getRandomInt(max : number) {
 
 export function getSourceTarget(creep: Creep, resource: ResourceConstant | null): targetData | null {
   let avail: string[] = [];
-  if (creep.room.name == "E47N45") {
-    console.log('in getSourceTarget', resource);
-  }
+
     if (resource == null || resource == RESOURCE_ENERGY) {
         for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
             let sourceMem: SourceMemory = Memory.Resources[ID];
@@ -19,9 +17,9 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
                 avail.push(ID);
             }
         }
-      if (creep.room.name == "E47N45") {
-        console.log('in getSourceTarget, found avail', avail.length);
-      }
+      //if (creep.room.name == "E47N45") {
+      //  console.log('in getSourceTarget, found avail', avail.length);
+      //}
         if (avail.length > 0) {
             const index = getRandomInt(avail.length);
             let target: targetData = {
@@ -48,8 +46,8 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
         let resD = colony.resourcePush[pushID];
         let targetObj = Game.getObjectById(pushID) as AnyStoreStructure;
         if (targetObj) {
-            if (creep.room.name == "E49N47")
-                console.log(creep.room.name, targetObj.structureType, "found resource push (store, onWay, amount, Threshold, max)", targetObj.store[resD.resource], resD.resOnWay, resD.amount(), resD.ThreshouldAmount, resD.ThreshouldHard);
+            //if (creep.room.name == "E49N47")
+            //    console.log(creep.room.name, targetObj.structureType, "found resource push (store, onWay, amount, Threshold, max)", targetObj.store[resD.resource], resD.resOnWay, resD.amount(), resD.ThreshouldAmount, resD.ThreshouldHard);
             if ((resource == null || resD.resource == resource) && resD.amount() >= resD.ThreshouldAmount) {
             
             let target: targetData = {

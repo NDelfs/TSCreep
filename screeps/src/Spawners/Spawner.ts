@@ -221,10 +221,10 @@ function calculateBuilderQue(colony: Colony): queData[] {
     let ret: queData[] = [];
     let cRoom = colony.room;
     if (cRoom.constructionSites.length > 0 && colony.memory.controllerStoreID) {
-        let limit = 0;
-        if (cRoom.availEnergy > 2e3)
+      let limit = 0;
+      if (cRoom.availEnergy > 2e3 || (cRoom.terminal && cRoom.terminal.store.energy > 10000))
             limit = 1;
-        if (cRoom.availEnergy > 2e4)
+      if (cRoom.availEnergy > 2e4 || (cRoom.terminal && cRoom.terminal.store.energy > 20000))
             limit = 2;
 
         if (cRoom.getCreeps(creepT.BUILDER).length < limit) {
