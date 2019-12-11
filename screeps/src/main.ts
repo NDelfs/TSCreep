@@ -53,6 +53,13 @@ function testeCode() {
 }
 
 function main() {
+  //for (let roomID in Memory.rooms) {
+  //  let roomMem = Memory.rooms[roomID];
+  //  let newMem: RoomMemory = {};//here data is transfered to new struct
+  //  Memory.rooms[roomID] = newMem;
+  //}
+
+
     reset();
     try {
         profiler.registerFN(DataUpdate)();

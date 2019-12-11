@@ -108,7 +108,7 @@ Object.defineProperty(Room.prototype, 'availEnergy', {
     get() {
         if (!this._availEnergy) {
             let roomEne = 0;
-            for (let sourceID of this.memory.sourcesUsed) {
+            for (let sourceID of global[this.name].memory.sourcesUsed) {
                 roomEne += Memory.Resources[sourceID].AvailResource;
             }
             if (this.storage)

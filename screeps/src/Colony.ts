@@ -19,7 +19,8 @@ const ColonyMemoryDef: ColonyMemory = {
     mineralsUsed: [],
     startSpawnPos: null, 
     ExpandedLevel: 0,
-    controllerStoreID: null,
+  controllerStoreID: null,
+  wallLim: 1e5,
 }
 
 function refreshArray(array: any[]) {
@@ -226,8 +227,12 @@ export class Colony {
                     this.repairSites.push(struct.id);
                 }
             }
-        } catch (e) { console.log(this.name, "failed repairSites", e); };
+      } catch (e) { console.log(this.name, "failed repairSites", e); };
+      if (Game.time % 1e4) {//1e4 ticks => container lose 1e5 of 2.5e5. Rampart loses 3e4 and roads loses 1k (5k on swamp) of 5k (25k on swamp)  
+
+      }
     }
+
 
     public refreshEnergyDemand(force?: boolean) {
         if (Game.time % 10 == 0 || force) {

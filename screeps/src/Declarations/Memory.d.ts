@@ -33,17 +33,11 @@ interface ColonyMemory {
     startSpawnPos: posData | null;
 
     ExpandedLevel: number;
-    controllerStoreID: string | null;
+  controllerStoreID: string | null;
+  wallLim: number;
 }
 
 interface RoomMemory {
-    //inCreepEmergency: number | null;
-    //sourcesUsed: string[];
-    //mineralsUsed: string[];
-    //startSpawnPos: posData | null;
-
-    //ExpandedLevel: number;
-    //controllerStoreID: string | null;
 }
 interface SpawnMemory {
 
