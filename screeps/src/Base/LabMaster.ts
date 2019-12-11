@@ -108,7 +108,7 @@ export class LabMaster {
         }
     }
 
-    private filterReactions(): boolean{
+    private filterReactions(): boolean{//this one fails to keep already runnning reactions that still are below the full threshold. 
         this.countResources();
 
         let newList = this.reactionsToAdd;
@@ -220,13 +220,13 @@ export class LabMaster {
                 this.colLabs.push({ nrLabs: colony.labs.length, nrLabUsed: 0, colony: col, roomReaction: [] });
             else
                 foundCol.nrLabs = colony.labs.length;
-            this.nrLabs += colony.labs.length;
+          this.nrLabs += colony.labs.length;
         }
-        this.colLabs.sort(function (obj1, obj2) { return obj1.nrLabs - obj2.nrLabs });
+      this.colLabs.sort(function (obj1, obj2) { return obj2.nrLabs - obj1.nrLabs });
 }
 
-    private AddReaction(mainIdx: number, reaction: IReaction, labInfo: IRoomLabs, reactionsToAdd: MineralReq[], finalP : boolean): boolean {
-        if (reaction.needs.length == 0 || (mainIdx != 0 && reaction.r == "G"))//G will never fit in a used room and needed as a pure mineral
+  private AddReaction(mainIdx: number, reaction: IReaction, labInfo: IRoomLabs, reactionsToAdd: MineralReq[], finalP: boolean): boolean {
+    if (reaction.needs.length == 0 || (mainIdx != 0 && reaction.r == "G") /*|| (this.resources[reaction.r] |0) > 2000 if 4 room have 500 they will never send it to this room. Need a way to empty rooms that are not producing even when below 1k limit*/)//G will never fit in a used room and needed as a pure mineral
             return false;
         if (labInfo.nrLabUsed + 2 <= labInfo.nrLabs) {
             let master = { idxs: [mainIdx], final: finalP };
@@ -270,8 +270,10 @@ export class LabMaster {
                       this.reactionsToAdd.shift();
                 }
                 this.reactionsToAdd = localReactionToAdd.concat( this.reactionsToAdd );
-                if (labInfo.roomReaction.length > 0)
-                    console.log(labInfo.colony, "total reaction added", labInfo.roomReaction.length, "left to add", this.reactionsToAdd.length);
+                //if (labInfo.roomReaction.length > 0)
+              console.log(labInfo.colony, "total reaction added", labInfo.roomReaction.length, "left to add", this.reactionsToAdd.length);
+              if (this.reactionsToAdd.length == 0)
+                return;
             }
         }
     }

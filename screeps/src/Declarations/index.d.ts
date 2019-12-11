@@ -1,5 +1,5 @@
-//declare const require: (module: string) => any;
-//declare var global: any;
+declare const require: (module: string) => any;
+declare var global: any;
 
 //declare namespace NodeJS {
 //    interface Global {

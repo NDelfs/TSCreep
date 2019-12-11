@@ -8,6 +8,10 @@ import { profile } from "profiler/decorator";
 import profiler from "Profiler/screeps-profiler";
 import { restorePos } from "./utils/posHelpers";
 
+function getRandomInt(min: number, max: number) {
+  return Math.floor(min + ((1-min/max)* Math.random()) * Math.floor(max));
+}
+
 const ColonyMemoryDef: ColonyMemory = {
     outposts: [],
     inCreepEmergency : null,
@@ -30,7 +34,7 @@ export class resourceRequest {
     creeps: string[];
     resOnWay: number;
 
-    constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax : number, room:Room) {
+  constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax: number, room: Room) {
         this.id = ID;
         this.resource = iResource;
         this.ThreshouldAmount = iThreshould;
@@ -103,6 +107,7 @@ profiler.registerClass(resourceRequest, 'resourceRequest');
 
 //@profile
 export class Colony {
+  mRebuild : number;
     memory: ColonyMemory;
     name: string;
     room: Room;
@@ -136,37 +141,29 @@ export class Colony {
             this.spawnEnergyNeed += creep.carry.energy;
     }
 
-    mRepairTargets: { ID: string, healtTarget: number}[];
+  //mRepairTargets: { ID: string, healtTarget: number }[];
 
-    repairSites: string[];
+  repairSites: string[];
+  wallSites: string[];
 
     constructor(iRoom: Room) {
         if (!Memory.ColonyMem)//this is rare enough that I do ugly fix here
-            Memory.ColonyMem = {};
+        Memory.ColonyMem = {};
+      this.mRebuild = getRandomInt(2000, 5000); //rebuil about every hour
         this.forceUpdateEnergy = false;
         this.room = iRoom;
         this.name = iRoom.name;
         this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
 
-        if (this.memory.startSpawnPos == null) {//move data over to colony
-            this.memory.controllerStoreID = this.room.memory.controllerStoreID;
-            this.memory.ExpandedLevel = this.room.memory.ExpandedLevel;
-            this.memory.inCreepEmergency = this.room.memory.inCreepEmergency;
-            this.memory.mineralsUsed = this.room.memory.mineralsUsed;
-            this.memory.sourcesUsed = this.room.memory.sourcesUsed;
-            this.memory.startSpawnPos = this.room.memory.startSpawnPos;
-        }
-
-        //global[this.name] = this;
-        //global[this.name.toLowerCase()] = this;
-        console.log(this.room.name,"recreate obj");
+        global[this.name] = this;
+        global[this.name.toLowerCase()] = this;
         this.outpostIDs = this.memory.outposts;
         this.controller = this.room.controller!;
         this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
         this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
         this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
-        this.repairSites = [];
-        this.mRepairTargets = [];
+      this.repairSites = [];
+      this.wallSites = [];
         this.computeLists(true);
         this.spawnEnergyNeed = 0;
         this.energyNeedStruct = [];

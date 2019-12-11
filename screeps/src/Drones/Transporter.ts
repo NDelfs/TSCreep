@@ -14,8 +14,8 @@ function claimResource(creep: Creep, target: targetData | null) {
 }
 
 function claimDeliver(creep: Creep, target: targetData) {
-    if (creep.pos.roomName == "E47N45")
-        console.log(creep.name, "claiming dropped", target.pos.x, target.pos.y, target.ID, target.type);
+    //if (creep.pos.roomName == "E47N45")
+        //console.log(creep.name, "claiming dropped", target.pos.x, target.pos.y, target.ID, target.type);
     if (target.type == POWERSTORAGE || target.type == STORAGE_RESOURCE)
         return;
     if (target.type == DROPPED_RESOURCE) {

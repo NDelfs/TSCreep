@@ -20,7 +20,9 @@ export class _PishiMaster {
     colonies: { [name: string]: Colony };
     labMaster: LabMaster;
     market: Market;
-    constructor() {
+  constructor() {
+    console.log("rebuild pishimaster")
+    global['PM'] = this;
         this.memory = Mem.wrap(Memory, "PishiMasterMem", PishiMasterMemoryDef);
         this.ticksAlive = 1;
         this.colonies = {};
