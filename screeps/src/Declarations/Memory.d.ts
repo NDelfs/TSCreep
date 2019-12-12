@@ -34,7 +34,7 @@ interface ColonyMemory {
 
     ExpandedLevel: number;
   controllerStoreID: string | null;
-  wallLim: number;
+  wallEnergy: number;
 }
 
 interface RoomMemory {

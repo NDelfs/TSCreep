@@ -10,7 +10,8 @@ type TargetConstant =
     | STORAGE_RESOURCE
     | TRANSPORT_PICKUP
     | CONSTRUCTION
-    | REPAIR
+  | REPAIR
+  | REPAIR_WALL
     | POSITION
     | FLAG_RED
     | FLAG_WHITE
@@ -26,6 +27,7 @@ type STORAGE_RESOURCE = 32;
 type TRANSPORT_PICKUP = 35;
 type CONSTRUCTION = 41;
 type REPAIR = 45;
+type REPAIR_WALL = 46;
 type POSITION = 51;
 type DEFEND = 61
 type FLAG_RED = 100;
@@ -79,7 +81,8 @@ interface targetData {
     type: TargetConstant;
     resType?: ResourceConstant;
     pos: posData;
-    range: number;
+  range: number;
+  targetVal?: number;//on repair wall
 }
 
 interface queData {

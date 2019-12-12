@@ -21,8 +21,9 @@ export function getRepairTarget(creep: Creep): boolean {
     let que = PM.colonies[creep.memory.creationRoom].repairSites;
     if (que.length > 0) {
         let index = getRandomInt(que.length);//insdead shift it if enough energy to repair is on current creep
-        let obj = Game.getObjectById(que[index]) as Structure;
-        creep.addTarget(obj.id, targetT.REPAIR, obj.pos, 3);
+      let obj = Game.getObjectById(que[index]) as Structure;
+      creep.addTargetT({ ID: obj.id, type: targetT.REPAIR, pos: obj.pos, range: 3, targetVal: Math.min(1e5, obj.hitsMax) });
+      
         return true;
     }
     return false;
@@ -41,8 +42,8 @@ export function useBuildTarget(creep: Creep): number {
 export function useRepairTarget(creep: Creep): number {
     let con: Structure | null = Game.getObjectById(creep.getTarget()!.ID);
         if (con) {
-            const err = creep.repair(con);
-            if (con.hits > con.hitsMax - 100 || creep.room.controller && (con.hits >= creep.room.controller.level * 100000))
+          const err = creep.repair(con);
+          if (con.hits >= (creep.getTarget()!.targetVal! - creep.getActiveBodyparts(WORK)*100))
                 creep.completeTarget();
             return err;
         }

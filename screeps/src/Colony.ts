@@ -2,11 +2,13 @@ import * as Mem from "Memory";
 
 import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
 import * as targetT from "Types/TargetTypes"
+import * as creepT from "Types/CreepType";
 import * as C from "Types/Constants"; 
 import { profile } from "profiler/decorator";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 import { restorePos } from "./utils/posHelpers";
+import { getBuilderBody } from "./Spawners/Spawner";
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(min + ((1-min/max)* Math.random()) * Math.floor(max));
@@ -20,7 +22,7 @@ const ColonyMemoryDef: ColonyMemory = {
     startSpawnPos: null, 
     ExpandedLevel: 0,
   controllerStoreID: null,
-  wallLim: 1e5,
+  wallEnergy: 0,
 }
 
 function refreshArray(array: any[]) {
@@ -127,7 +129,9 @@ export class Colony {
 
     resourceRequests: { [id: string]: resourceRequest };
     resourcePush: { [id: string]: resourceRequest };
-    resourceExternal: ResourceConstant[];
+  resourceExternal: ResourceConstant[];
+
+  creepRequest: queData[];
 
     public addEnergyTran(creep: Creep, preknownAmount?: number) {
         let already = _.find(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
@@ -143,9 +147,9 @@ export class Colony {
     }
 
   //mRepairTargets: { ID: string, healtTarget: number }[];
-
+  emergencyRepairSites: string[];
   repairSites: string[];
-  wallSites: string[];
+  wallSites: {id: string, newHits : number }[];
 
     constructor(iRoom: Room) {
         if (!Memory.ColonyMem)//this is rare enough that I do ugly fix here
@@ -164,12 +168,14 @@ export class Colony {
         this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
         this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
       this.repairSites = [];
+      this.emergencyRepairSites = [];
       this.wallSites = [];
         this.computeLists(true);
         this.spawnEnergyNeed = 0;
         this.energyNeedStruct = [];
         this.energyTransporters = [];
-        this.labs = [];
+      this.labs = [];
+      this.creepRequest = [];
 
         this.resourceRequests = {};
         this.resourcePush = {};
@@ -217,19 +223,47 @@ export class Colony {
 
     private computeLists(force?:boolean){
         try {
-            if (Game.time % 100 == 0 || force) {
-                let controller = this.controller;
+          if (Game.time % 100 == 0 || force) {
+            let emergstructs = _.filter(this.room.structures, function (struct: Structure) {
+              return (struct.hits < 1500);
+            });
+
+            emergstructs.sort(function (obj: Structure, obj2: Structure): number { return obj.hits - obj2.hits; });
+            this.emergencyRepairSites = emergstructs.map((obj) => { return obj.id; });
+
+
                 let structs = _.filter(this.room.structures, function (struct: Structure) {
-                    return (struct.hits < controller.level * 100000) && (struct.hits < struct.hitsMax - 2000 && struct.hits < 0.8 * struct.hitsMax);
+                    return (struct.hits < 200000) && (struct.hits < struct.hitsMax - 2000 && struct.hits < 0.8 * struct.hitsMax);
                 });
-                structs.sort(function (obj: Structure, obj2: Structure): number { return obj.hits - obj2.hits; });
-                for (let struct of structs) {
-                    this.repairSites.push(struct.id);
-                }
+            structs.sort(function (obj: Structure, obj2: Structure): number { return obj.hits - obj2.hits; });
+            this.repairSites = structs.map((obj) => { return obj.id; });
             }
       } catch (e) { console.log(this.name, "failed repairSites", e); };
-      if (Game.time % 1e4) {//1e4 ticks => container lose 1e5 of 2.5e5. Rampart loses 3e4 and roads loses 1k (5k on swamp) of 5k (25k on swamp)  
+      if (this.room.storage) {
+        let timeBetween = 1e4;
+        let proportion = 0.05;
+        if (Game.time % timeBetween) {//1e4 ticks => container lose 1e5 of 2.5e5. Rampart loses 3e4 and roads loses 1k (5k on swamp) of 5k (25k on swamp)  
+          this.memory.wallEnergy = Math.max(0, this.memory.wallEnergy) + this.memory.sourcesUsed.length * 10 * proportion * timeBetween; //for a single room this give 1e/s
+          let nrBuilders = Math.floor( Math.min(this.memory.wallEnergy / 1e4, this.room.storage.store.energy / 1e4));
+          for (let i = 0; i < nrBuilders; i++) {
+            const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
+            this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
+          }
+        }
+        if (Game.time % timeBetween || force) {
+          let walls = this.room.structures.filter((struct) => { return struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART });
+          this.wallSites = [];
+          if (walls.length > 0) {
+            walls.sort((a, b) => { return a.hits - b.hits });
+            let lastHit = _.last(walls).hits;
+            for (let wall of walls) {
+              let upgradeAmount = Math.max(lastHit - wall.hits, 1e5);
+              this.wallSites.push({ id: wall.id, newHits: wall.hits + upgradeAmount });
+            }
+            console.log("first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
 
+          }
+        }
       }
     }
 

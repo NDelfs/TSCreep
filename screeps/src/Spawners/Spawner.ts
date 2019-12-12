@@ -20,18 +20,28 @@ function getRandomName() {
     return namesCombined[Memory.creepIndex % namesCombined.length]
 }
 
+function computeBodyCost(body: BodyPartConstant[]):number {
+  let ret = 0;
+  for (let part of body) {
+    ret += BODYPART_COST[part];
+  }
+  return ret;
+}
+
+function calculateBodyFromSet(room: Room, set: BodyPartConstant[], maxSets : number) {
+  let nrSets = Math.floor((room.energyCapacityAvailable * 0.8) / computeBodyCost(set));
+  nrSets = Math.min(maxSets, nrSets);
+  let body: BodyPartConstant[] = [];
+  for (let i = 0; i < nrSets; i++) {
+    body = body.concat(body, set);
+  }
+  return body;
+}
+
 function getStarterBody(room: Room): BodyPartConstant[] {
     let body: BodyPartConstant[] = [WORK, WORK, CARRY, MOVE];
     if (room.energyCapacityAvailable >= 1200) {
-        body = [];
-        let nrSets = room.energyCapacityAvailable * 0.8 / 200.0;
-        if (nrSets > 8)
-            nrSets = 8;
-        for (let i = 0; i < nrSets; i++) {
-            body.push(WORK);
-            body.push(CARRY);
-            body.push(MOVE);
-        }
+    body = calculateBodyFromSet(room, [WORK, CARRY, MOVE], 8);
     }
     else if (room.energyCapacityAvailable >= 800)
         body = [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE];
@@ -40,8 +50,8 @@ function getStarterBody(room: Room): BodyPartConstant[] {
     return body;
 }
 
-function getBuilderBody(room: Room): BodyPartConstant[] {
-    return getStarterBody(room);
+export function getBuilderBody(room: Room): BodyPartConstant[] {
+  return calculateBodyFromSet(room, [WORK, CARRY, MOVE], 10);
 }
 
 function getHarvesterBody(room: Room): BodyPartConstant[]
@@ -53,20 +63,8 @@ function getHarvesterBody(room: Room): BodyPartConstant[]
     throw ("cant get harvester body with less than 550 energy");
 }
 
-function getTransportBody(room: Room): BodyPartConstant[] {
-    let nrSets = room.energyCapacityAvailable*0.8 / 150.0;
-    
-    let ret: BodyPartConstant[] = [];
-    if (nrSets > 10)
-        nrSets = 10;
-
-    for (let i = 0; i < nrSets; i++) {
-        ret.push(CARRY);
-        ret.push(CARRY);
-        ret.push(MOVE);
-    }
-
-    return ret;
+export function getTransportBody(room: Room): BodyPartConstant[] {
+  return calculateBodyFromSet(room, [CARRY, CARRY, MOVE], 10);
 }
 
 function getUpgradeBody(room: Room, size: number): BodyPartConstant[] {
@@ -329,6 +327,14 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
             console.log(spawner.room.name, "spawn failed to spawn", PrettyPrintCreep(que[0].memory.type), PrettyPrintErr(err));
     }
     return 0;
+}
+
+export function spawnFromReq(colony: Colony, colonies: { [name: string]: Colony }) {
+  for (let spawn of colony.spawns) {
+    //spawnCreep(colony.creepRequest,spawn, colony, colonies);
+    if (colony.creepRequest.length > 0)
+      console.log(colony.name, "found request spawn que", PrettyPrintCreep(colony.creepRequest[0].memory.type));
+  }
 }
 
 function isFailedEconomy(colony: Colony, spawns: StructureSpawn[]): void {

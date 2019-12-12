@@ -3,36 +3,61 @@ import { resetDeliverTarget, useDeliverTarget } from "Drones/Funcs/DeliverEnergy
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "Drones/Funcs/Build";
 import * as targetT from "Types/TargetTypes";
 import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
+import { PM } from "PishiMaster";
 
 export function Builder(creep: Creep) {
-    resetDeliverTarget(creep);
-    if (creep.room.name, creep.getTarget() == null && creep.carry.energy > 50) {
+    //resetDeliverTarget(creep);
+  let haveEnoughEnergy = creep.carry.energy > 50;
+  if (creep.room.name, creep.getTarget() == null) {
         if (!getRepairTarget(creep)) {
-            getBuildTarget(creep);
+          getBuildTarget(creep);
+          if (creep.getTarget() == null) {
+            let colony = PM.colonies[creep.memory.creationRoom];
+            while (colony.wallSites.length > 0 || creep.getTarget() == null) {
+              let wall = Game.getObjectById(colony.wallSites[0].id) as Structure;
+              if (wall.hits + 4e4 < colony.wallSites[0].newHits) {
+                creep.addTarget(wall.id, targetT.REPAIR_WALL, wall.pos, 3);
+                let target = creep.getTarget()!;
+                target.targetVal = colony.wallSites[0].newHits;
+                console.log(creep.room.name, "found a wall target, goal wall", target.targetVal, "at pos", target.pos.x, target.pos.y);
+              }
+              else {
+                colony.wallSites.shift();
+                console.log("removed a wall from list");
+              }
+            }
+
+          }
         }
-    }
-    else if (creep.getTarget() == null && Game.rooms[creep.memory.creationRoom].availEnergy > 2000) {//get closest energy
+  }
+  //if it has one target only that should mean that it has a build or repair target but not started to pick up energy
+  if (creep.memory.targetQue.length == 1 && ((!haveEnoughEnergy && !creep.inPlace) || creep.carry.energy == 0)) {//get closest energy
         let target1 = getSourceTarget(creep, RESOURCE_ENERGY);
         let target2 = getFromStoreTarget(creep, RESOURCE_ENERGY);
        
         if (target1 && target2) {
             let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
-            if (range1 < range2) {
-                creep.addTargetT(target1);
+          if (range1 < range2) {
+            creep.memory.targetQue.unshift(target1);
+                //creep.addTargetT(target1);
                 Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
             }
-            else {
-                creep.addTargetT(target2);
+          else {
+            creep.memory.targetQue.unshift(target2);
+                //creep.addTargetT(target2);
             }
         }
         else if (target1) {
-            creep.addTargetT(target1);
+          //creep.addTargetT(target1);
+          creep.memory.targetQue.unshift(target1);
             Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
         }
         else if (target2) {
-            creep.addTargetT(target2);
-        }
+          creep.memory.targetQue.unshift(target2);
+            //creep.addTargetT(target2);
+    }
+    console.log(creep.room.name, "builder now have two targets", creep.getTarget()!.type);
     }
     let inPlace = creep.inPlace;
     //repair roads
@@ -57,7 +82,12 @@ export function Builder(creep: Creep) {
         switch (target.type) {
             case targetT.CONSTRUCTION:
                 useBuildTarget(creep);
-                break;
+            break;
+          case targetT.REPAIR_WALL: {
+            useRepairTarget(creep);
+            PM.colonies[creep.memory.creationRoom].memory.wallEnergy -= creep.getActiveBodyparts(WORK);
+            break;
+          }
             case targetT.REPAIR: {
                 useRepairTarget(creep);
                 break;

@@ -8,6 +8,7 @@ export const STORAGE_RESOURCE = 32;
 export const TRANSPORT_PICKUP = 35;
 export const CONSTRUCTION = 41;
 export const REPAIR = 45;
+export const REPAIR_WALL = 46;
 export const POSITION = 51;
 export const DEFEND = 61
 export const FLAG_RED = 100;
