@@ -8,12 +8,12 @@ import { PM } from "PishiMaster";
 export function Builder(creep: Creep) {
     //resetDeliverTarget(creep);
   let haveEnoughEnergy = creep.carry.energy > 50;
-  if (creep.room.name, creep.getTarget() == null) {
+  if (creep.getTarget() == null) {
         if (!getRepairTarget(creep)) {
           getBuildTarget(creep);
           if (creep.getTarget() == null) {
             let colony = PM.colonies[creep.memory.creationRoom];
-            while (colony.wallSites.length > 0 || creep.getTarget() == null) {
+            while (colony.wallSites.length > 0 && creep.getTarget() == null) {
               let wall = Game.getObjectById(colony.wallSites[0].id) as Structure;
               if (wall.hits + 4e4 < colony.wallSites[0].newHits) {
                 creep.addTarget(wall.id, targetT.REPAIR_WALL, wall.pos, 3);
@@ -22,8 +22,8 @@ export function Builder(creep: Creep) {
                 console.log(creep.room.name, "found a wall target, goal wall", target.targetVal, "at pos", target.pos.x, target.pos.y);
               }
               else {
+                console.log(creep.room.name, "removed a wall from list", wall.hits, wall.hits + 4e4, colony.wallSites[0].newHits);
                 colony.wallSites.shift();
-                console.log("removed a wall from list");
               }
             }
 
@@ -39,31 +39,26 @@ export function Builder(creep: Creep) {
             let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
             let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
           if (range1 < range2) {
-            creep.memory.targetQue.unshift(target1);
-                //creep.addTargetT(target1);
+                creep.addTargetFirst(target1);
                 Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
             }
           else {
-            creep.memory.targetQue.unshift(target2);
-                //creep.addTargetT(target2);
+                creep.addTargetFirst(target2);
             }
         }
         else if (target1) {
-          //creep.addTargetT(target1);
-          creep.memory.targetQue.unshift(target1);
+          creep.addTargetFirst(target1);
             Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
         }
         else if (target2) {
-          creep.memory.targetQue.unshift(target2);
-            //creep.addTargetT(target2);
+            creep.addTargetFirst(target2);
     }
-    console.log(creep.room.name, "builder now have two targets", creep.getTarget()!.type);
     }
     let inPlace = creep.inPlace;
     //repair roads
     if (!inPlace && creep.carry.energy > 0) {
         let road = creep.pos.lookFor(LOOK_STRUCTURES);
-        if (road.length > 0 && road[0].hits < road[0].hitsMax) {
+        if (road.length > 0 && road[0].hits + 400 < road[0].hitsMax) {
             let err = creep.repair(road[0]);
             if (err == OK)
                 creep.say("repaired");
@@ -77,7 +72,10 @@ export function Builder(creep: Creep) {
     }
 
 
-    let target = creep.getTarget();
+  let target = creep.getTarget();
+  if (target == null)
+    console.log(creep.room.name,"builder have nothing to do")
+
     if (target && inPlace) {
         switch (target.type) {
             case targetT.CONSTRUCTION:

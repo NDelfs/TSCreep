@@ -2,7 +2,7 @@ import { storePos, restorePos } from "utils/posHelpers";
 import * as creepT from "Types/CreepType";
 import * as targetT from "Types/TargetTypes";
 import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
-import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
+import { HARVESTER, TRANSPORTER, STARTER, BUILDER } from "Types/CreepType";
 import * as C from "Types/Constants"; 
 import { Starter } from "../Drones/starter";
 import { PM } from "PishiMaster";
@@ -55,8 +55,8 @@ function updateSources() {
                         let cont = struct as StructureContainer;
                         sMem.AvailResource += _.sum(cont.store);
                     }
-                }
-                let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER));
+              }
+              let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)).concat(room.getCreeps(BUILDER));
                 const transportersTmp = _.filter(transporters, function (creep) {
                     return creep.alreadyTarget(ID);
                 })

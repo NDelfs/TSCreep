@@ -34,7 +34,8 @@ export class _PishiMaster {
         this.labMaster = new LabMaster(this.colonies);
         this.market = new Market(this.colonies);
     }
-    refresh() {
+  refresh() {
+    this.memory = Mem.wrap(Memory, "PishiMasterMem", PishiMasterMemoryDef);
         this.ticksAlive++;
         for (let colonyID in this.colonies) {
             this.colonies[colonyID].refresh();

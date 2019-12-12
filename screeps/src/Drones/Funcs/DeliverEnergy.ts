@@ -42,8 +42,8 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
     let roomPos: RoomPosition = creep.pos;
     let colony = PM.colonies[roomPos.roomName];
     if ((resourceType == null || resourceType == RESOURCE_ENERGY) && colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0) {
-        if (roomPos.roomName == "E47N45")
-            console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
+        //if (roomPos.roomName == "E47N45")
+            //console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
         let target = getClosest(roomPos, colony.energyNeedStruct);
         let targets = getMatchingSource(creep, target, resourceType);
         return targets;
@@ -113,7 +113,7 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//d
                     //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
                 if (obj && obj.store[req.resource] + req.resOnWay < req.ThreshouldAmount) {
                     //if (room.name == "E49N47")
-                      console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
+                      //console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
                     creep.addTarget(id, targetT.TRANSPORT, obj.pos, 1);
                     req.addTran(creep);
                     return true;

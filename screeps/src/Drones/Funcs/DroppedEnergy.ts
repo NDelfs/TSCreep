@@ -36,7 +36,7 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
                 let target: targetData = {
                     ID: ID, type: targetT.DROPPED_RESOURCE, resType: min.resourceType, pos: min.workPos, range: 1
                 }
-                console.log(creep.room, "transport mineral");
+                //console.log(creep.room, "transport mineral");
                 return target;
             }
         }
@@ -53,7 +53,7 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
                     let target: targetData = {
                         ID: pushID, type: targetT.TRANSPORT_PICKUP, resType: resD.resource, pos: targetObj.pos, range: 1
                     }
-                    console.log(colony.name, "new push target", resD.amount(), resD.resOnWay, resD.resource);
+                    //console.log(colony.name, "new push target", resD.amount(), resD.resOnWay, resD.resource);
                     return target;
                 }
             }
@@ -117,11 +117,11 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
             structWithdraw(creep, storageObj, target.resType!, freeSpace);
             if (storageObj.store[target.resType!] - freeSpace <= req.ThreshouldHard) {
                 delete PM.colonies[creep.memory.creationRoom].resourcePush[target.ID];
-                console.log("push request deleted");
+                //console.log("push request deleted");
             }
             else {
                 PM.colonies[creep.memory.creationRoom].resourcePush[target.ID].removeTran(creep, freeSpace);
-                console.log("push request one transport less");
+               // console.log("push request one transport less");
             }
         }
         else

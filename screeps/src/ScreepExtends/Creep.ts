@@ -108,6 +108,13 @@ Creep.prototype.addTargetT = function (iTarget: targetData) {
     }
 }
 
+Creep.prototype.addTargetFirst = function (iTarget: targetData) {
+  this.memory.targetQue.unshift(iTarget);
+  //if (this.memory.targetQue.length == 1) {//special case to init when beeing lazy before
+    this.walkTo(this.memory.targetQue[0].pos, this.memory.targetQue[0].range)
+  //}
+}
+
 Creep.prototype.getTarget = function (): targetData | null{
     if (this.memory.targetQue.length > 0)
         return this.memory.targetQue[0];
