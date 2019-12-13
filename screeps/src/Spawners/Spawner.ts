@@ -51,7 +51,7 @@ function getStarterBody(room: Room): BodyPartConstant[] {
 }
 
 export function getBuilderBody(room: Room): BodyPartConstant[] {
-  return calculateBodyFromSet(room, [WORK, CARRY, MOVE], 10);
+  return calculateBodyFromSet(room, [WORK,WORK, CARRY,CARRY,CARRY,CARRY, MOVE,MOVE,MOVE], 5);
 }
 
 function getHarvesterBody(room: Room): BodyPartConstant[]

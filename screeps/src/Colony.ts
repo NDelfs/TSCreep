@@ -222,6 +222,27 @@ export class Colony {
     }
   }
 
+  public computeWallList() {
+    try {
+    let walls = this.room.structures.filter((struct) => { return (struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits != undefined });
+    this.wallSites = [];
+    if (walls.length > 0) {
+      walls.sort((a, b) => { return a.hits - b.hits });
+      let lastHit = _.last(walls).hits;
+      for (let wall of walls) {
+        let upgradeAmount = Math.min(Math.max(lastHit - wall.hits, 1e5), 2e5);
+        if (this.wallSites.length > 0)
+          _.last(this.wallSites).newHits = Math.max(_.last(this.wallSites).newHits, wall.hits);
+        this.wallSites.push({ id: wall.id, newHits: wall.hits + upgradeAmount });
+      }
+      console.log(this.name, "first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
+
+      }
+    } catch (e) {
+      console.log("find wall sites failed", e);
+    }
+  }
+
   private computeLists(force?: boolean) {
     try {
       if (Game.time % 100 == 0 || force) {
@@ -252,38 +273,22 @@ export class Colony {
           console.log(this.name, "posible wall energy is now", this.memory.wallEnergy, "added", this.memory.sourcesUsed.length * 10 * proportion * timeBetween);
         }
 
-        if ((Game.time % 2500) == 0 && this.memory.wallEnergy >5000) {//1e4 ticks => container lose 1e5 of 2.5e5. Rampart loses 3e4 and roads loses 1k (5k on swamp) of 5k (25k on swamp)
+        if ((Game.time % 2500) == 0 && this.memory.wallEnergy > 5000) {//1e4 ticks => container lose 1e5 of 2.5e5. Rampart loses 3e4 and roads loses 1k (5k on swamp) of 5k (25k on swamp)
           //this.memory.wallEnergy = 0;
-          
+
           //let nrBuilders = Math.floor(Math.min(this.memory.wallEnergy / 1e4, this.room.storage.store.energy / 1e4));
           //console.log(this.name, "nr builders =", nrBuilders, this.memory.wallEnergy / 1e4, this.room.storage.store.energy / 1e4);
           //for (let i = 0; i < nrBuilders; i++) {
-            const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
-            this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
+          const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
+          this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
           //}
         }
       } catch (e) {
         console.log("create wall builder failed", e);
       }
-      try {
-        if ((Game.time % 2500) == 0 || force) {
-          let walls = this.room.structures.filter((struct) => { return (struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits != undefined });
-          this.wallSites = [];
-          if (walls.length > 0) {
-            walls.sort((a, b) => { return a.hits - b.hits });
-            let lastHit = _.last(walls).hits;
-            for (let wall of walls) {
-              let upgradeAmount = Math.min( Math.max(lastHit - wall.hits, 1e5),2e5);
-              this.wallSites.push({ id: wall.id, newHits: wall.hits + upgradeAmount });
-            }
-            console.log(this.name,"first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
-
-          }
-        }
-      } catch (e) {
-        console.log("find wall sites failed", e);
+      if ((Game.time % 2500) == 0 || force) {
+        this.computeWallList();
       }
-
     }
 
   }
@@ -345,10 +350,17 @@ export class Colony {
       try {
         if (room.hostiles.length > 0) {
           for (let creep of room.hostiles) {
-            //if (creep.owner.username != "Invader" || this.controller.level < 6) {
-            tower.attack(room.hostiles[0]);
-            continue;
-            //}
+            if (creep.owner.username != "Invader" || this.controller.level < 6) {
+              tower.attack(room.hostiles[0]);
+              continue;
+            }
+            else {
+              if (Game.time % 100 == 0)
+                this.computeWallList();
+              let struct = Game.getObjectById(this.wallSites[0].id) as Structure;
+              if (struct) 
+                tower.repair(struct);
+            }
           }
         }
         if (this.emergencyRepairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {

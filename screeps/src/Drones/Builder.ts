@@ -24,6 +24,8 @@ export function Builder(creep: Creep) {
               else {
                 console.log(creep.room.name, "removed a wall from list", wall.hits, wall.hits + 4e4, colony.wallSites[0].newHits);
                 colony.wallSites.shift();
+                if (colony.wallSites.length == 0)
+                  colony.computeWallList();
               }
             }
 
