@@ -9,6 +9,7 @@ import { profile } from "profiler/decorator";
 import profiler from "Profiler/screeps-profiler";
 import { restorePos } from "./utils/posHelpers";
 import { getBuilderBody } from "./Spawners/Spawner";
+import { NukeResourceReq } from "./Base/NukePlaner";
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(min + ((1 - min / max) * Math.random()) * Math.floor(max));
@@ -121,6 +122,7 @@ export class Colony {
   towers: StructureTower[];
   extensions: StructureExtension[];
   labs: StructureLab[];
+  nuker: StructureNuker | undefined;
 
   forceUpdateEnergy: boolean;
   spawnEnergyNeed: number;
@@ -164,6 +166,8 @@ export class Colony {
     global[this.name.toLowerCase()] = this;
     this.outpostIDs = this.memory.outposts;
     this.controller = this.room.controller!;
+
+    this.nuker = this.room.myStructures.find((struct) => { return struct.structureType == STRUCTURE_NUKER; }) as StructureNuker | undefined;
     this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
     this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
     this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
@@ -201,6 +205,8 @@ export class Colony {
     this.room = Game.rooms[this.name];
     this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
     this.controller = this.room.controller!;
+    if (this.nuker)
+      this.nuker = Game.getObjectById(this.nuker.id) as StructureNuker;
     //refreshArray(this.spawns);
     this.spawns = _.compact(_.map(this.spawns, obj => Game.getObjectById(obj.id))) as StructureSpawn[]
     //refreshArray(this.extensions);
@@ -336,6 +342,7 @@ export class Colony {
         this.resourceRequests[this.room.terminal.id] = new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room);
       }
 
+      NukeResourceReq(this);
       //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
       //    console.log(this.name, "Total energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
     }
