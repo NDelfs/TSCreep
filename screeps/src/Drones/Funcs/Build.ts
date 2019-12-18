@@ -31,7 +31,7 @@ export function getRepairTarget(creep: Creep): boolean {
             que.shift();//take it for them self
           }
           creep.addTargetT({ ID: obj.id, type: targetT.REPAIR, pos: obj.pos, range: 3, targetVal: Math.min(2.5e5, obj.hitsMax) });
-          console.log(creep.room.name, "found repair target", obj.structureType, obj.pos.x, obj.pos.y);
+          //console.log(creep.room.name, "found repair target", obj.structureType, obj.pos.x, obj.pos.y);
           return true;
         }
         else {

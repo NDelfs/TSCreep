@@ -19,10 +19,10 @@ export function Builder(creep: Creep) {
                 creep.addTarget(wall.id, targetT.REPAIR_WALL, wall.pos, 3);
                 let target = creep.getTarget()!;
                 target.targetVal = colony.wallSites[0].newHits;
-                console.log(creep.room.name, "found a wall target, goal wall", target.targetVal, "at pos", target.pos.x, target.pos.y);
+                //console.log(creep.room.name, "found a wall target, goal wall", target.targetVal, "at pos", target.pos.x, target.pos.y);
               }
               else {
-                console.log(creep.room.name, "removed a wall from list", wall.hits, wall.hits + 4e4, colony.wallSites[0].newHits);
+                //console.log(creep.room.name, "removed a wall from list", wall.hits, wall.hits + 4e4, colony.wallSites[0].newHits);
                 colony.wallSites.shift();
                 if (colony.wallSites.length == 0)
                   colony.computeWallList();

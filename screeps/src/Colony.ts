@@ -9,7 +9,7 @@ import { profile } from "profiler/decorator";
 import profiler from "Profiler/screeps-profiler";
 import { restorePos } from "./utils/posHelpers";
 import { getBuilderBody } from "./Spawners/Spawner";
-import { NukeResourceReq } from "./Base/NukePlaner";
+
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(min + ((1 - min / max) * Math.random()) * Math.floor(max));
@@ -241,7 +241,7 @@ export class Colony {
           _.last(this.wallSites).newHits = Math.max(_.last(this.wallSites).newHits, wall.hits);
         this.wallSites.push({ id: wall.id, newHits: wall.hits + upgradeAmount });
       }
-      console.log(this.name, "first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
+      //console.log(this.name, "first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
 
       }
     } catch (e) {
@@ -342,10 +342,10 @@ export class Colony {
         this.resourceRequests[this.room.terminal.id] = new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room);
       }
 
-      NukeResourceReq(this);
       //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
       //    console.log(this.name, "Total energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
     }
+  
     // else
     //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
     //    console.log(this.name, "energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
@@ -353,22 +353,28 @@ export class Colony {
 
   runTowers() {
     let room = this.room;
+    let healer = false;
+    if (room.hostiles.length > 0) {
+      for (let creep of room.hostiles) {
+        if (creep.getActiveBodyparts(HEAL) > 0)
+          healer = true;
+      }
+    }
     for (let tower of this.towers) {
       try {
         if (room.hostiles.length > 0) {
-          for (let creep of room.hostiles) {
-            if (creep.owner.username != "Invader" || this.controller.level < 6) {
+          if (!healer) {
               tower.attack(room.hostiles[0]);
               continue;
-            }
-            else {
+          }
+           else {
               if (Game.time % 100 == 0)
                 this.computeWallList();
               let struct = Game.getObjectById(this.wallSites[0].id) as Structure;
-              if (struct) 
+              if (struct && struct.hits < 5e5)
                 tower.repair(struct);
             }
-          }
+          
         }
         if (this.emergencyRepairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
           let struct = Game.getObjectById(this.emergencyRepairSites[0]) as Structure;

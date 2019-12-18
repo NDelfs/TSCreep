@@ -7,6 +7,7 @@ import { baseExpansion } from "Base/BaseExpansion"
 import profiler from "Profiler/screeps-profiler";
 import { Market } from "./Base/Market";
 import { Spawner, spawnFromReq } from "./Spawners/Spawner";
+import { NukeResourceReq } from "./Base/NukePlaner";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
@@ -53,7 +54,13 @@ export class _PishiMaster {
         }
        
         this.labMaster.run();
-        this.market.run();
+      this.market.run();
+      for (let colonyID in this.colonies) {
+        if (Game.time % 100 == 0) {
+          NukeResourceReq(this.colonies[colonyID]);
+        }
+      }
+
     }
 
 

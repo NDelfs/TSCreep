@@ -90,23 +90,24 @@ export function getStorageDeliverTarget(room: Room, resourceType: ResourceConsta
 }
 
 export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//depricadet
-    let room = Game.rooms[creep.memory.creationRoom];
+  let room = Game.rooms[creep.memory.creationRoom];
+  let colony = PM.colonies[creep.memory.creationRoom];
     //first prio colony energy
 
     //if (room.name == "E49N47")
         //console.log("in get deliver")
 
-    if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length && PM.colonies[creep.memory.creationRoom].spawnEnergyNeed > 0 && creep.carry.energy > 0) {
+  if (colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0 && creep.carry.energy > 0) {
         //if (room.name == "E49N47")
             //console.log(room.name, "found energy demand", PM.colonies[creep.memory.creationRoom].energyNeedStruct.length, PM.colonies[creep.memory.creationRoom].spawnEnergyNeed);
-        creep.addTargetT(getClosest(creep.pos, PM.colonies[creep.memory.creationRoom].energyNeedStruct));
+    creep.addTargetT(getClosest(creep.pos, colony.energyNeedStruct));
         PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
         return true;
     }
     else {
         //if (room.name == "E49N47")
             //console.log("looking for resource reg")
-        for (let [id, req] of Object.entries(PM.colonies[creep.memory.creationRoom].resourceRequests)) {
+    for (let [id, req] of Object.entries(colony.resourceRequests)) {
             if (creep.carry[req.resource] > 0) {
                 let obj = Game.getObjectById(id) as AnyStoreStructure;
                 //if (room.name == "E49N47")
@@ -128,10 +129,16 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//d
             return true;
         }
         //base dump energy
-        if (findStore && room.storage) {
-            creep.addTarget(room.storage.id, targetT.POWERSTORAGE, room.storage.pos, 1);
-            return true;
-        }
+    if (findStore && room.storage) {
+      if (colony.nuker && room.storage.store.energy > 1e5 && colony.nuker.store.energy < 3e5) {
+        creep.addTarget(colony.nuker.id, targetT.POWERSTORAGE, colony.nuker.pos, 1);
+        return true;
+      }
+      else {
+        creep.addTarget(room.storage.id, targetT.POWERSTORAGE, room.storage.pos, 1);
+        return true;
+      }
+    }
     }
     return false;
 }
