@@ -23,18 +23,31 @@ interface Memory {
 interface PishiMasterMemory {
     
 }
+interface BoostMemory {
+  labID: number;
+  boost: MineralBoostConstant;
+  nrCreep: number;
+}
+
+interface LabMemory {
+  state: LabStates;
+  pushedStat: LabStates;
+  resource: ResourceConstant;//or id to boost or reaction if reaction is tracable
+}
 
 interface ColonyMemory {
-    outposts: string[];
+  outposts: string[];
 
-    inCreepEmergency: number | null;
-    sourcesUsed: string[];
-    mineralsUsed: string[];
-    startSpawnPos: posData | null;
+  inCreepEmergency: number | null;
+  sourcesUsed: string[];
+  mineralsUsed: string[];
+  startSpawnPos: posData | null;
 
-    ExpandedLevel: number;
+  ExpandedLevel: number;
   controllerStoreID: string | null;
   wallEnergy: number;
+  boosts: BoostMemory[];
+  labMemories: LabMemory[];
 }
 
 interface RoomMemory {

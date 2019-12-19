@@ -24,6 +24,8 @@ const ColonyMemoryDef: ColonyMemory = {
   ExpandedLevel: 0,
   controllerStoreID: null,
   wallEnergy: 0,
+  boosts: [],
+  labMemories: [],
 }
 
 function refreshArray(array: any[]) {
@@ -102,12 +104,13 @@ export class resourceRequest {
 }
 profiler.registerClass(resourceRequest, 'resourceRequest');
 
-//interface resourcePush {
-//    id: string;
-//    resource: ResourceConstant;
-//    MaxAmount: number
-//    creeps: string[];
-//}
+export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant): number {
+  let ret = 0;
+  for (let part of body) {
+    ret += part == type ? 1 :0;
+  }
+  return ret;
+}
 
 //@profile
 export class Colony {
@@ -398,6 +401,32 @@ export class Colony {
     }
   }
 
+  boostCreep(creepData: queData): void {
+    if (!this.room.storage) {
+      return;
+    }
+
+    let boostType: MineralBoostConstant | null = null;
+    if (creepData.memory.type == creepT.BUILDER) {
+      let builderType = RESOURCE_LEMERGIUM_HYDRIDE;
+      let boostCost = countBodyPart(creepData.body, "WORK" as BodyPartConstant) * 30;
+      if (this.room.storage.store[builderType] >= boostCost) {
+        boostType = RESOURCE_LEMERGIUM_HYDRIDE;
+        let booster = this.memory.boosts.find(value => value.boost == builderType);
+        if (booster) {
+          booster.nrCreep += 1;
+          //return target
+        }
+        else {
+          let labNr = _.findLastIndex(this.memory.labMemories,(val => val.state == null));
+          if (labNr) {
+            this.memory.boosts.push({ boost: builderType, nrCreep: 1, labID: labNr });
+            //retrun target
+          }
+        }
+      }
+    }
+  }
 }
 profiler.registerClass(Colony, 'Colony');
 

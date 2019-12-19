@@ -55,6 +55,16 @@ type ATTACKER = 71;
 type ATTACKERCONTROLLER = 75;
 
 
+type LabStates =
+  | null
+  | BOOSTING
+  | UNBOSTING
+  | REACTION
+  ;
+
+type BOOSTING = 1;
+type UNBOSTING = 2;
+type REACTION = 10;
 
 interface posData {
     /**
