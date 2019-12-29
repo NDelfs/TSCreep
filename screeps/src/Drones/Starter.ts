@@ -2,9 +2,10 @@ import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import * as targetT from "Types/TargetTypes";
 import { getSourceTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 import { restorePos } from "../utils/posHelpers";
-import { resetDeliverTarget, getDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
+import { resetDeliverTarget, getNewDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
 import { HARVESTER } from "Types/CreepType";
+import { getTransportTarget } from "./Transporter";
 
 function printRes(creep: Creep, iErr: number, name: string): void {
     if (iErr == OK)
@@ -39,7 +40,8 @@ export function Starter(creep: Creep) {
         }
     }
     else {
-        if (!getDeliverTarget(creep, false)) {
+      getTransportTarget(creep,false);
+      if (creep.getTarget() == null) {
             let controller = creep.room.controller;
             if (controller) {//if safe tick run external construction target getter, same used for builder
                 if (controller.ticksToDowngrade > 5000) {
@@ -54,7 +56,7 @@ export function Starter(creep: Creep) {
             }
         }
         if (creep.getTarget() == null) {
-            console.warn("Harvester could not find a target");
+            console.warn("Starter could not find a target");
             return;
         }
     }

@@ -1,6 +1,6 @@
 import * as Mem from "Memory";
 
-import { HARVESTER, TRANSPORTER, STARTER } from "Types/CreepType";
+import { HARVESTER, TRANSPORTER, STARTER, BUILDER } from "Types/CreepType";
 import * as targetT from "Types/TargetTypes"
 import * as creepT from "Types/CreepType";
 import * as C from "Types/Constants";
@@ -28,6 +28,7 @@ const ColonyMemoryDef: ColonyMemory = {
   controllerStoreID: null,
   wallEnergy: 0,
   boosts: [],
+  creepBuildQue: [],
   labMemories: [],
 }
 
@@ -139,11 +140,11 @@ export class Colony {
   energyNeedStruct: targetData[];
   energyTransporters: Creep[];
 
-  resourceRequests: { [id: string]: resourceRequest };
+  _resourceRequests: { [id: string]: resourceRequest[] };
   resourcePush: { [id: string]: resourceRequest };
   resourceExternal: ResourceConstant[];
 
-  creepRequest: queData[];
+  creepBuildQueRef: queData[];
 
   public addEnergyTran(creep: Creep, preknownAmount?: number) {
     let already = _.find(this.energyTransporters, (mCreep) => mCreep.name == creep.name);
@@ -163,14 +164,70 @@ export class Colony {
   repairSites: string[];
   wallSites: { id: string, newHits: number }[];
 
+  public getReq(id: string, res: ResourceConstant): resourceRequest | undefined {
+    if (this._resourceRequests[id])
+      return this._resourceRequests[id].find((req) => { return req.resource == res });
+    return undefined;
+  }
+
+  public removeTranReq(id: string, res: ResourceConstant, creep: Creep) {
+    let req = this.getReq(id, res);
+    if (req) {
+      let targetObj = Game.getObjectById(id) as AnyStoreStructure;
+      if (req.creeps.length == 1 && targetObj.store[req.resource] + req.resOnWay >= req.ThreshouldHard) {
+        _.remove(this._resourceRequests[id], (req) => { return req.resource == res });
+      }
+      else {
+        req.removeTran(creep);
+      }
+    }
+    else
+      console.log("tried to use a target req that is already deleted")
+  }
+
+  public addRequest(req: resourceRequest) {
+    if (this._resourceRequests[req.id] == null)
+      this._resourceRequests[req.id] = [];
+    this._resourceRequests[req.id].push(req);
+  }
+
+  rebuildBoostResourceReq(boosts: BoostMemory[], labs: StructureLab[]) {
+    try {
+      for (let boost of boosts) {
+        let amount = boost.boostCost * boost.nrCreep;
+        let lab = labs[boost.labID];
+        if (lab.store[boost.boost] < amount) {
+          this.addRequest(new resourceRequest(lab.id, boost.boost, amount - 1, amount, this.room));
+        }
+        if (lab.store.energy < amount) {
+          this.addRequest(new resourceRequest(lab.id, RESOURCE_ENERGY, amount - 1, amount, this.room));
+        }
+        console.log(this.name, "rebuild boost res req", JSON.stringify(this._resourceRequests[lab.id]));
+      }
+    }
+    catch (e) {
+      console.log("failed to rebuild boost req", e);
+    }
+  }
+
   constructor(iRoom: Room) {
     if (!Memory.ColonyMem)//this is rare enough that I do ugly fix here
       Memory.ColonyMem = {};
-    this.mRebuild = getRandomInt(2000, 5000); //rebuil about every hour
-    this.forceUpdateEnergy = false;
     this.room = iRoom;
     this.name = iRoom.name;
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
+    if (!this.memory.creepBuildQue) {//for first time running new code, can be deleted when code have been live
+      this.memory.creepBuildQue = [];
+      this.memory.boosts = [];
+    }
+    if (!this.memory.labMemories) {
+      this.memory.labMemories=[];
+    }
+    this.creepBuildQueRef = this.memory.creepBuildQue;
+
+
+    this.mRebuild = getRandomInt(2000, 5000); //rebuil about every hour
+    this.forceUpdateEnergy = false;
 
     global[this.name] = this;
     global[this.name.toLowerCase()] = this;
@@ -198,12 +255,11 @@ export class Colony {
       }
     }
     findAndBuildLab(this, this.labs);
-    this.creepRequest = [];
 
-    this.resourceRequests = {};
+    this._resourceRequests = {};
     this.resourcePush = {};
     this.resourceExternal = [];
-
+    this.rebuildBoostResourceReq(this.memory.boosts, this.labs);//this is needed as long as we do not save the requests
     this.computeLists(true);
     this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
       let ret = false;
@@ -222,6 +278,7 @@ export class Colony {
 
   public refresh() {
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
+    this.creepBuildQueRef = this.memory.creepBuildQue;
     this.room = Game.rooms[this.name];
     this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
     this.controller = this.room.controller!;
@@ -239,11 +296,9 @@ export class Colony {
     if (Game.time % 100) {
       findAndBuildLab(this, this.labs);
 
-      for (let reqID in this.resourceRequests) {
-        if (this.resourceRequests[reqID].createdTime > Game.time + 1000) {
-          delete this.resourceRequests[reqID];//cleanup of lod requests. imporpant for buggy requests
-          console.log(this.room.name, "cleaned up a res req", reqID);
-        }
+      for (let reqID in this._resourceRequests) {//clean up resource requests
+        let reqs = this._resourceRequests[reqID];
+        _.remove(reqs, (req) => { return req.createdTime > Game.time + 1000 });
       }
     }
 
@@ -282,10 +337,21 @@ export class Colony {
     }
   }
 
+  public orderNewCreep(type: CreepConstant) {
+    if (type == BUILDER) {
+      const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
+      //this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
+      this.queNewCreep(mem, getBuilderBody(this.room));
+    }
+  }
+
   public queNewCreep(creepMemory: CreepMemory, body: BodyPartConstant[]) {
     let data: queData = { memory: creepMemory, body: body };
-    this.queBoostCreep(data);
-    this.creepRequest.push(data);
+    if (this.room.name == "E49N47") {
+      this.queBoostCreep(data);
+      console.log("called on boost Creep", this.memory.boosts.length);
+    }
+    this.creepBuildQueRef.push(data);
   }
 
   private computeLists(force?: boolean) {
@@ -375,11 +441,11 @@ export class Colony {
       //    }
       //}
       let conStore = Game.getObjectById(this.memory.controllerStoreID!);
-      if (conStore && this.resourceRequests[this.memory.controllerStoreID!] == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
-        this.resourceRequests[this.memory.controllerStoreID!] = new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room);
+      if (conStore && this.getReq(this.memory.controllerStoreID!, RESOURCE_ENERGY) == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
+        this.addRequest(new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room));
       }
-      if (this.room.terminal && this.resourceRequests[this.room.terminal.id] == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
-        this.resourceRequests[this.room.terminal.id] = new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room);
+      if (this.room.terminal && this.getReq(this.room.terminal.id, RESOURCE_ENERGY) == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
+        this.addRequest(new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room));
       }
 
       //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
@@ -428,8 +494,8 @@ export class Colony {
             this.emergencyRepairSites.shift();
           }
         }
-        if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceRequests[tower.id] == null) {
-          this.resourceRequests[tower.id] = new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room);
+        if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.getReq(tower.id,RESOURCE_ENERGY) == null) {
+          this.addRequest(new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room));
         }
       }
       catch (e) {
@@ -438,12 +504,8 @@ export class Colony {
     }
   }
 
-  public registreBoost(boost: BoostMemory) {
-
-  }
-
   public queBoostCreep(creepData: queData): void {
-    if (!this.room.storage) {
+    if (!this.room.terminal || this.labs.length == 0) {
       return;
     }
     try {
@@ -451,11 +513,11 @@ export class Colony {
       let boostCost = 1e9;
       if (creepData.memory.type == creepT.BUILDER) {
         boostType = RESOURCE_LEMERGIUM_HYDRIDE;
-        boostCost = countBodyPart(creepData.body, "WORK" as BodyPartConstant) * 30;
+        boostCost = countBodyPart(creepData.body, WORK) * 30;
       }
 
       //create boost que and target
-      if (boostType && this.room.storage.store[boostType] >= boostCost) {
+      if (boostType && this.room.terminal.store[boostType] >= boostCost) {
 
         let booster = this.memory.boosts.find(value => value.boost == boostType);
         if (booster) {
@@ -464,20 +526,31 @@ export class Colony {
         else {
           let labNr = _.findLastIndex(this.memory.labMemories, (val => val.state == null));
           if (labNr) {
-            booster = { boost: boostType, nrCreep: 1, labID: labNr };
+            booster = { boost: boostType, nrCreep: 1, labID: labNr, boostCost: boostCost };
             this.memory.boosts.push(booster);
           }
         }
-        let req = this.resourceRequests[this.labs[booster!.labID].id];
-        if (req) {
-          req.ThreshouldHard += boostCost;
-          req.ThreshouldAmount += boostCost;
-        }
-        else {
-          this.resourceRequests[this.labs[booster!.labID].id] = new resourceRequest(this.labs[booster!.labID].id, boostType, boostCost - 1, boostCost, this.room);
-        }
-        console.log(this.name, "new boost res req", JSON.stringify(this.resourceRequests[this.labs[booster!.labID].id]));
         let lab = this.labs[booster!.labID];
+        let amount = booster!.boostCost * booster!.nrCreep;
+        if (lab.store[booster!.boost] < amount) {
+          let req = this.getReq(lab.id, boostType );
+          if (req) {
+            req.ThreshouldHard += boostCost;
+            req.ThreshouldAmount += boostCost;
+          }
+          else {
+            this.addRequest(new resourceRequest(lab.id, boostType, boostCost - 1, boostCost, this.room));
+          }
+          let reqEne = this.getReq(lab.id, RESOURCE_ENERGY);
+          if (reqEne) {
+            reqEne.ThreshouldHard += boostCost;
+            reqEne.ThreshouldAmount += boostCost;
+          }
+          else {
+            this.addRequest(new resourceRequest(lab.id, RESOURCE_ENERGY, boostCost - 1, boostCost, this.room));
+          }
+        }
+        console.log(this.name, "new boost res req", JSON.stringify(this._resourceRequests[this.labs[booster!.labID].id]));
         let boostTarget: targetData = { ID: lab.id, type: BOOST, pos: lab.pos, range: 1, targetVal: boostCost, resType: boostType };
         creepData.memory.targetQue.unshift(boostTarget);
       }
@@ -487,8 +560,8 @@ export class Colony {
     }
   }
 
-  boostCreep(creep: Creep, target: targetData): void {
-    let boostT = target.ID;
+  boostCreep(creep: Creep, target: targetData): number {
+    let boostT = target.resType;
     let boostInfo = this.memory.boosts.find(value => value.boost == boostT);
     console.log(this.room.name, "in place for boost", boostT, JSON.stringify(boostInfo));
     if (boostInfo) {
@@ -498,18 +571,25 @@ export class Colony {
         if (err == OK) {
           creep.completeTarget();
           boostInfo.nrCreep -= 1;
+          console.log(this.name, "boosted", creep.name, PrettyPrintErr(err));
           if (boostInfo.nrCreep <= 0) {
             _.remove(this.memory.boosts, value => value.boost == boostT);
           }
         }
-        else
-          console.log(this.name, "failed boost", PrettyPrintErr(err));
+        else {
+          return err;
+        }
       }
       else {
         console.log(lab.room.name, "waiting for boost res");
+        return ERR_NOT_ENOUGH_RESOURCES;
       }
 
     }
+    else
+      throw ("failed to find boost" + boostT);
+
+    return OK;
   }
 }
 profiler.registerClass(Colony, 'Colony');

@@ -8,7 +8,7 @@ import { Harvester } from "Drones/Harvester";
 import { scout } from "Drones/Scout";
 import { Transporter } from "Drones/Transporter";
 import { Upgrader } from "Drones/Upgrader";
-import { PrettyPrintCreep } from "utils/PrettyPrintErr";
+import { PrettyPrintCreep, PrettyPrintErr } from "utils/PrettyPrintErr";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 import { BOOST } from "../Types/TargetTypes";
@@ -26,22 +26,26 @@ export function CreepUpdate() {
 
           if (creep.spawning)
             continue;
+          creep.walk();
           let target = creep.getTarget();
           if (target) {
             if (target.type == BOOST) {
               if (creep.inPlace) {
                 try {
-                  PM.colonies[creep.memory.creationRoom].boostCreep(creep, target);
+                  let err = PM.colonies[creep.memory.creationRoom].boostCreep(creep, target);
+                  if (err != OK) {
+                    console.log(creep.room.name, "failed boost", PrettyPrintErr(err));
+                  }
                 }
                 catch (e) {
                   console.log(creep.room.name, "creep target boost failed", e);
                 }
               }
+              return;
             }
+            
           }
-          
-
-            creep.walk();
+           
             switch (creep.type) {
                 case creepT.STARTER: {
                     profiler.registerFN(Starter)(creep);

@@ -58,8 +58,6 @@ function main() {
   //  let newMem: RoomMemory = {};//here data is transfered to new struct
   //  Memory.rooms[roomID] = newMem;
   //}
-
-
     reset();
     try {
         profiler.registerFN(DataUpdate)();
@@ -111,9 +109,10 @@ function main() {
           for (let targ of Memory.creeps[name].targetQue) {
             if (targ) {
               PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
-              let creepMis = PM.colonies[Memory.creeps[name].creationRoom].resourceRequests[targ.ID];
+              let creepMis = PM.colonies[Memory.creeps[name].creationRoom]._resourceRequests[targ.ID];
               if (creepMis) {
-                creepMis.updateCreepD();
+                for(let req of creepMis)
+                  req.updateCreepD();
               }
               else {
                 let creepP = PM.colonies[Memory.creeps[name].creationRoom].resourcePush[targ.ID];

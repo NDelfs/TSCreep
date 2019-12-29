@@ -14,64 +14,72 @@ function claimResource(creep: Creep, target: targetData | null) {
 }
 
 function claimDeliver(creep: Creep, target: targetData) {
-    //if (creep.pos.roomName == "E47N45")
-        //console.log(creep.name, "claiming dropped", target.pos.x, target.pos.y, target.ID, target.type);
-    if (target.type == POWERSTORAGE || target.type == STORAGE_RESOURCE)
-        return;
-    if (target.type == DROPPED_RESOURCE) {
-        Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
-        return;
-    }
-    let colony = PM.colonies[creep.memory.creationRoom];
-    if (target.type == TRANSPORT_PICKUP) {
-        colony.resourcePush[target.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
-        return;
-    }
+  //if (creep.pos.roomName == "E47N45")
+  //console.log(creep.name, "claiming dropped", target.pos.x, target.pos.y, target.ID, target.type);
+  if (target.type == POWERSTORAGE || target.type == STORAGE_RESOURCE)
+    return;
+  if (target.type == DROPPED_RESOURCE) {
+    Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
+    return;
+  }
+  let colony = PM.colonies[creep.memory.creationRoom];
+  if (target.type == TRANSPORT_PICKUP) {
+    colony.resourcePush[target.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
+    return;
+  }
 
-    if (target.type == TRANSPORT) {
-        colony.resourceRequests[target.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
-        return;
+  if (target.type == TRANSPORT && target.resType) {
+    let req = colony.getReq(target.ID, target.resType);
+    if (req) {
+      req.addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
     }
-    if (target.type == POWERUSER) {
-        colony.addEnergyTran(creep, creep.carryCapacity);
-        return;
+    else
+      console.log("could not claim request");
+    return;
+  }
+  if (target.type == POWERUSER) {
+    colony.addEnergyTran(creep, creep.carryCapacity);
+    return;
+  }
+  console.log("claiming unknown", target.type, target.resType);
+}
+
+export function getTransportTarget(creep: Creep, useStorage: boolean) {
+  //get key of already resources
+  let key: ResourceConstant | null = null;
+  for (let tmpKey of Object.keys(creep.store)) {
+    if (creep.store[tmpKey as ResourceConstant] > 0) {
+      key = tmpKey as ResourceConstant;
+      break;
     }
-    console.log("claiming unknown", target.type);
+  }
+
+  //find if resource are nedded, if so then pick up from storage
+  let targets = getNewDeliverTarget(creep, key);
+  if (targets.length == 0) {//there is the case when do recource could be found for a deliver target above. A lab require a super rare resource, the creep would go into last if but not get a target
+    if (key == null) {
+      let target = getSourceTarget(creep, null);
+      if (target) {
+        targets.push(target);
+        key = target.resType!;
+      }
+    }
+    if (key && useStorage) {
+      let target = getStorageDeliverTarget(Game.rooms[creep.memory.creationRoom], key);
+      if (target) {
+        targets.push(target);
+      }
+    }
+  }
+  for (let target of targets) {
+    creep.addTargetT(target);
+    claimDeliver(creep, target);
+  }
 }
 
 export function Transporter(creep: Creep) {
-    let room = creep.room;
-    if (creep.getTarget() == null) {
-        //get key of already resources
-        let key: ResourceConstant | null = null;
-        for (let tmpKey of Object.keys(creep.store)) {
-            if (creep.store[tmpKey as ResourceConstant] > 0) {
-                key = tmpKey as ResourceConstant;
-                break;
-            }
-        }
-
-        //find if resource are nedded, if so then pick up from storage
-        let targets = getNewDeliverTarget(creep, key);
-        if (targets.length == 0) {//there is the case when do recource could be found for a deliver target above. A lab require a super rare resource, the creep would go into last if but not get a target
-            if (key == null) {
-                let target = getSourceTarget(creep, null);
-                if (target) {
-                    targets.push(target);
-                    key = target.resType!;
-                }
-            }
-            if (key) {
-                let target = getStorageDeliverTarget(room, key);
-                if (target) {
-                    targets.push(target);
-                }
-            }
-        }
-        for (let target of targets) {
-            creep.addTargetT(target);
-            claimDeliver(creep, target);
-        }
+  if (creep.getTarget() == null) {
+    getTransportTarget(creep,true);
     }
 
     let target = creep.getTarget();

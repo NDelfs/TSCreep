@@ -29,8 +29,14 @@ export class _PishiMaster {
         this.colonies = {};
         for (let roomID in Game.rooms) {
             let room = Game.rooms[roomID];
-            if (room.controller && room.controller.my/* && room.controller.level>0*/)
+          if (room.controller && room.controller.my/* && room.controller.level>0*/) {
+            try {
               this.colonies[roomID] = new Colony(Game.rooms[roomID]);
+            }
+            catch (e) {
+              console.log("Colony construction failed", e);
+            }
+          }
         }    
         this.labMaster = new LabMaster(this.colonies);
         this.market = new Market(this.colonies);

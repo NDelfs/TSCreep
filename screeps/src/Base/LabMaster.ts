@@ -73,19 +73,19 @@ export class LabMaster {
                         for (let idx of react.result.idxs) {
                             let main = colony.labs[idx]; 
                             main.runReaction(first, second);
-                            if (react.result.final && main.store[react.react.r] >= 1000 && colony.resourcePush[main.id] == null) {
-                                colony.resourcePush[main.id] = new resourceRequest(main.id, react.react.r, 1000, 200, colony.room);
+                          if (react.result.final && main.store[react.react.r] >= 1000 && colony.resourcePush[main.id] == null) {
+                            colony.addRequest(new resourceRequest(main.id, react.react.r, 1000, 200, colony.room));
                                 console.log(colony.name, "push resource from lab", react.react.r, "final", react.result.final);
                             }
                         }
                     }
-                    if (Game.time % 100 == 0) {
-                        if (firstAmount < 200 && colony.resourceRequests[first.id] == null) {
-                            colony.resourceRequests[first.id] = new resourceRequest(first.id, react.react.needs[0], 200, 800, colony.room);
+                  if (Game.time % 100 == 0) {
+                    if (firstAmount < 200 && colony.getReq(first.id, react.react.needs[0]) == null) {
+                          colony.addRequest(new resourceRequest(first.id, react.react.needs[0], 200, 800, colony.room));
                             console.log(colony.name, "request resource to lab", react.react.needs[0], firstAmount);
                         }
-                        if (secondAmount < 200 && colony.resourceRequests[second.id] == null) {
-                            colony.resourceRequests[second.id] = new resourceRequest(second.id, react.react.needs[1], 200, 800, colony.room);
+                    if (secondAmount < 200 && colony.getReq(second.id, react.react.needs[1]) == null) {
+                          colony.addRequest(new resourceRequest(second.id, react.react.needs[1], 200, 800, colony.room));
                             console.log(colony.name, "request resource to lab", react.react.needs[1], secondAmount);
                         }
                     }
@@ -174,9 +174,9 @@ export class LabMaster {
                 }
             }
             else {
-                colony.resourceExternal.push(res);
-                if (lab.store[res] < 200 && colony.resourceRequests[lab.id] == null) {
-                    colony.resourceRequests[lab.id] = new resourceRequest(lab.id, res, 200, 800, colony.room);
+              colony.resourceExternal.push(res);
+              if (lab.store[res] < 200 && colony.getReq(lab.id,res) == null) {
+                  colony.addRequest(new resourceRequest(lab.id, res, 200, 800, colony.room));
                     console.log(colony.name, "request resource to lab", res, lab.store[res]);
                 }
             }

@@ -26,6 +26,7 @@ interface PishiMasterMemory {
 interface BoostMemory {
   labID: number;
   boost: MineralBoostConstant;
+  boostCost: number;
   nrCreep: number;
 }
 
@@ -48,6 +49,7 @@ interface ColonyMemory {
   controllerStoreID: string | null;
   wallEnergy: number;
   boosts: BoostMemory[];
+  creepBuildQue: queData[];
   labMemories: LabMemory[];
 }
 

@@ -102,10 +102,14 @@ function calculateTransportQue(colony: Colony): queData[] {
         for (let sourceID of colony.memory.sourcesUsed) {
             roomEne += Memory.Resources[sourceID].AvailResource;
         }
-        let controllerNeed = 0;
-        if (colony.memory.controllerStoreID && colony.resourceRequests[colony.memory.controllerStoreID]) {
-            controllerNeed = 2000 - colony.resourceRequests[colony.memory.controllerStoreID!].amount();
+      let controllerNeed = 0;
+      
+      if (colony.memory.controllerStoreID) {
+        let req = colony.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
+        if (req) {
+          controllerNeed = 2000 - req.amount();
         }
+      }
 
         if (roomEne > transportSize * 4 && (controllerNeed > 500 || cRoom.storage))
             limit = 3;
@@ -188,9 +192,13 @@ function calculateUpgraderQue(colony: Colony): queData[] {
                 roomEne += Memory.Resources[sourceID].AvailResource;
             }
             let controllerNeed = 0;
-            if (colony.memory.controllerStoreID && colony.resourceRequests[colony.memory.controllerStoreID]) {
-                controllerNeed = 2000 - colony.resourceRequests[colony.memory.controllerStoreID!].amount();
+          if (colony.memory.controllerStoreID) {
+            let req = colony.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
+            if (req) {
+              controllerNeed = 2000 - req.amount();
             }
+          }
+          
    
             if (cRoom.storage) {
                 size = 2;
@@ -310,7 +318,10 @@ function calculateAttackQue(): queData[] {
 function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, colonies: { [name: string]: Colony }): number {
     if (que.length > 0 && spawner.spawning == null) {
         const err = spawner.spawnCreep(que[0].body, "test1", { dryRun: true });
-        if (err == OK) {
+      if (err == OK) {
+        if (que[0].memory.moveTarget == null && que[0].memory.targetQue.length > 0) {
+          que[0].memory.moveTarget = { pos: que[0].memory.targetQue[0].pos, range: que[0].memory.targetQue[0].range };
+        }
             let err = spawner.spawnCreep(que[0].body, PrettyPrintCreep(que[0].memory.type) + " " + getRandomName(), { memory: que[0].memory });
             if (err == OK) {
                 if (que[0].memory.type != creepT.HARVESTER&& que[0].memory.type != creepT.TRANSPORTER&& que[0].memory.type != creepT.UPGRADER)
@@ -331,7 +342,7 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
 
 export function spawnFromReq(colony: Colony, colonies: { [name: string]: Colony }) {
   for (let spawn of colony.spawns) {
-    spawnCreep(colony.creepRequest,spawn, colony, colonies);
+    spawnCreep(colony.creepBuildQueRef,spawn, colony, colonies);
    
   }
 }
