@@ -331,8 +331,6 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
 
 export function spawnFromReq(colony: Colony, colonies: { [name: string]: Colony }) {
   for (let spawn of colony.spawns) {
-    if (colony.creepRequest.length > 0)
-      console.log(colony.name, "found request spawn que", PrettyPrintCreep(colony.creepRequest[0].memory.type));
     spawnCreep(colony.creepRequest,spawn, colony, colonies);
    
   }

@@ -203,7 +203,8 @@ export function baseExpansion(colony : Colony) {
 }
 
 
-export function findAndBuildLab(room: Room, labs: StructureLab[]) {
+export function findAndBuildLab(col: Colony, labs: StructureLab[]) {
+  let room = col.room;
     let level = room.controller!.level - 5;
     let maxLab = (level * 3 + Number(level == 3));
     if (labs.length < maxLab) {
@@ -220,8 +221,10 @@ export function findAndBuildLab(room: Room, labs: StructureLab[]) {
                 //console.log(i, pos.x, pos.y)
                 let structs = pos.lookFor(LOOK_STRUCTURES);
                 for (let struct of structs) {
-                    if (struct.structureType == STRUCTURE_LAB)
-                        labs.push(struct as StructureLab);
+                  if (struct.structureType == STRUCTURE_LAB) {
+                    labs.push(struct as StructureLab);
+                    col.memory.labMemories.push({ ID: struct.id, state: null, pushedStat: null, resource: "" });
+                  }
                 }
                 if (labs.length < i + 1) {
                     pos.createConstructionSite(STRUCTURE_LAB);

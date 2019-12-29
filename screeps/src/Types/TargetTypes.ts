@@ -10,7 +10,9 @@ export const CONSTRUCTION = 41;
 export const REPAIR = 45;
 export const REPAIR_WALL = 46;
 export const POSITION = 51;
-export const DEFEND = 61
+export const DEFEND = 61;
+export const BOOST = 71;
+export const UNBOOST = 75;
 export const FLAG_RED = 100;
 export const FLAG_WHITE = 190;
 

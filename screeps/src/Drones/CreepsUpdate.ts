@@ -11,19 +11,36 @@ import { Upgrader } from "Drones/Upgrader";
 import { PrettyPrintCreep } from "utils/PrettyPrintErr";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { BOOST } from "../Types/TargetTypes";
+import { PM } from "../PishiMaster";
 
 
 export function CreepUpdate() {
     for (let creepID in Game.creeps) {
         try {
             let creep = Game.creeps[creepID];
-            if (creep.memory.targetQue.length > 2) {
+            if (creep.memory.targetQue.length > 3) {
                 creep.memory.targetQue = [];
                 console.log(creep.room.name,"rampant targets, cleared instead", creep.type)
             }
 
-            if (creep.spawning)
-                continue;
+          if (creep.spawning)
+            continue;
+          let target = creep.getTarget();
+          if (target) {
+            if (target.type == BOOST) {
+              if (creep.inPlace) {
+                try {
+                  PM.colonies[creep.memory.creationRoom].boostCreep(creep, target);
+                }
+                catch (e) {
+                  console.log(creep.room.name, "creep target boost failed", e);
+                }
+              }
+            }
+          }
+          
+
             creep.walk();
             switch (creep.type) {
                 case creepT.STARTER: {

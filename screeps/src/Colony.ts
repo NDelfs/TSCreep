@@ -5,10 +5,13 @@ import * as targetT from "Types/TargetTypes"
 import * as creepT from "Types/CreepType";
 import * as C from "Types/Constants";
 import { profile } from "profiler/decorator";
+import { findAndBuildLab } from "Base/BaseExpansion"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 import { restorePos } from "./utils/posHelpers";
 import { getBuilderBody } from "./Spawners/Spawner";
+import { BOOST } from "Types/TargetTypes";
+import { PrettyPrintErr } from "./utils/PrettyPrintErr";
 
 
 function getRandomInt(min: number, max: number) {
@@ -35,13 +38,15 @@ function refreshArray(array: any[]) {
 export class resourceRequest {
   id: string;
   resource: ResourceConstant;
-  ThreshouldAmount: number;
-  ThreshouldHard: number;
+  ThreshouldAmount: number;//if its acceptable to end early
+  ThreshouldHard: number;//the absolute value requested
   creeps: string[];
   resOnWay: number;
+  createdTime: number;
 
   constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax: number, room: Room) {
     this.id = ID;
+    this.createdTime = Game.time;
     this.resource = iResource;
     this.ThreshouldAmount = iThreshould;
     this.ThreshouldHard = iThreshouldMax
@@ -100,6 +105,8 @@ export class resourceRequest {
         this.resOnWay = Math.max(this.resOnWay, 0);
       }
     }
+    if (this.creeps.length == 0)
+      this.resOnWay = 0;
   }
 }
 profiler.registerClass(resourceRequest, 'resourceRequest');
@@ -181,6 +188,16 @@ export class Colony {
     this.energyNeedStruct = [];
     this.energyTransporters = [];
     this.labs = [];
+    for (let mem of this.memory.labMemories) {
+      let lab = Game.getObjectById(mem.ID) as StructureLab | null;
+      if (lab) {
+        this.labs.push(lab);
+      }
+      else {
+        break;
+      }
+    }
+    findAndBuildLab(this, this.labs);
     this.creepRequest = [];
 
     this.resourceRequests = {};
@@ -219,6 +236,17 @@ export class Colony {
 
     this.towers = _.compact(_.map(this.towers, id => Game.getObjectById(id.id))) as StructureTower[];
     this.labs = _.compact(_.map(this.labs, id => Game.getObjectById(id.id))) as StructureLab[];
+    if (Game.time % 100) {
+      findAndBuildLab(this, this.labs);
+
+      for (let reqID in this.resourceRequests) {
+        if (this.resourceRequests[reqID].createdTime > Game.time + 1000) {
+          delete this.resourceRequests[reqID];//cleanup of lod requests. imporpant for buggy requests
+          console.log(this.room.name, "cleaned up a res req", reqID);
+        }
+      }
+    }
+
     this.computeLists();
     this.refreshEnergyDemand(this.forceUpdateEnergy);
     this.forceUpdateEnergy = false;
@@ -230,6 +258,8 @@ export class Colony {
       }
     }
   }
+
+
 
   public computeWallList() {
     try {
@@ -250,6 +280,12 @@ export class Colony {
     } catch (e) {
       console.log("find wall sites failed", e);
     }
+  }
+
+  public queNewCreep(creepMemory: CreepMemory, body: BodyPartConstant[]) {
+    let data: queData = { memory: creepMemory, body: body };
+    this.queBoostCreep(data);
+    this.creepRequest.push(data);
   }
 
   private computeLists(force?: boolean) {
@@ -289,7 +325,8 @@ export class Colony {
           //console.log(this.name, "nr builders =", nrBuilders, this.memory.wallEnergy / 1e4, this.room.storage.store.energy / 1e4);
           //for (let i = 0; i < nrBuilders; i++) {
           const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
-          this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
+          //this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
+          this.queNewCreep(mem, getBuilderBody(this.room));
           //}
         }
       } catch (e) {
@@ -401,30 +438,77 @@ export class Colony {
     }
   }
 
-  boostCreep(creepData: queData): void {
+  public registreBoost(boost: BoostMemory) {
+
+  }
+
+  public queBoostCreep(creepData: queData): void {
     if (!this.room.storage) {
       return;
     }
-
-    let boostType: MineralBoostConstant | null = null;
-    if (creepData.memory.type == creepT.BUILDER) {
-      let builderType = RESOURCE_LEMERGIUM_HYDRIDE;
-      let boostCost = countBodyPart(creepData.body, "WORK" as BodyPartConstant) * 30;
-      if (this.room.storage.store[builderType] >= boostCost) {
+    try {
+      let boostType: MineralBoostConstant | null = null;
+      let boostCost = 1e9;
+      if (creepData.memory.type == creepT.BUILDER) {
         boostType = RESOURCE_LEMERGIUM_HYDRIDE;
-        let booster = this.memory.boosts.find(value => value.boost == builderType);
+        boostCost = countBodyPart(creepData.body, "WORK" as BodyPartConstant) * 30;
+      }
+
+      //create boost que and target
+      if (boostType && this.room.storage.store[boostType] >= boostCost) {
+
+        let booster = this.memory.boosts.find(value => value.boost == boostType);
         if (booster) {
           booster.nrCreep += 1;
-          //return target
         }
         else {
-          let labNr = _.findLastIndex(this.memory.labMemories,(val => val.state == null));
+          let labNr = _.findLastIndex(this.memory.labMemories, (val => val.state == null));
           if (labNr) {
-            this.memory.boosts.push({ boost: builderType, nrCreep: 1, labID: labNr });
-            //retrun target
+            booster = { boost: boostType, nrCreep: 1, labID: labNr };
+            this.memory.boosts.push(booster);
           }
         }
+        let req = this.resourceRequests[this.labs[booster!.labID].id];
+        if (req) {
+          req.ThreshouldHard += boostCost;
+          req.ThreshouldAmount += boostCost;
+        }
+        else {
+          this.resourceRequests[this.labs[booster!.labID].id] = new resourceRequest(this.labs[booster!.labID].id, boostType, boostCost - 1, boostCost, this.room);
+        }
+        console.log(this.name, "new boost res req", JSON.stringify(this.resourceRequests[this.labs[booster!.labID].id]));
+        let lab = this.labs[booster!.labID];
+        let boostTarget: targetData = { ID: lab.id, type: BOOST, pos: lab.pos, range: 1, targetVal: boostCost, resType: boostType };
+        creepData.memory.targetQue.unshift(boostTarget);
       }
+    }
+    catch(e){
+      console.log(this.name, 'que boost failed', e);
+    }
+  }
+
+  boostCreep(creep: Creep, target: targetData): void {
+    let boostT = target.ID;
+    let boostInfo = this.memory.boosts.find(value => value.boost == boostT);
+    console.log(this.room.name, "in place for boost", boostT, JSON.stringify(boostInfo));
+    if (boostInfo) {
+      let lab = this.labs[boostInfo.labID];
+      if (lab.store[boostInfo.boost] >= target.targetVal!) {
+        let err = this.labs[boostInfo.labID].boostCreep(creep);
+        if (err == OK) {
+          creep.completeTarget();
+          boostInfo.nrCreep -= 1;
+          if (boostInfo.nrCreep <= 0) {
+            _.remove(this.memory.boosts, value => value.boost == boostT);
+          }
+        }
+        else
+          console.log(this.name, "failed boost", PrettyPrintErr(err));
+      }
+      else {
+        console.log(lab.room.name, "waiting for boost res");
+      }
+
     }
   }
 }

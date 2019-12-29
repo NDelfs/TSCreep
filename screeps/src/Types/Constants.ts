@@ -36,3 +36,7 @@ export const REACTION_CHAIN: { [name: string]: IReaction } = {
     O: { r: "O", needs: [] },
     X: { r: "X", needs: [] },
 }
+
+export const BOOSTING = 1;
+export const UNBOSTING = 2;
+export const REACTION = 10;

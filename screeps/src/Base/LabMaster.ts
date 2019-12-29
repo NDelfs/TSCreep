@@ -1,6 +1,5 @@
 import { Colony, resourceRequest } from "Colony"
-import { findAndBuildLab } from "Base/BaseExpansion"
-import { REACTION_CHAIN, IReaction } from "Types/Constants"
+import { REACTION_CHAIN, IReaction, REACTION } from "Types/Constants"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 
@@ -214,7 +213,6 @@ export class LabMaster {
         this.nrLabs = 0;
         for (let col in this.colonies) {
             let colony = this.colonies[col];
-            findAndBuildLab(colony.room, colony.labs);
             let foundCol = _.find(this.colLabs, (colL) => { return colL.colony == col; });
             if (foundCol == null)
                 this.colLabs.push({ nrLabs: colony.labs.length, nrLabUsed: 0, colony: col, roomReaction: [] });
@@ -224,6 +222,8 @@ export class LabMaster {
         }
       this.colLabs.sort(function (obj1, obj2) { return obj2.nrLabs - obj1.nrLabs });
 }
+
+
 
   private AddReaction(mainIdx: number, reaction: IReaction, labInfo: IRoomLabs, reactionsToAdd: MineralReq[], finalP: boolean): boolean {
     if (reaction.needs.length == 0 || (mainIdx != 0 && reaction.r == "G") /*|| (this.resources[reaction.r] |0) > 2000 if 4 room have 500 they will never send it to this room. Need a way to empty rooms that are not producing even when below 1k limit*/)//G will never fit in a used room and needed as a pure mineral
@@ -235,7 +235,7 @@ export class LabMaster {
             labInfo.nrLabUsed += 2;
             slave2.bring = !this.AddReaction(slave2.idx, REACTION_CHAIN[reaction.needs[1]], labInfo, reactionsToAdd,false);
             slave1.bring = !this.AddReaction(slave1.idx, REACTION_CHAIN[reaction.needs[0]], labInfo, reactionsToAdd,false);
-            labInfo.roomReaction.push({ react: reaction, result: master, res1: slave1, res2: slave2 });
+          labInfo.roomReaction.push({ react: reaction, result: master, res1: slave1, res2: slave2 });
             console.log(labInfo.colony, "Added", reaction.r, "with slaves", slave1.idx, slave1.bring, slave2.idx, slave2.bring);
             return true;
         }
@@ -245,9 +245,26 @@ export class LabMaster {
         }
     }
 
+  private availLabs(labInfo: IRoomLabs) {
+    let availLab = 0;
+    for (let labMem of this.colonies[labInfo.colony].memory.labMemories) {
+      if (labMem.state == REACTION) {
+        labMem.state = null;
+      }
+      if (labMem.state == null)//avoid using the last ones if they are already used for boost
+        availLab++;
+      else
+        break;
+    }
+    return availLab;
+  }
+
     private distibuteReactions() {
         if (this.colLabs.length >= 3) {
-            for (let labInfo of this.colLabs) {
+          for (let labInfo of this.colLabs) {
+
+            labInfo.nrLabs = this.availLabs(labInfo);//because we reset react everytime we can run this code
+
                 let localReactionToAdd: MineralReq[] = [];
                 while (this.reactionsToAdd.length > 0 && labInfo.nrLabUsed + 3 <= labInfo.nrLabs) {
                     labInfo.nrLabUsed += 1;
@@ -272,6 +289,14 @@ export class LabMaster {
                 this.reactionsToAdd = localReactionToAdd.concat( this.reactionsToAdd );
                 //if (labInfo.roomReaction.length > 0)
               console.log(labInfo.colony, "total reaction added", labInfo.roomReaction.length, "left to add", this.reactionsToAdd.length);
+
+            for (let react of labInfo.roomReaction) {//because we reset react we need to claim the labs
+                for (let idx of react.result.idxs)
+                  this.colonies[labInfo.colony].memory.labMemories[idx].state = REACTION;
+                this.colonies[labInfo.colony].memory.labMemories[react.res1.idx].state = REACTION;
+                this.colonies[labInfo.colony].memory.labMemories[react.res2.idx].state = REACTION;
+              }
+
               if (this.reactionsToAdd.length == 0)
                 return;
             }

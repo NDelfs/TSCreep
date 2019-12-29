@@ -30,9 +30,10 @@ interface BoostMemory {
 }
 
 interface LabMemory {
+  ID: string;
   state: LabStates;
   pushedStat: LabStates;
-  resource: ResourceConstant;//or id to boost or reaction if reaction is tracable
+  resource: string;//or id to boost or reaction if reaction is tracable
 }
 
 interface ColonyMemory {

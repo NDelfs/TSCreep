@@ -15,7 +15,9 @@ type TargetConstant =
     | POSITION
     | FLAG_RED
     | FLAG_WHITE
-    | DEFEND;
+  | DEFEND
+  | BOOST
+  | UNBOOST;
 
 type CONTROLLER = 1;
 type POWERUSER = 11;
@@ -29,7 +31,9 @@ type CONSTRUCTION = 41;
 type REPAIR = 45;
 type REPAIR_WALL = 46;
 type POSITION = 51;
-type DEFEND = 61
+type DEFEND = 61;
+type BOOST = 71;
+type UNBOOST = 75;
 type FLAG_RED = 100;
 type FLAG_WHITE = 190;
 

@@ -82,7 +82,13 @@ export function getStorageDeliverTarget(room: Room, resourceType: ResourceConsta
         return { ID: room.terminal.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.terminal.pos, range: 1 };
     }
     //base dump energy
-    if (room.storage) {
+  if (room.storage) {
+    let colony = PM.colonies[room.name];
+    if (colony.nuker && room.storage.store.energy > 1e5 && colony.nuker.store.energy < 3e5) {
+      console.log(colony.name, "transport to nuker");
+      return { ID: colony.nuker.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: colony.nuker.pos, range: 1 };
+    }
+    else
         return { ID: room.storage.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.storage.pos, range: 1};
     }
 
@@ -132,6 +138,7 @@ export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//d
     if (findStore && room.storage) {
       if (colony.nuker && room.storage.store.energy > 1e5 && colony.nuker.store.energy < 3e5) {
         creep.addTarget(colony.nuker.id, targetT.POWERSTORAGE, colony.nuker.pos, 1);
+        console.log(colony.name, "transport to nuker");
         return true;
       }
       else {
