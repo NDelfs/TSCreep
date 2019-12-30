@@ -6,10 +6,10 @@ import { TRANSPORT, DROPPED_RESOURCE, TRANSPORT_PICKUP, POWERUSER, POWERSTORAGE,
 import { Colony } from "../Colony";
 
 function claimResource(creep: Creep, target: targetData | null) {
-    if (target) {
-        Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
-        creep.say("Go to source");
-    }
+  if (target) {
+    Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
+    creep.say("Go to source");
+  }
 
 }
 
@@ -80,22 +80,22 @@ export function getTransportTarget(creep: Creep, useStorage: boolean) {
 
 export function Transporter(creep: Creep) {
   if (creep.getTarget() == null) {
-    getTransportTarget(creep,true);
-    }
+    getTransportTarget(creep, true);
+  }
 
-    let target = creep.getTarget();
-    if (target == null) {
-        creep.say("zZzZ")
+  let target = creep.getTarget();
+  if (target == null) {
+    creep.say("zZzZ")
+  }
+  else if (creep.inPlace) {
+    switch (target.type) {
+      case targetT.POWERSTORAGE:
+      case targetT.TRANSPORT:
+      case targetT.POWERUSER: useDeliverTarget(creep); break;
+      case targetT.TRANSPORT_PICKUP:
+      case targetT.STORAGE_RESOURCE:
+      case targetT.DROPPED_RESOURCE: useEnergyTarget(creep, target); break;
+      default: console.log("Canceled ", target.type); creep.completeTarget();
     }
-    else if (creep.inPlace) {
-        switch (target.type) {
-            case targetT.POWERSTORAGE:
-            case targetT.TRANSPORT:
-            case targetT.POWERUSER: useDeliverTarget(creep); break;
-            case targetT.TRANSPORT_PICKUP:
-            case targetT.STORAGE_RESOURCE:
-            case targetT.DROPPED_RESOURCE: useEnergyTarget(creep, target); break;
-            default: console.log("Canceled ", target.type); creep.completeTarget();
-        }
-    }
+  }
 }

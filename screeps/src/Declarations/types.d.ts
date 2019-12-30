@@ -1,20 +1,20 @@
 // example declaration file - remove these and add your own custom typings
 // memory extension samples
 type TargetConstant =
-    | CONTROLLER
-    | POWERUSER
-    | POWERSTORAGE
-    | TRANSPORT
-    | SOURCE
-    | DROPPED_RESOURCE
-    | STORAGE_RESOURCE
-    | TRANSPORT_PICKUP
-    | CONSTRUCTION
+  | CONTROLLER
+  | POWERUSER
+  | POWERSTORAGE
+  | TRANSPORT
+  | SOURCE
+  | DROPPED_RESOURCE
+  | STORAGE_RESOURCE
+  | TRANSPORT_PICKUP
+  | CONSTRUCTION
   | REPAIR
   | REPAIR_WALL
-    | POSITION
-    | FLAG_RED
-    | FLAG_WHITE
+  | POSITION
+  | FLAG_RED
+  | FLAG_WHITE
   | DEFEND
   | BOOST
   | UNBOOST;
@@ -38,15 +38,15 @@ type FLAG_RED = 100;
 type FLAG_WHITE = 190;
 
 type CreepConstant =
-    | STARTER
-    | HARVESTER
-    | UPGRADER
-    | TRANSPORTER
-    | BUILDER
-    | SCOUT
-    | DEFENDER
-    | ATTACKER
-    | ATTACKERCONTROLLER;
+  | STARTER
+  | HARVESTER
+  | UPGRADER
+  | TRANSPORTER
+  | BUILDER
+  | SCOUT
+  | DEFENDER
+  | ATTACKER
+  | ATTACKERCONTROLLER;
 
 type STARTER = 1;
 type HARVESTER = 11;
@@ -71,37 +71,37 @@ type UNBOSTING = 2;
 type REACTION = 10;
 
 interface posData {
-    /**
-     * The name of the room.
-     */
-    roomName: string;
-    /**
-     * X position in the room.
-     */
-    x: number;
-    /**
-     * Y position in the room.
-     */
-    y: number;
+  /**
+   * The name of the room.
+   */
+  roomName: string;
+  /**
+   * X position in the room.
+   */
+  x: number;
+  /**
+   * Y position in the room.
+   */
+  y: number;
 }
 
 interface moveData {
-    pos: posData;
-    range: number;
+  pos: posData;
+  range: number;
 }
 
 interface targetData {
-    ID: string;
-    type: TargetConstant;
-    resType?: ResourceConstant;
-    pos: posData;
+  ID: string;
+  type: TargetConstant;
+  resType?: ResourceConstant;
+  pos: posData;
   range: number;
   targetVal?: number;//on repair wall
 }
 
 interface queData {
-    memory: CreepMemory;
-    body: BodyPartConstant[];
+  memory: CreepMemory;
+  body: BodyPartConstant[];
 }
 
 

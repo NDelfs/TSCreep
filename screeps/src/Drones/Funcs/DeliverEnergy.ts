@@ -6,51 +6,51 @@ import { getSourceTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy"
 import { PM } from "PishiMaster";
 
 export function resetDeliverTarget(creep: Creep) {
-    let target = creep.getTarget();
-    if (target && targetT.RequiresEnergy.includes(target.type) && creep.carry.energy == 0) {
-        creep.completeTarget();
-        creep.say("reset");
-    }
+  let target = creep.getTarget();
+  if (target && targetT.RequiresEnergy.includes(target.type) && creep.carry.energy == 0) {
+    creep.completeTarget();
+    creep.say("reset");
+  }
 }
 
-function getClosest(roomPos: RoomPosition, iTargets: targetData[]): targetData{
-    let index: number = 0;
-    let minDist = 100;
-    for (let i=0; i < iTargets.length; i++) {
-        let target = iTargets[i];
-        let newD = roomPos.getRangeTo(target.pos.x, target.pos.y);
-        if (newD < minDist) {
-            minDist = newD;
-            index = i;
-        }
+function getClosest(roomPos: RoomPosition, iTargets: targetData[]): targetData {
+  let index: number = 0;
+  let minDist = 100;
+  for (let i = 0; i < iTargets.length; i++) {
+    let target = iTargets[i];
+    let newD = roomPos.getRangeTo(target.pos.x, target.pos.y);
+    if (newD < minDist) {
+      minDist = newD;
+      index = i;
     }
-    return iTargets.splice(index, 1)[0];
+  }
+  return iTargets.splice(index, 1)[0];
 }
 function getMatchingSource(creep: Creep, target: targetData, alreadyresourceType: ResourceConstant | null | undefined): targetData[] {
-    if (alreadyresourceType != null)//already have res
-        return [target];
-    let sourceT = getSourceTarget(creep, target.resType!);
-    if (sourceT == null)
-        sourceT = getFromStoreTarget(creep, target.resType!);
-    if (sourceT) {
-        return [sourceT, target];
-    }
-    return [];
+  if (alreadyresourceType != null)//already have res
+    return [target];
+  let sourceT = getSourceTarget(creep, target.resType!);
+  if (sourceT == null)
+    sourceT = getFromStoreTarget(creep, target.resType!);
+  if (sourceT) {
+    return [sourceT, target];
+  }
+  return [];
 }
 
 export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstant | null): targetData[] {
-    let roomPos: RoomPosition = creep.pos;
-    let colony = PM.colonies[roomPos.roomName];
-    if ((resourceType == null || resourceType == RESOURCE_ENERGY) && colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0) {
-        //if (roomPos.roomName == "E47N45")
-            //console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
-        let target = getClosest(roomPos, colony.energyNeedStruct);
-        let targets = getMatchingSource(creep, target, resourceType);
-        return targets;
-        //PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
-    }
-    //if (roomPos.roomName == "E49N47")
-        //console.log("looking for resource reg")
+  let roomPos: RoomPosition = creep.pos;
+  let colony = PM.colonies[roomPos.roomName];
+  if ((resourceType == null || resourceType == RESOURCE_ENERGY) && colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0) {
+    //if (roomPos.roomName == "E47N45")
+    //console.log(roomPos.roomName, "found energy demand", colony.energyNeedStruct.length, colony.spawnEnergyNeed);
+    let target = getClosest(roomPos, colony.energyNeedStruct);
+    let targets = getMatchingSource(creep, target, resourceType);
+    return targets;
+    //PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
+  }
+  //if (roomPos.roomName == "E49N47")
+  //console.log("looking for resource reg")
 
   for (let [id, reqs] of Object.entries(colony.resourceHandler._resourceRequests)) {
     for (let req of reqs) {
@@ -71,19 +71,19 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
       }
     }
   }
-    
 
-    //if (roomPos.roomName == "E49N47")
-        //console.log("failed to find resource req")
-    return [];
+
+  //if (roomPos.roomName == "E49N47")
+  //console.log("failed to find resource req")
+  return [];
 }
 
 export function getStorageDeliverTarget(room: Room, resourceType: ResourceConstant): targetData | null {
-    //base dump mineral
-    if (resourceType != RESOURCE_ENERGY && room.terminal) {
-        return { ID: room.terminal.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.terminal.pos, range: 1 };
-    }
-    //base dump energy
+  //base dump mineral
+  if (resourceType != RESOURCE_ENERGY && room.terminal) {
+    return { ID: room.terminal.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.terminal.pos, range: 1 };
+  }
+  //base dump energy
   if (room.storage) {
     let colony = PM.colonies[room.name];
     if (colony.nuker && room.storage.store.energy > 1e5 && colony.nuker.store.energy < 3e5) {
@@ -91,10 +91,10 @@ export function getStorageDeliverTarget(room: Room, resourceType: ResourceConsta
       return { ID: colony.nuker.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: colony.nuker.pos, range: 1 };
     }
     else
-        return { ID: room.storage.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.storage.pos, range: 1};
-    }
+      return { ID: room.storage.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.storage.pos, range: 1 };
+  }
 
-    return null;
+  return null;
 }
 
 //export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//depricadet
@@ -153,19 +153,19 @@ export function getStorageDeliverTarget(room: Room, resourceType: ResourceConsta
 //}
 
 function getCloseDeliverTarget(creep: Creep): void {
-    //let room = Game.rooms[creep.memory.creationRoom];
-    //let structs = creep.pos.findInRange(FIND_MY_STRUCTURES, 1, {
-    //    filter: function (str) {
-    //        return (str.structureType == STRUCTURE_EXTENSION ||
-    //            str.structureType == STRUCTURE_SPAWN || str.structureType == STRUCTURE_TOWER) &&
-    //            str.energy < str.energyCapacity;
-    //    }
-    //});
-    //else {
-    if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length > 0) {
-        creep.addTargetT(getClosest(creep.pos, PM.colonies[creep.memory.creationRoom].energyNeedStruct));
-    }
-   // }
+  //let room = Game.rooms[creep.memory.creationRoom];
+  //let structs = creep.pos.findInRange(FIND_MY_STRUCTURES, 1, {
+  //    filter: function (str) {
+  //        return (str.structureType == STRUCTURE_EXTENSION ||
+  //            str.structureType == STRUCTURE_SPAWN || str.structureType == STRUCTURE_TOWER) &&
+  //            str.energy < str.energyCapacity;
+  //    }
+  //});
+  //else {
+  if (PM.colonies[creep.memory.creationRoom].energyNeedStruct.length > 0) {
+    creep.addTargetT(getClosest(creep.pos, PM.colonies[creep.memory.creationRoom].energyNeedStruct));
+  }
+  // }
 
 }
 

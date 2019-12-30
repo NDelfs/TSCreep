@@ -42,7 +42,7 @@ function refreshArray(array: any[]) {
 export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant): number {
   let ret = 0;
   for (let part of body) {
-    ret += part == type ? 1 :0;
+    ret += part == type ? 1 : 0;
   }
   return ret;
 }
@@ -103,7 +103,7 @@ export class Colony {
       this.memory.boosts = [];
     }
     if (!this.memory.labMemories) {
-      this.memory.labMemories=[];
+      this.memory.labMemories = [];
     }
     this.creepBuildQueRef = this.memory.creepBuildQue;
 
@@ -194,18 +194,18 @@ export class Colony {
 
   public computeWallList() {
     try {
-    let walls = this.room.structures.filter((struct) => { return (struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits != undefined });
-    this.wallSites = [];
-    if (walls.length > 0) {
-      walls.sort((a, b) => { return a.hits - b.hits });
-      let lastHit = _.last(walls).hits;
-      for (let wall of walls) {
-        let upgradeAmount = Math.min(Math.max(lastHit - wall.hits, 1e5), 2e5);
-        if (this.wallSites.length > 0)
-          _.last(this.wallSites).newHits = Math.max(_.last(this.wallSites).newHits, wall.hits);
-        this.wallSites.push({ id: wall.id, newHits: wall.hits + upgradeAmount });
-      }
-      //console.log(this.name, "first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
+      let walls = this.room.structures.filter((struct) => { return (struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits != undefined });
+      this.wallSites = [];
+      if (walls.length > 0) {
+        walls.sort((a, b) => { return a.hits - b.hits });
+        let lastHit = _.last(walls).hits;
+        for (let wall of walls) {
+          let upgradeAmount = Math.min(Math.max(lastHit - wall.hits, 1e5), 2e5);
+          if (this.wallSites.length > 0)
+            _.last(this.wallSites).newHits = Math.max(_.last(this.wallSites).newHits, wall.hits);
+          this.wallSites.push({ id: wall.id, newHits: wall.hits + upgradeAmount });
+        }
+        //console.log(this.name, "first have", walls[0].hits, "last have", _.last(walls).hits, "new hits =", this.wallSites[0].newHits);
 
       }
     } catch (e) {
@@ -327,7 +327,7 @@ export class Colony {
       //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
       //    console.log(this.name, "Total energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
     }
-  
+
     // else
     //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
     //    console.log(this.name, "energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
@@ -346,17 +346,17 @@ export class Colony {
       try {
         if (room.hostiles.length > 0) {
           if (!healer) {
-              tower.attack(room.hostiles[0]);
-              continue;
+            tower.attack(room.hostiles[0]);
+            continue;
           }
-           else {
-              if (Game.time % 100 == 0)
-                this.computeWallList();
-              let struct = Game.getObjectById(this.wallSites[0].id) as Structure;
-              if (struct && struct.hits < 5e5)
-                tower.repair(struct);
-            }
-          
+          else {
+            if (Game.time % 100 == 0)
+              this.computeWallList();
+            let struct = Game.getObjectById(this.wallSites[0].id) as Structure;
+            if (struct && struct.hits < 5e5)
+              tower.repair(struct);
+          }
+
         }
         if (this.emergencyRepairSites.length > 0 && tower.energy > tower.energyCapacity * 0.5) {
           let struct = Game.getObjectById(this.emergencyRepairSites[0]) as Structure;
@@ -370,7 +370,7 @@ export class Colony {
             this.emergencyRepairSites.shift();
           }
         }
-        if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceHandler.getReq(tower.id,RESOURCE_ENERGY) == null) {
+        if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceHandler.getReq(tower.id, RESOURCE_ENERGY) == null) {
           this.resourceHandler.addRequest(new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room));
         }
       }
@@ -409,7 +409,7 @@ export class Colony {
         let lab = this.labs[booster!.labID];
         let amount = booster!.boostCost * booster!.nrCreep;
         if (lab.store[booster!.boost] < amount) {
-          let req = this.resourceHandler.getReq(lab.id, boostType );
+          let req = this.resourceHandler.getReq(lab.id, boostType);
           if (req) {
             req.ThreshouldHard += boostCost;
             req.ThreshouldAmount += boostCost;
@@ -431,7 +431,7 @@ export class Colony {
         creepData.memory.targetQue.unshift(boostTarget);
       }
     }
-    catch(e){
+    catch (e) {
       console.log(this.name, 'que boost failed', e);
     }
   }
