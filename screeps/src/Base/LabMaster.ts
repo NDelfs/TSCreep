@@ -49,8 +49,8 @@ export class LabMaster {
     this.colLabs = [];
     this.nrLabs = 0;
     try {
-      this.filterReactions();//do not care if list is changed
       this.updateLabInfo();
+      this.filterReactions();//do not care if list is changed, uses that lab info is updated 
       this.distibuteReactions();
       this.resourceRequests();
     } catch (e) {
@@ -185,7 +185,7 @@ export class LabMaster {
     return;
   }
 
-  private resourceRequests() {
+  private resourceRequests() {//this code coulb maybe be simplified with lab memories instead.
     for (let colLab of this.colLabs) {
       let colony = this.colonies[colLab.colony];
       colony.resourceExternal = [];
@@ -202,7 +202,7 @@ export class LabMaster {
         usedLabs[reaction.res2.idx] = true;
       }
       for (let i = 0; i < usedLabs.length; i++) {
-        if (!usedLabs[i]) {
+        if (!usedLabs[i] && colony.memory.labMemories[i].state == null) {
           this.resourceResetLab(colony, labs[i], null, false);
         }
       }

@@ -13,6 +13,7 @@ import { getBuilderBody } from "./Spawners/Spawner";
 import { BOOST } from "Types/TargetTypes";
 import { PrettyPrintErr } from "./utils/PrettyPrintErr";
 import { ResourceHandler, resourceRequest } from "Base/ResourceHandler";
+import { BOOSTING } from "Types/Constants";
 
 
 function getRandomInt(min: number, max: number) {
@@ -223,10 +224,11 @@ export class Colony {
 
   public queNewCreep(creepMemory: CreepMemory, body: BodyPartConstant[]) {
     let data: queData = { memory: creepMemory, body: body };
-    if (this.room.name == "E49N47") {
-      this.queBoostCreep(data);
-      console.log("called on boost Creep", this.memory.boosts.length);
-    }
+    //if (this.room.name == "E49N47") {
+    this.queBoostCreep(data);
+    if (data.memory.targetQue.length > 0 && data.memory.targetQue[0].type == BOOST)
+      console.log(this.name, "called on boost Creep", data.memory.targetQue[0].resType, this.memory.boosts.length);
+    //}
     this.creepBuildQueRef.push(data);
   }
 
@@ -404,6 +406,7 @@ export class Colony {
           if (labNr) {
             booster = { boost: boostType, nrCreep: 1, labID: labNr, boostCost: boostCost };
             this.memory.boosts.push(booster);
+            this.memory.labMemories[labNr].state = BOOSTING;
           }
         }
         let lab = this.labs[booster!.labID];
@@ -444,11 +447,12 @@ export class Colony {
       let lab = this.labs[boostInfo.labID];
       if (lab.store[boostInfo.boost] >= target.targetVal!) {
         let err = this.labs[boostInfo.labID].boostCreep(creep);
-        if (err == OK) {
+        if (err == OK || err == ERR_NOT_ENOUGH_RESOURCES) {//the not enough res is such that the builder then can continue with its life. Still will be printed as err in log
           creep.completeTarget();
           boostInfo.nrCreep -= 1;
-          console.log(this.name, "boosted", creep.name, PrettyPrintErr(err));
+          console.log(this.name, "boosted", err, creep.name, PrettyPrintErr(err));
           if (boostInfo.nrCreep <= 0) {
+            this.memory.labMemories[boostInfo.labID].state = null;
             _.remove(this.memory.boosts, value => value.boost == boostT);
           }
         }
