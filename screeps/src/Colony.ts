@@ -272,8 +272,7 @@ export class Colony {
     this.refreshEnergyDemand(true);
 
     this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
-    if (this.memory.startSpawnPos)
-      expandResources(this, restorePos(this.memory.startSpawnPos));
+    expandResources(this, this.spawns[0].pos);
   }
 
   public refresh() {
@@ -599,6 +598,7 @@ profiler.registerClass(Colony, 'Colony');
 
 function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MINERALS | FIND_SOURCES) {
   const sources = colony.room.find(findType);
+  console.log("nrSources", sources.length);
   if (sources.length == 0)
     return;
   if (findType == FIND_MINERALS) {

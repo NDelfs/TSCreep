@@ -19,9 +19,9 @@ export function CreepUpdate() {
     for (let creepID in Game.creeps) {
         try {
             let creep = Game.creeps[creepID];
-            if (creep.memory.targetQue.length > 3) {
-                creep.memory.targetQue = [];
-                console.log(creep.room.name,"rampant targets, cleared instead", creep.type)
+          if (creep.memory.targetQue.length > 3) {
+            console.log(creep.room.name, "rampant targets, cleared instead", JSON.stringify(creep.memory.targetQue));
+                creep.memory.targetQue = [];            
             }
 
           if (creep.spawning)
