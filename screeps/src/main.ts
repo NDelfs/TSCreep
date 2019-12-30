@@ -109,13 +109,13 @@ function main() {
           for (let targ of Memory.creeps[name].targetQue) {
             if (targ) {
               PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
-              let creepMis = PM.colonies[Memory.creeps[name].creationRoom]._resourceRequests[targ.ID];
+              let creepMis = PM.colonies[Memory.creeps[name].creationRoom].resourceHandler._resourceRequests[targ.ID];
               if (creepMis) {
                 for(let req of creepMis)
                   req.updateCreepD();
               }
               else {
-                let creepP = PM.colonies[Memory.creeps[name].creationRoom].resourcePush[targ.ID];
+                let creepP = PM.colonies[Memory.creeps[name].creationRoom].resourceHandler.resourcePush[targ.ID];
                 if (creepP)
                   creepP.updateCreepD();
               }

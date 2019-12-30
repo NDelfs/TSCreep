@@ -41,9 +41,9 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
             }
         }
 
-        let colony = PM.colonies[creep.creationRoom];
-        for (let pushID in colony.resourcePush) {
-            let resD = colony.resourcePush[pushID];
+      let resHandler = PM.colonies[creep.creationRoom].resourceHandler;
+      for (let pushID in resHandler.resourcePush) {
+        let resD = resHandler.resourcePush[pushID];
             let targetObj = Game.getObjectById(pushID) as AnyStoreStructure;
             if (targetObj) {
                 //if (creep.room.name == "E49N47")
@@ -111,16 +111,17 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
         }
     }
     else {
-        let req = PM.colonies[creep.memory.creationRoom].resourcePush[target.ID];
+      let resHandler = PM.colonies[creep.memory.creationRoom].resourceHandler;
+      let req = resHandler.resourcePush[target.ID];
         if (req) {
             let storageObj = Game.getObjectById(target.ID) as AnyStoreStructure;          
             structWithdraw(creep, storageObj, target.resType!, freeSpace);
             if (storageObj.store[target.resType!] - freeSpace <= req.ThreshouldHard) {
-                delete PM.colonies[creep.memory.creationRoom].resourcePush[target.ID];
+              delete resHandler.resourcePush[target.ID];
                 //console.log("push request deleted");
             }
             else {
-                PM.colonies[creep.memory.creationRoom].resourcePush[target.ID].removeTran(creep, freeSpace);
+              resHandler.resourcePush[target.ID].removeTran(creep, freeSpace);
                // console.log("push request one transport less");
             }
         }

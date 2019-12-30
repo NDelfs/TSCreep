@@ -12,6 +12,7 @@ import { restorePos } from "./utils/posHelpers";
 import { getBuilderBody } from "./Spawners/Spawner";
 import { BOOST } from "Types/TargetTypes";
 import { PrettyPrintErr } from "./utils/PrettyPrintErr";
+import { ResourceHandler, resourceRequest } from "Base/ResourceHandler";
 
 
 function getRandomInt(min: number, max: number) {
@@ -36,81 +37,7 @@ function refreshArray(array: any[]) {
   array = _.compact(_.map(array, obj => Game.getObjectById(obj.id)));
 }
 
-export class resourceRequest {
-  id: string;
-  resource: ResourceConstant;
-  ThreshouldAmount: number;//if its acceptable to end early
-  ThreshouldHard: number;//the absolute value requested
-  creeps: string[];
-  resOnWay: number;
-  createdTime: number;
 
-  constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax: number, room: Room) {
-    this.id = ID;
-    this.createdTime = Game.time;
-    this.resource = iResource;
-    this.ThreshouldAmount = iThreshould;
-    this.ThreshouldHard = iThreshouldMax
-    this.resOnWay = 0;
-    //this.creeps = [];
-    this.creeps = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
-      return obj.alreadyTarget(ID);
-    }).map((obj) => { return obj.name; });
-    this.updateCreepD();
-  }
-
-  public amount(): number {
-    let obj = Game.getObjectById(this.id) as AnyStoreStructure;
-    if (obj) {
-      if (this.ThreshouldHard > this.ThreshouldAmount)
-        return obj.store[this.resource] + this.resOnWay;
-      else
-        return obj.store[this.resource] - this.resOnWay;
-    }
-    else
-      return 0;
-  }
-
-  public updateCreepD() {
-    this.resOnWay = 0;
-    let creepsTmp = _.compact(_.map(this.creeps, obj => Game.creeps[obj]));
-    this.creeps = [];
-    for (let creep of creepsTmp) {
-      let found = false;
-      for (let targ of creep.memory.targetQue) {
-        if (targ.ID == this.id) {
-          this.resOnWay += creep.carry[this.resource];
-          this.creeps.push(creep.name);
-          found = true;
-        }
-      }
-      if (!found) {
-        console.log(creep.room.name, creep.name, "where not activly working for resource anymore", this.resource, this.id);
-      }
-    }
-  }
-
-  public addTran(creep: Creep, preknownAmount?: number) {
-    let already = _.find(this.creeps, (mCreep) => mCreep == creep.name) || false;
-    if (!already) {
-      this.creeps.push(creep.name);
-      this.resOnWay += preknownAmount || creep.carry[this.resource];
-    }
-  }
-  public removeTran(creep: Creep, preknownAmount?: number) {
-    let removed = _.remove(this.creeps, (mCreep) => mCreep == creep.name);
-    if (removed.length > 0) {
-      this.resOnWay -= preknownAmount || creep.carry[this.resource];
-      if (this.resOnWay < 0) {
-        console.log(creep.room.name, "res on way went negative, carry", creep.carry[this.resource], preknownAmount || creep.carry[this.resource]);
-        this.resOnWay = Math.max(this.resOnWay, 0);
-      }
-    }
-    if (this.creeps.length == 0)
-      this.resOnWay = 0;
-  }
-}
-profiler.registerClass(resourceRequest, 'resourceRequest');
 
 export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant): number {
   let ret = 0;
@@ -140,8 +67,7 @@ export class Colony {
   energyNeedStruct: targetData[];
   energyTransporters: Creep[];
 
-  _resourceRequests: { [id: string]: resourceRequest[] };
-  resourcePush: { [id: string]: resourceRequest };
+  resourceHandler: ResourceHandler
   resourceExternal: ResourceConstant[];
 
   creepBuildQueRef: queData[];
@@ -164,51 +90,7 @@ export class Colony {
   repairSites: string[];
   wallSites: { id: string, newHits: number }[];
 
-  public getReq(id: string, res: ResourceConstant): resourceRequest | undefined {
-    if (this._resourceRequests[id])
-      return this._resourceRequests[id].find((req) => { return req.resource == res });
-    return undefined;
-  }
 
-  public removeTranReq(id: string, res: ResourceConstant, creep: Creep) {
-    let req = this.getReq(id, res);
-    if (req) {
-      let targetObj = Game.getObjectById(id) as AnyStoreStructure;
-      if (req.creeps.length == 1 && targetObj.store[req.resource] + req.resOnWay >= req.ThreshouldHard) {
-        _.remove(this._resourceRequests[id], (req) => { return req.resource == res });
-      }
-      else {
-        req.removeTran(creep);
-      }
-    }
-    else
-      console.log("tried to use a target req that is already deleted")
-  }
-
-  public addRequest(req: resourceRequest) {
-    if (this._resourceRequests[req.id] == null)
-      this._resourceRequests[req.id] = [];
-    this._resourceRequests[req.id].push(req);
-  }
-
-  rebuildBoostResourceReq(boosts: BoostMemory[], labs: StructureLab[]) {
-    try {
-      for (let boost of boosts) {
-        let amount = boost.boostCost * boost.nrCreep;
-        let lab = labs[boost.labID];
-        if (lab.store[boost.boost] < amount) {
-          this.addRequest(new resourceRequest(lab.id, boost.boost, amount - 1, amount, this.room));
-        }
-        if (lab.store.energy < amount) {
-          this.addRequest(new resourceRequest(lab.id, RESOURCE_ENERGY, amount - 1, amount, this.room));
-        }
-        console.log(this.name, "rebuild boost res req", JSON.stringify(this._resourceRequests[lab.id]));
-      }
-    }
-    catch (e) {
-      console.log("failed to rebuild boost req", e);
-    }
-  }
 
   constructor(iRoom: Room) {
     if (!Memory.ColonyMem)//this is rare enough that I do ugly fix here
@@ -256,10 +138,8 @@ export class Colony {
     }
     findAndBuildLab(this, this.labs);
 
-    this._resourceRequests = {};
-    this.resourcePush = {};
     this.resourceExternal = [];
-    this.rebuildBoostResourceReq(this.memory.boosts, this.labs);//this is needed as long as we do not save the requests
+    this.resourceHandler = new ResourceHandler(this.room, this.memory.boosts, this.labs);
     this.computeLists(true);
     this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {
       let ret = false;
@@ -294,11 +174,6 @@ export class Colony {
     this.labs = _.compact(_.map(this.labs, id => Game.getObjectById(id.id))) as StructureLab[];
     if (Game.time % 100) {
       findAndBuildLab(this, this.labs);
-
-      for (let reqID in this._resourceRequests) {//clean up resource requests
-        let reqs = this._resourceRequests[reqID];
-        _.remove(reqs, (req) => { return req.createdTime > Game.time + 1000 });
-      }
     }
 
     this.computeLists();
@@ -311,6 +186,8 @@ export class Colony {
         this.memory.controllerStoreID = con[0].id;
       }
     }
+
+    this.resourceHandler.postRun();//should be moved to postrun
   }
 
 
@@ -440,11 +317,11 @@ export class Colony {
       //    }
       //}
       let conStore = Game.getObjectById(this.memory.controllerStoreID!);
-      if (conStore && this.getReq(this.memory.controllerStoreID!, RESOURCE_ENERGY) == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
-        this.addRequest(new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room));
+      if (conStore && this.resourceHandler.getReq(this.memory.controllerStoreID!, RESOURCE_ENERGY) == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
+        this.resourceHandler.addRequest(new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room));
       }
-      if (this.room.terminal && this.getReq(this.room.terminal.id, RESOURCE_ENERGY) == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
-        this.addRequest(new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room));
+      if (this.room.terminal && this.resourceHandler.getReq(this.room.terminal.id, RESOURCE_ENERGY) == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
+        this.resourceHandler.addRequest(new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room));
       }
 
       //if (this.spawnEnergyNeed != 0 || this.room.memory.EnergyNeed != 0)
@@ -493,8 +370,8 @@ export class Colony {
             this.emergencyRepairSites.shift();
           }
         }
-        if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.getReq(tower.id,RESOURCE_ENERGY) == null) {
-          this.addRequest(new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room));
+        if (tower.store.getFreeCapacity(RESOURCE_ENERGY) > 300 && this.resourceHandler.getReq(tower.id,RESOURCE_ENERGY) == null) {
+          this.resourceHandler.addRequest(new resourceRequest(tower.id, RESOURCE_ENERGY, tower.energyCapacity - 300, tower.energyCapacity, room));
         }
       }
       catch (e) {
@@ -532,24 +409,24 @@ export class Colony {
         let lab = this.labs[booster!.labID];
         let amount = booster!.boostCost * booster!.nrCreep;
         if (lab.store[booster!.boost] < amount) {
-          let req = this.getReq(lab.id, boostType );
+          let req = this.resourceHandler.getReq(lab.id, boostType );
           if (req) {
             req.ThreshouldHard += boostCost;
             req.ThreshouldAmount += boostCost;
           }
           else {
-            this.addRequest(new resourceRequest(lab.id, boostType, boostCost - 1, boostCost, this.room));
+            this.resourceHandler.addRequest(new resourceRequest(lab.id, boostType, boostCost - 1, boostCost, this.room));
           }
-          let reqEne = this.getReq(lab.id, RESOURCE_ENERGY);
+          let reqEne = this.resourceHandler.getReq(lab.id, RESOURCE_ENERGY);
           if (reqEne) {
             reqEne.ThreshouldHard += boostCost;
             reqEne.ThreshouldAmount += boostCost;
           }
           else {
-            this.addRequest(new resourceRequest(lab.id, RESOURCE_ENERGY, boostCost - 1, boostCost, this.room));
+            this.resourceHandler.addRequest(new resourceRequest(lab.id, RESOURCE_ENERGY, boostCost - 1, boostCost, this.room));
           }
         }
-        console.log(this.name, "new boost res req", JSON.stringify(this._resourceRequests[this.labs[booster!.labID].id]));
+        console.log(this.name, "new boost res req", JSON.stringify(this.resourceHandler._resourceRequests[this.labs[booster!.labID].id]));
         let boostTarget: targetData = { ID: lab.id, type: BOOST, pos: lab.pos, range: 1, targetVal: boostCost, resType: boostType };
         creepData.memory.targetQue.unshift(boostTarget);
       }

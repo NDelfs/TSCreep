@@ -1,7 +1,8 @@
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
-import { Colony, resourceRequest } from "Colony"
+import { Colony } from "Colony"
 import * as C from "Types/Constants";
 import { REACTION_CHAIN, IReaction, Terminal_Min_Trade } from "Types/Constants"
+//import { resourceRequest } from "Base/ResourceHandler"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 interface overflowBalance {

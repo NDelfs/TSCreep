@@ -105,7 +105,7 @@ function calculateTransportQue(colony: Colony): queData[] {
       let controllerNeed = 0;
       
       if (colony.memory.controllerStoreID) {
-        let req = colony.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
+        let req = colony.resourceHandler.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
         if (req) {
           controllerNeed = 2000 - req.amount();
         }
@@ -193,7 +193,7 @@ function calculateUpgraderQue(colony: Colony): queData[] {
             }
             let controllerNeed = 0;
           if (colony.memory.controllerStoreID) {
-            let req = colony.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
+            let req = colony.resourceHandler.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
             if (req) {
               controllerNeed = 2000 - req.amount();
             }

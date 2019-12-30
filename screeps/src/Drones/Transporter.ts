@@ -23,13 +23,14 @@ function claimDeliver(creep: Creep, target: targetData) {
     return;
   }
   let colony = PM.colonies[creep.memory.creationRoom];
+  let resHandler = colony.resourceHandler;
   if (target.type == TRANSPORT_PICKUP) {
-    colony.resourcePush[target.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
+    resHandler.resourcePush[target.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
     return;
   }
 
   if (target.type == TRANSPORT && target.resType) {
-    let req = colony.getReq(target.ID, target.resType);
+    let req = resHandler.getReq(target.ID, target.resType);
     if (req) {
       req.addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
     }

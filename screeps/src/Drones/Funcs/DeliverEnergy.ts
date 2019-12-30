@@ -51,8 +51,8 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
     }
     //if (roomPos.roomName == "E49N47")
         //console.log("looking for resource reg")
-    
-  for (let [id, reqs] of Object.entries(colony._resourceRequests)) {
+
+  for (let [id, reqs] of Object.entries(colony.resourceHandler._resourceRequests)) {
     for (let req of reqs) {
       if (resourceType == null || req.resource == resourceType) {
         let obj = Game.getObjectById(id) as AnyStoreStructure;
@@ -184,7 +184,7 @@ export function useDeliverTarget(creep: Creep): number {
     //if (creep.room.name == "E49N47")
     //console.log("transfered", PrettyPrintErr(err), targetObj, targetObj.pos.x, targetObj.pos.y)
     if (err == OK && target.type == targetT.TRANSPORT) {
-      PM.colonies[creep.memory.creationRoom].removeTranReq(targetObj.id, target.resType!, creep);
+      PM.colonies[creep.memory.creationRoom].resourceHandler.removeTranReq(targetObj.id, target.resType!, creep);
     }
     else {
       if (err == ERR_FULL || err == OK) {

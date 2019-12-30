@@ -1,5 +1,6 @@
-import { Colony, resourceRequest } from "Colony"
+import { Colony } from "Colony"
 import { REACTION_CHAIN, IReaction, REACTION } from "Types/Constants"
+import { ResourceHandler, resourceRequest } from "Base/ResourceHandler";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 
@@ -17,8 +18,6 @@ interface IRoomLabs {
     colony: string,
     roomReaction: IRoomReactions[],
 }
-
-
 
 interface MineralReq {
     r: IReaction;
@@ -62,7 +61,8 @@ export class LabMaster {
     run() {
         try {
             for (let roomRun of this.colLabs) {
-                let colony = this.colonies[roomRun.colony];
+              let colony = this.colonies[roomRun.colony];
+              let resHandler = colony.resourceHandler;
                 for (let react of roomRun.roomReaction) {
                     let main0 = colony.labs[react.result.idxs[0]]; 
                     let first = colony.labs[react.res1.idx];
@@ -73,19 +73,19 @@ export class LabMaster {
                         for (let idx of react.result.idxs) {
                             let main = colony.labs[idx]; 
                             main.runReaction(first, second);
-                          if (react.result.final && main.store[react.react.r] >= 1000 && colony.resourcePush[main.id] == null) {
-                            colony.addRequest(new resourceRequest(main.id, react.react.r, 1000, 200, colony.room));
+                          if (react.result.final && main.store[react.react.r] >= 1000 && resHandler.resourcePush[main.id] == null) {
+                            resHandler.addRequest(new resourceRequest(main.id, react.react.r, 1000, 200, colony.room));
                                 console.log(colony.name, "push resource from lab", react.react.r, "final", react.result.final);
                             }
                         }
                     }
                   if (Game.time % 100 == 0) {
-                    if (firstAmount < 200 && colony.getReq(first.id, react.react.needs[0]) == null) {
-                          colony.addRequest(new resourceRequest(first.id, react.react.needs[0], 200, 800, colony.room));
+                    if (firstAmount < 200 && resHandler.getReq(first.id, react.react.needs[0]) == null) {
+                      resHandler.addRequest(new resourceRequest(first.id, react.react.needs[0], 200, 800, colony.room));
                             console.log(colony.name, "request resource to lab", react.react.needs[0], firstAmount);
                         }
-                    if (secondAmount < 200 && colony.getReq(second.id, react.react.needs[1]) == null) {
-                          colony.addRequest(new resourceRequest(second.id, react.react.needs[1], 200, 800, colony.room));
+                    if (secondAmount < 200 && resHandler.getReq(second.id, react.react.needs[1]) == null) {
+                      resHandler.addRequest(new resourceRequest(second.id, react.react.needs[1], 200, 800, colony.room));
                             console.log(colony.name, "request resource to lab", react.react.needs[1], secondAmount);
                         }
                     }
@@ -153,14 +153,15 @@ export class LabMaster {
         }
     }
 
-    private resourceResetLab(colony: Colony, lab: StructureLab, res: ResourceConstant|null, created: boolean) {
-        if (colony.resourcePush[lab.id] != null)
+  private resourceResetLab(colony: Colony, lab: StructureLab, res: ResourceConstant | null, created: boolean) {
+    let resHandler = colony.resourceHandler;
+    if (resHandler.resourcePush[lab.id] != null)
             return;
 
         let key = _.find(Object.keys(lab.store), (key) => { return key != RESOURCE_ENERGY && (key != res || res == null); });
         if (key) {
-            if (colony.resourcePush[lab.id] == null) {
-                colony.resourcePush[lab.id] = new resourceRequest(lab.id, key as ResourceConstant, 0, 0, colony.room);
+          if (resHandler.resourcePush[lab.id] == null) {
+            resHandler.resourcePush[lab.id] = new resourceRequest(lab.id, key as ResourceConstant, 0, 0, resHandler.room);
                 console.log(colony.name, "push wrong resource from lab", key);
             }
             return;
@@ -168,15 +169,15 @@ export class LabMaster {
 
         if (res != null) {
             if (created) {
-                if (lab.store[res] >= 2000 && colony.resourcePush[lab.id] == null) {
-                    colony.resourcePush[lab.id] = new resourceRequest(lab.id, res, 1000, 0, colony.room);
+              if (lab.store[res] >= 2000 && resHandler.resourcePush[lab.id] == null) {
+                resHandler.resourcePush[lab.id] = new resourceRequest(lab.id, res, 1000, 0, resHandler.room);
                     console.log(colony.name, "push created resource from lab", res);
                 }
             }
             else {
               colony.resourceExternal.push(res);
-              if (lab.store[res] < 200 && colony.getReq(lab.id,res) == null) {
-                  colony.addRequest(new resourceRequest(lab.id, res, 200, 800, colony.room));
+              if (lab.store[res] < 200 && resHandler.getReq(lab.id,res) == null) {
+                resHandler.addRequest(new resourceRequest(lab.id, res, 200, 800, resHandler.room));
                     console.log(colony.name, "request resource to lab", res, lab.store[res]);
                 }
             }
