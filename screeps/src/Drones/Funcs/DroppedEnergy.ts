@@ -65,12 +65,16 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
   return null;
 }
 
-export function getFromStoreTarget(creep: Creep, resource: ResourceConstant): targetData | null {
+export function getFromStoreTarget(creep: Creep, resource: ResourceConstant, iAmount?: number): targetData | null {
+  let amount = creep.carryCapacity;
+  if (iAmount) {
+    amount = Math.min(amount, iAmount);
+  }
   let room = Game.rooms[creep.memory.creationRoom];
-  if (room.storage && room.storage.store[resource] >= creep.carryCapacity) {
+  if (room.storage && room.storage.store[resource] >= amount) {
     return { ID: room.storage.id, type: targetT.STORAGE_RESOURCE, resType: resource, pos: room.storage.pos, range: 1 }
   }
-  else if (room.terminal && room.terminal.store[resource] >= creep.carryCapacity) {
+  else if (room.terminal && room.terminal.store[resource] >= amount) {
     return { ID: room.terminal.id, type: targetT.STORAGE_RESOURCE, resType: resource, pos: room.terminal.pos, range: 1 }
   }
   return null;

@@ -82,8 +82,9 @@ export class Market {
           underflow.push({ R: RESOURCE_ENERGY, A: C.TERMINAL_HELPLIM * 1.25 - terminal.store.energy, P: roomID });
         }
 
-        for (let req of this.colonies[roomID].resourceExternal) {
-          if ((globalRes[req] | 0) + Terminal_Min_Trade < UNDERFLOW_EXTERNALTRADE && REACTION_CHAIN[req].needs.length == 0) {
+        let resourcesNeeded = this.colonies[roomID].resourceExternal.concat(this.colonies[roomID].resourceExternalPerm);
+        for (let req of resourcesNeeded) {
+          if ((globalRes[req] | 0) + Terminal_Min_Trade < UNDERFLOW_EXTERNALTRADE && REACTION_CHAIN[req].needs.length == 0) {//only bying base ingreedients
             buyOrder[req] = roomID;
             //console.log("added buy order", req, roomID, this.colonies[roomID].resourceExternal);
           }

@@ -31,7 +31,7 @@ function getMatchingSource(creep: Creep, target: targetData, alreadyresourceType
     return [target];
   let sourceT = getSourceTarget(creep, target.resType!);
   if (sourceT == null)
-    sourceT = getFromStoreTarget(creep, target.resType!);
+    sourceT = getFromStoreTarget(creep, target.resType!, target.targetVal);
   if (sourceT) {
     return [sourceT, target];
   }
@@ -59,10 +59,11 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
         //if (roomPos.roomName == "E49N47")
         //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
         let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.store[req.resource!] != 0);
-        if (obj && haveRes && req.amount() < req.ThreshouldAmount) {
+        let amount = req.amount();
+        if (obj && haveRes && amount < req.ThreshouldAmount) {
           //if (roomPos.roomName == "E49N47")
           //console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
-          let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1, resType: req.resource };
+          let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1, resType: req.resource, targetVal: req.ThreshouldHard - amount };
           let targets = getMatchingSource(creep, target, resourceType);
           if (targets.length > 0)
             return targets;
@@ -97,61 +98,6 @@ export function getStorageDeliverTarget(room: Room, resourceType: ResourceConsta
   return null;
 }
 
-//export function getDeliverTarget(creep: Creep, findStore: boolean): boolean {//depricadet
-//  let room = Game.rooms[creep.memory.creationRoom];
-//  let colony = PM.colonies[creep.memory.creationRoom];
-//    //first prio colony energy
-
-//    //if (room.name == "E49N47")
-//        //console.log("in get deliver")
-
-//  if (colony.energyNeedStruct.length && colony.spawnEnergyNeed > 0 && creep.carry.energy > 0) {
-//        //if (room.name == "E49N47")
-//            //console.log(room.name, "found energy demand", PM.colonies[creep.memory.creationRoom].energyNeedStruct.length, PM.colonies[creep.memory.creationRoom].spawnEnergyNeed);
-//    creep.addTargetT(getClosest(creep.pos, colony.energyNeedStruct));
-//        PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
-//        return true;
-//    }
-//    else {
-//        //if (room.name == "E49N47")
-//            //console.log("looking for resource reg")
-//    for (let [id, req] of Object.entries(colony.resourceRequests)) {
-//            if (creep.carry[req.resource] > 0) {
-//                let obj = Game.getObjectById(id) as AnyStoreStructure;
-//                //if (room.name == "E49N47")
-//                    //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
-//                if (obj && obj.store[req.resource] + req.resOnWay < req.ThreshouldAmount) {
-//                    //if (room.name == "E49N47")
-//                      //console.log(creep.room.name, obj.structureType, "used new target (store, onWay, Threshold)", obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
-//                    creep.addTarget(id, targetT.TRANSPORT, obj.pos, 1);
-//                    req.addTran(creep);
-//                    return true;
-//                }
-//            }
-//        }
-//        //if (room.name == "E49N47")
-//            //console.log("failed to find resource req")
-//        //base dump mineral
-//        if (findStore && creep.carry.energy == 0 && room.terminal && creep.carryAmount > 0) {
-//            creep.addTarget(room.terminal.id, targetT.POWERSTORAGE, room.terminal.pos, 1);
-//            return true;
-//        }
-//        //base dump energy
-//    if (findStore && room.storage) {
-//      if (colony.nuker && room.storage.store.energy > 1e5 && colony.nuker.store.energy < 3e5) {
-//        creep.addTarget(colony.nuker.id, targetT.POWERSTORAGE, colony.nuker.pos, 1);
-//        console.log(colony.name, "transport to nuker");
-//        return true;
-//      }
-//      else {
-//        creep.addTarget(room.storage.id, targetT.POWERSTORAGE, room.storage.pos, 1);
-//        return true;
-//      }
-//    }
-//    }
-//    return false;
-//}
-
 function getCloseDeliverTarget(creep: Creep): void {
   //let room = Game.rooms[creep.memory.creationRoom];
   //let structs = creep.pos.findInRange(FIND_MY_STRUCTURES, 1, {
@@ -168,7 +114,6 @@ function getCloseDeliverTarget(creep: Creep): void {
   // }
 
 }
-
 
 export function useDeliverTarget(creep: Creep): number {
   let target = creep.getTarget()!;

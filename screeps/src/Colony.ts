@@ -70,6 +70,7 @@ export class Colony {
 
   resourceHandler: ResourceHandler
   resourceExternal: ResourceConstant[];
+  resourceExternalPerm: ResourceConstant[];
 
   creepBuildQueRef: queData[];
 
@@ -140,6 +141,10 @@ export class Colony {
     findAndBuildLab(this, this.labs);
 
     this.resourceExternal = [];
+    this.resourceExternalPerm = [];
+    if (this.labs.length > 0)
+      this.resourceExternalPerm.push(RESOURCE_LEMERGIUM_HYDRIDE);
+  
     this.resourceHandler = new ResourceHandler(this.room, this.memory.boosts, this.labs);
     this.computeLists(true);
     this.energyTransporters = _.filter(this.room.getCreeps(TRANSPORTER).concat(this.room.getCreeps(STARTER)), function (obj) {

@@ -41,7 +41,7 @@ export function CreepUpdate() {
               console.log(creep.room.name, "creep target boost failed", e);
             }
           }
-          return;
+          continue;
         }
 
       }

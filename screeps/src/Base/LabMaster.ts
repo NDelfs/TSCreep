@@ -30,8 +30,8 @@ const REACTION_TIME_TYPED = REACTION_TIME as { [react: string]: number };
 
 const reactionsWanted: { r: IReaction, perRoom: number, global: number, perTick: number }[] = [//half global init a restart of prod
   { r: REACTION_CHAIN["G"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
-  { r: REACTION_CHAIN["LH"], perRoom: 1000, global: 5000, perTick: 0.04 },//cheap boost for building
-  { r: REACTION_CHAIN["UO"], perRoom: 1000, global: 5000, perTick: 0.1 }
+  { r: REACTION_CHAIN["LH"], perRoom: 2000, global: 5000, perTick: 0.04 },//cheap boost for building
+  { r: REACTION_CHAIN["UO"], perRoom: 2000, global: 5000, perTick: 0.1 }
   /*, REACTION_CHAIN["XGH2O"]*/
 ];
 
@@ -74,7 +74,7 @@ export class LabMaster {
               let main = colony.labs[idx];
               main.runReaction(first, second);
               if (react.result.final && main.store[react.react.r] >= 1000 && resHandler.resourcePush[main.id] == null) {
-                resHandler.addRequest(new resourceRequest(main.id, react.react.r, 1000, 200, colony.room));
+                resHandler.resourcePush[main.id] = (new resourceRequest(main.id, react.react.r, 1000, 200, colony.room));
                 console.log(colony.name, "push resource from lab", react.react.r, "final", react.result.final);
               }
             }
