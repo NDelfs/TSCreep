@@ -28,6 +28,8 @@ const ColonyMemoryDef: ColonyMemory = {
   startSpawnPos: null,
   ExpandedLevel: 0,
   controllerStoreID: null,
+  controllerLinkID: null,
+  baseLinkID: null,
   wallEnergy: 0,
   boosts: [],
   creepBuildQue: [],
@@ -48,6 +50,17 @@ export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant):
   return ret;
 }
 
+function updateObject<type>(struct: type | undefined, id: string | null): string | null {
+  if (id) {
+    struct = Game.getObjectById(id) as type | undefined;
+    if (struct == null)
+      return null;
+    else
+      return id;
+  }
+  return null;
+}
+
 //@profile
 export class Colony {
   mRebuild: number;
@@ -57,6 +70,9 @@ export class Colony {
   outpostIDs: string[];//all rooms ids;
   outposts: Room[];
   controller: StructureController;
+  controllerContainer: StructureContainer | undefined;
+  controllerLink: StructureLink | undefined;
+  baseLink: StructureLink | undefined;
   spawns: StructureSpawn[];
   towers: StructureTower[];
   extensions: StructureExtension[];
@@ -117,6 +133,9 @@ export class Colony {
     global[this.name.toLowerCase()] = this;
     this.outpostIDs = this.memory.outposts;
     this.controller = this.room.controller!;
+    this.memory.controllerStoreID = updateObject<StructureContainer>(this.controllerContainer, this.memory.controllerStoreID);
+    this.memory.controllerLinkID = updateObject<StructureLink>(this.controllerLink, this.memory.controllerLinkID);
+    this.memory.baseLinkID = updateObject<StructureLink>(this.baseLink, this.memory.baseLinkID);
 
     this.nuker = this.room.myStructures.find((struct) => { return struct.structureType == STRUCTURE_NUKER; }) as StructureNuker | undefined;
     this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
@@ -167,6 +186,9 @@ export class Colony {
     this.room = Game.rooms[this.name];
     this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
     this.controller = this.room.controller!;
+    this.memory.controllerStoreID = updateObject<StructureContainer>(this.controllerContainer, this.memory.controllerStoreID);
+    this.memory.controllerLinkID = updateObject<StructureLink>(this.controllerLink, this.memory.controllerLinkID);
+    this.memory.baseLinkID = updateObject<StructureLink>(this.baseLink, this.memory.baseLinkID);
     if (this.nuker)
       this.nuker = Game.getObjectById(this.nuker.id) as StructureNuker;
     //refreshArray(this.spawns);
@@ -186,17 +208,8 @@ export class Colony {
     this.refreshEnergyDemand(this.forceUpdateEnergy);
     this.forceUpdateEnergy = false;
 
-    if (this.memory.controllerStoreID == null) {//maybe can be done more rarely?
-      let con = this.controller.pos.findInRange(FIND_STRUCTURES, 2, { filter: { structureType: STRUCTURE_CONTAINER } });
-      if (con.length > 0 && con[0].isActive()) {
-        this.memory.controllerStoreID = con[0].id;
-      }
-    }
-
     this.resourceHandler.postRun();//should be moved to postrun
   }
-
-
 
   public computeWallList() {
     try {

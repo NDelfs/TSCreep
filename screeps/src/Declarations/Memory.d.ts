@@ -47,6 +47,8 @@ interface ColonyMemory {
 
   ExpandedLevel: number;
   controllerStoreID: string | null;
+  controllerLinkID: string | null;
+  baseLinkID: string | null;
   wallEnergy: number;
   boosts: BoostMemory[];
   creepBuildQue: queData[];

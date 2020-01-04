@@ -150,6 +150,9 @@
     <TypeScriptCompile Include="src\ScreepExtends\Room.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\ScreepExtends\Source.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Types\Constants.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

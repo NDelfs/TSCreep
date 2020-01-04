@@ -46,6 +46,65 @@ function buildPrint(err: number, type: string, room: string) {
   }
 }
 
+function getIdInRange(pos: RoomPosition, range: number, type: StructureConstant): string | null{
+  let con = pos.findInRange(FIND_STRUCTURES, range, { filter: { structureType: type } });
+  if (con.length > 0 && con[0].isActive()) {
+    return con[0].id;
+  }
+  return null;
+}
+
+function buildControlerStruct(colony: Colony, type: BuildableStructureConstant, pathInd : number, memory : string|null) : string | null {//path ind is starting from zero and zero is end of path before Controler
+  if (memory == null) {
+    memory = getIdInRange(colony.controller.pos, pathInd+1, type);
+    if (memory == null) {
+      let con = colony.controller.pos.findInRange(FIND_CONSTRUCTION_SITES, pathInd + 1, { filter: { structureType: type } });
+      if (con.length == 0) {
+        let goal = { pos: colony.spawns[0].pos, range: 1 };
+        let pathObj = PathFinder.search(colony.controller.pos, goal);//ignore object need something better later. cant use for desirialize
+        if (pathObj.path.length < 2)
+          throw ("Could not place controller stuff due to short distance");
+        pathObj.path[pathInd].createConstructionSite(type);
+        console.log(colony.name, "built controller",type);
+      }
+    }
+  }
+  return memory;//due to string overvriting the reference with a new object
+}
+
+function buildSourceLink(colony: Colony, memory: SourceMemory) {
+  if (memory.linkID == null) {
+    let workPos = restorePos(memory.workPos);
+    memory.linkID = getIdInRange(workPos, 1, STRUCTURE_LINK);
+    if (memory.linkID==null) {
+      let con = workPos.findInRange(FIND_CONSTRUCTION_SITES, 1, { filter: { structureType: STRUCTURE_LINK } });
+      if (con.length == 0) {
+        findAndBuildLink(workPos);
+        console.log(colony.name, "built source link");
+      }
+    }
+  }
+}
+
+function buildSourceCon(colony: Colony, memory: SourceMemory) {
+  if (memory.container == null) {
+    let workPos = restorePos(memory.workPos);
+    memory.container = getIdInRange(workPos, 1, STRUCTURE_CONTAINER);
+    if (memory.container)
+      console.log(colony.name, "found source container");
+  }
+}
+
+function buildBaseLink(colony: Colony) {
+  if (colony.baseLink == null && colony.room.storage) {
+    let pos = colony.room.storage.pos;
+    colony.memory.baseLinkID = getIdInRange(pos, 1, STRUCTURE_LINK);
+    if (colony.memory.baseLinkID == null) {
+      console.log(colony.name, "could not find base link");
+    }
+  }
+}
+
 
 export function baseExpansion(colony: Colony) {
   if (Game.time % 10 != 1)
@@ -59,6 +118,28 @@ export function baseExpansion(colony: Colony) {
     console.log("flag expansion failed in ", colony.name, " with ", e);
   }
   try {
+    //we have some stuff that should be verified and rebuilt if destroyed
+    if (colony.controller.level >= 2) {
+      colony.memory.controllerStoreID=buildControlerStruct(colony, STRUCTURE_CONTAINER, 1, colony.memory.controllerStoreID);
+    }
+    let sources = colony.room.find(FIND_SOURCES);
+    if (colony.controller.level >= 3) {
+      for (let source of sources)
+        buildSourceCon(colony, source.memory);
+    }
+    if (colony.controller.level >= 5) {
+      colony.memory.controllerLinkID = buildControlerStruct(colony, STRUCTURE_LINK, 0, colony.memory.controllerLinkID);
+      if (sources.length > 0)
+        buildSourceLink(colony, sources[0].memory)
+    }
+    if (colony.controller.level >= 6) {
+      if (sources.length > 1)
+        buildSourceLink(colony, sources[1].memory)
+    }
+    if (colony.controller.level >= 7) {
+      //buildBaseLink(colony);
+    }
+
     if (colony.controller.level > colony.memory.ExpandedLevel) {
       let buildFlag = cRoom.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
       let spawns = cRoom.find(FIND_MY_SPAWNS);
@@ -97,12 +178,6 @@ export function baseExpansion(colony: Colony) {
             return;
           }
         }
-        let goal = { pos: spawns[0].pos, range: 1 };
-        let pathObj = PathFinder.search(colony.controller.pos, goal);//ignore object need something better later. cant use for desirialize
-        if (pathObj.path.length < 2)
-          throw ("Could not place controller stuff due to short distance");
-        pathObj.path[1].createConstructionSite(STRUCTURE_CONTAINER);
-
         colony.memory.ExpandedLevel = 3;
       } else if (colony.memory.ExpandedLevel == 3) {
         let storagecons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
@@ -233,6 +308,8 @@ export function findAndBuildLab(col: Colony, labs: StructureLab[]) {
     }
   }
 }
+
+
 
 function findAndBuildLink(workPos: RoomPosition): number {
   console.log("in build link");

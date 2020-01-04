@@ -21,6 +21,10 @@ interface getCreepsType {
   (creepType: CreepConstant): Creep[];
 }
 
+interface Source {
+  memory: SourceMemory;
+}
+
 interface Room {
   my: boolean;
   creepsInRoom: Creep[];
