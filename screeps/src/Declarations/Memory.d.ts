@@ -28,6 +28,7 @@ interface BoostMemory {
   boost: MineralBoostConstant;
   boostCost: number;
   nrCreep: number;
+  boostTime: number;
 }
 
 interface LabMemory {
@@ -58,7 +59,7 @@ interface ColonyMemory {
 interface RoomMemory {
 }
 interface SpawnMemory {
-
+  currentlySpawning: queData |null;
 }
 
 interface SourceMemory {

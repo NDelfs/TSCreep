@@ -135,9 +135,11 @@ export function baseExpansion(colony: Colony) {
     if (colony.controller.level >= 6) {
       if (sources.length > 1)
         buildSourceLink(colony, sources[1].memory)
+      if (colony.memory.mineralsUsed.length >= 1)
+        buildSourceCon(colony, Memory.Resources[colony.memory.mineralsUsed[0]]);
     }
     if (colony.controller.level >= 7) {
-      //buildBaseLink(colony);
+      buildBaseLink(colony);
     }
 
     if (colony.controller.level > colony.memory.ExpandedLevel) {

@@ -25,6 +25,10 @@ interface Source {
   memory: SourceMemory;
 }
 
+interface Mineral {
+  memory: SourceMemory;
+}
+
 interface Room {
   my: boolean;
   creepsInRoom: Creep[];

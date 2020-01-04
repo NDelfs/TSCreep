@@ -50,13 +50,10 @@ export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant):
   return ret;
 }
 
-function updateObject<type>(struct: type | undefined, id: string | null): string | null {
+function updateObject<type>(id: string | null) {
   if (id) {
-    struct = Game.getObjectById(id) as type | undefined;
-    if (struct == null)
-      return null;
-    else
-      return id;
+    let obj = Game.getObjectById(id) as type | null;
+    return obj;
   }
   return null;
 }
@@ -70,9 +67,9 @@ export class Colony {
   outpostIDs: string[];//all rooms ids;
   outposts: Room[];
   controller: StructureController;
-  controllerContainer: StructureContainer | undefined;
-  controllerLink: StructureLink | undefined;
-  baseLink: StructureLink | undefined;
+  controllerContainer: StructureContainer | null;
+  controllerLink: StructureLink | null;
+  baseLink: StructureLink | null;
   spawns: StructureSpawn[];
   towers: StructureTower[];
   extensions: StructureExtension[];
@@ -133,9 +130,9 @@ export class Colony {
     global[this.name.toLowerCase()] = this;
     this.outpostIDs = this.memory.outposts;
     this.controller = this.room.controller!;
-    this.memory.controllerStoreID = updateObject<StructureContainer>(this.controllerContainer, this.memory.controllerStoreID);
-    this.memory.controllerLinkID = updateObject<StructureLink>(this.controllerLink, this.memory.controllerLinkID);
-    this.memory.baseLinkID = updateObject<StructureLink>(this.baseLink, this.memory.baseLinkID);
+    this.controllerContainer = updateObject<StructureContainer>(this.memory.controllerStoreID);
+    this.controllerLink = updateObject<StructureLink>(this.memory.controllerLinkID);
+    this.baseLink = updateObject<StructureLink>(this.memory.baseLinkID);
 
     this.nuker = this.room.myStructures.find((struct) => { return struct.structureType == STRUCTURE_NUKER; }) as StructureNuker | undefined;
     this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
@@ -186,13 +183,17 @@ export class Colony {
     this.room = Game.rooms[this.name];
     this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
     this.controller = this.room.controller!;
-    this.memory.controllerStoreID = updateObject<StructureContainer>(this.controllerContainer, this.memory.controllerStoreID);
-    this.memory.controllerLinkID = updateObject<StructureLink>(this.controllerLink, this.memory.controllerLinkID);
-    this.memory.baseLinkID = updateObject<StructureLink>(this.baseLink, this.memory.baseLinkID);
+    this.controllerContainer = updateObject<StructureContainer>(this.memory.controllerStoreID);
+    this.controllerLink = updateObject<StructureLink>(this.memory.controllerLinkID);
+    this.baseLink = updateObject<StructureLink>(this.memory.baseLinkID);
     if (this.nuker)
       this.nuker = Game.getObjectById(this.nuker.id) as StructureNuker;
     //refreshArray(this.spawns);
-    this.spawns = _.compact(_.map(this.spawns, obj => Game.getObjectById(obj.id))) as StructureSpawn[]
+    this.spawns = _.compact(_.map(this.spawns, obj => Game.getObjectById(obj.id))) as StructureSpawn[];
+    for (let spawn of this.spawns) {
+      if (!spawn.spawning)
+        spawn.memory.currentlySpawning = null;
+    }
     //refreshArray(this.extensions);
     this.extensions = _.compact(_.map(this.extensions, obj => Game.getObjectById(obj.id))) as StructureExtension[];
     //refreshArray(this.energyTransporters);
@@ -208,8 +209,25 @@ export class Colony {
     this.refreshEnergyDemand(this.forceUpdateEnergy);
     this.forceUpdateEnergy = false;
 
+    this.refreshStorageIDs();
+
     this.resourceHandler.postRun();//should be moved to postrun
   }
+
+  private refreshStorageID(id: string | null, obj: Structure | null, structT: StructureConstant, level : number) {
+    if (id) {
+      obj = Game.getObjectById(id);
+      if (obj == null) {
+        id = null;
+      }
+    }
+
+    
+  }
+
+  private refreshStorageIDs() {
+   
+}
 
   public computeWallList() {
     try {
@@ -241,13 +259,18 @@ export class Colony {
   }
 
   public queNewCreep(creepMemory: CreepMemory, body: BodyPartConstant[]) {
-    let data: queData = { memory: creepMemory, body: body };
+    let data: queData = { memory: creepMemory, body: body, prio: 2, eTresh: 0.9 };
     //if (this.room.name == "E49N47") {
     this.queBoostCreep(data);
     if (data.memory.targetQue.length > 0 && data.memory.targetQue[0].type == BOOST)
       console.log(this.name, "called on boost Creep", data.memory.targetQue[0].resType, this.memory.boosts.length);
     //}
     this.creepBuildQueRef.push(data);
+    if (this.creepBuildQueRef.length > 2) {
+      this.creepBuildQueRef.sort((a, b) => { return a.prio - b.prio; });
+      console.log("sorted que, first vs last prio", this.creepBuildQueRef[0].prio, this.creepBuildQueRef[2]);
+    }
+    
   }
 
   private computeLists(force?: boolean) {
@@ -418,11 +441,12 @@ export class Colony {
         let booster = this.memory.boosts.find(value => value.boost == boostType);
         if (booster) {
           booster.nrCreep += 1;
+          booster.boostTime = Game.time;
         }
         else {
           let labNr = _.findLastIndex(this.memory.labMemories, (val => val.state == null));
           if (labNr) {
-            booster = { boost: boostType, nrCreep: 1, labID: labNr, boostCost: boostCost };
+            booster = { boost: boostType, nrCreep: 1, labID: labNr, boostCost: boostCost, boostTime: Game.time };
             this.memory.boosts.push(booster);
             this.memory.labMemories[labNr].state = BOOSTING;
           }

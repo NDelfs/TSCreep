@@ -102,6 +102,8 @@ interface targetData {
 interface queData {
   memory: CreepMemory;
   body: BodyPartConstant[];
+  prio: number;//low is important
+  eTresh: number;//min energy to build, 1 is full
 }
 
 

@@ -18,15 +18,6 @@ export function DataUpdate(): void {
   catch (e) {
     console.log("Failed levelTimings update with: ", e);
   }
-  try {
-    //if (Game.time % 3 == 0) {//by having a better tracking of resources we only need to update rarly for thing we didnt foorsee
-    //profiler.registerFN(updateEnergyDemand)();
-    profiler.registerFN(updateSources)();
-    //}
-  }
-  catch (e) {
-    console.log("Failed updateEnergyDemandAndNrCreeps update with: ", e);
-  }
 }
 
 function filterCreeps() {
@@ -36,40 +27,34 @@ function filterCreeps() {
   }
 }
 
-
-
-function updateSources() {
+export function updateSource(source: Source | Mineral) {
   try {
-    for (let [ID, sMem] of Object.entries(Memory.Resources)) {
-      const pos = restorePos(sMem.workPos);
-      if (Game.rooms[pos.roomName]) {
-        let room = Game.rooms[pos.roomName];
-        sMem.AvailResource = 0;
-        const energys = pos.lookFor(LOOK_RESOURCES);
-        for (let energy of energys) {
-          sMem.AvailResource += energy.amount;
-        }
-        const structs = pos.lookFor(LOOK_STRUCTURES);
-        for (let struct of structs) {
-          if (struct.structureType == STRUCTURE_CONTAINER) {
-            let cont = struct as StructureContainer;
-            sMem.AvailResource += _.sum(cont.store);
-          }
-        }
-        let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)).concat(room.getCreeps(BUILDER));
-        const transportersTmp = _.filter(transporters, function (creep) {
-          return creep.alreadyTarget(ID);
-        })
-        for (const transp of transportersTmp) {
-          sMem.AvailResource -= Number(transp.carryCapacity);
-        }
+    let sMem = source.memory;
+    const pos = restorePos(sMem.workPos);
+
+      let room = Game.rooms[pos.roomName];
+      sMem.AvailResource = 0;
+      const energys = pos.lookFor(LOOK_RESOURCES);
+      for (let energy of energys) {
+        sMem.AvailResource += energy.amount;
       }
+      if (source.memory.container) {
+        let con = Game.getObjectById(source.memory.container) as StructureContainer;
+        sMem.AvailResource += _.sum(con.store);
+      }
+      let transporters = room.getCreeps(TRANSPORTER).concat(room.getCreeps(STARTER)).concat(room.getCreeps(BUILDER));
+      const transportersTmp = _.filter(transporters, function (creep) {
+        return creep.alreadyTarget(source.id);
+      })
+      for (const transp of transportersTmp) {
+        sMem.AvailResource -= Number(transp.carryCapacity);
     }
   }
   catch (e) {
-    console.log("Failed to update sources ", e);
+    console.log(JSON.stringify(source.pos), 'failed to update old style source', e);
   }
 }
+
 
 function levelTimings() {
   let highest = _.max(Game.rooms, function (room: Room) { if (room.controller) return room.controller.level; else return 0; });

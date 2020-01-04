@@ -6,7 +6,7 @@ import { baseExpansion } from "Base/BaseExpansion"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 import { Market } from "./Base/Market";
-import { Spawner, spawnFromReq } from "./Spawners/Spawner";
+import { Spawner, spawnFromReq, RefreshQue } from "./Spawners/Spawner";
 import { NukeResourceReq } from "./Base/NukePlaner";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
@@ -52,8 +52,9 @@ export class _PishiMaster {
 
   run() {
     for (let colonyID in this.colonies) {
-      let colony = this.colonies[colonyID];
+      let colony = this.colonies[colonyID];    
       Spawner(colony, this.colonies);
+      RefreshQue(colony);
       spawnFromReq(colony, this.colonies);
       colony.runTowers();
       baseExpansion(colony);
