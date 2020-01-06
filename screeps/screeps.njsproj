@@ -69,6 +69,9 @@
     <TypeScriptCompile Include="src\Base\Market.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Base\NewColonyHandler.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\NukePlaner.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -171,6 +174,9 @@
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\utils\ErrorMapper.ts" />
+    <TypeScriptCompile Include="src\utils\minorUtils.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\utils\posHelpers.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

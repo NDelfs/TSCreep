@@ -96,7 +96,7 @@ export function CreepUpdate() {
       creep.walk();
     }
     catch (e) {
-      console.log(Game.creeps[creepID].pos.roomName, " a creep failed, type =", PrettyPrintCreep(Game.creeps[creepID].memory.type), "with err: ", e);
+      console.log(Game.creeps[creepID].pos.roomName, " a creep failed, type =", PrettyPrintCreep(Game.creeps[creepID].memory.type), "with err: ", e, "target was", JSON.stringify( Game.creeps[creepID].memory.targetQue));
     }
   }
 }

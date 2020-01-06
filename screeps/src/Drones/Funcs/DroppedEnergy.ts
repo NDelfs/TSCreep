@@ -3,9 +3,8 @@ import { restorePos, storePos } from "utils/posHelpers";
 import { PrettyPrintErr } from "../../utils/PrettyPrintErr";
 import { PM } from "PishiMaster";
 import { DROPPED_RESOURCE, STORAGE_RESOURCE } from "Types/TargetTypes";
-function getRandomInt(max: number) {
-  return Math.floor(Math.random() * Math.floor(max));
-}
+import { getRandomInt } from "../../utils/minorUtils";
+
 
 export function getSourceTarget(creep: Creep, resource: ResourceConstant | null): targetData | null {
   let avail: string[] = [];

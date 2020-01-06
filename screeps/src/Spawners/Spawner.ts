@@ -5,6 +5,7 @@ import { CONTROLLER } from "Types/TargetTypes";
 import { TRANSPORTER, HARVESTER, STARTER, BUILDER } from "Types/CreepType";
 import { Transporter } from "../Drones/Transporter";
 import { Colony } from "Colony"
+import { nrCreepInQue } from "../utils/minorUtils";
 
 let names1 = ["Jackson", "Aiden", "Liam", "Lucas", "Noah", "Mason", "Jayden", "Ethan", "Jacob", "Jack", "Caden", "Logan", "Benjamin", "Michael", "Caleb", "Ryan", "Alexander", "Elijah", "James", "William", "Oliver", "Connor", "Matthew", "Daniel", "Luke", "Brayden", "Jayce", "Henry", "Carter", "Dylan", "Gabriel", "Joshua", "Nicholas", "Isaac", "Owen", "Nathan", "Grayson", "Eli", "Landon", "Andrew", "Max", "Samuel", "Gavin", "Wyatt", "Christian", "Hunter", "Cameron", "Evan", "Charlie", "David", "Sebastian", "Joseph", "Dominic", "Anthony", "Colton", "John", "Tyler", "Zachary", "Thomas", "Julian", "Levi", "Adam", "Isaiah", "Alex", "Aaron", "Parker", "Cooper", "Miles", "Chase", "Muhammad", "Christopher", "Blake", "Austin", "Jordan", "Leo", "Jonathan", "Adrian", "Colin", "Hudson", "Ian", "Xavier", "Camden", "Tristan", "Carson", "Jason", "Nolan", "Riley", "Lincoln", "Brody", "Bentley", "Nathaniel", "Josiah", "Declan", "Jake", "Asher", "Jeremiah", "Cole", "Mateo", "Micah", "Elliot"]
 let names2 = ["Sophia", "Emma", "Olivia", "Isabella", "Mia", "Ava", "Lily", "Zoe", "Emily", "Chloe", "Layla", "Madison", "Madelyn", "Abigail", "Aubrey", "Charlotte", "Amelia", "Ella", "Kaylee", "Avery", "Aaliyah", "Hailey", "Hannah", "Addison", "Riley", "Harper", "Aria", "Arianna", "Mackenzie", "Lila", "Evelyn", "Adalyn", "Grace", "Brooklyn", "Ellie", "Anna", "Kaitlyn", "Isabelle", "Sophie", "Scarlett", "Natalie", "Leah", "Sarah", "Nora", "Mila", "Elizabeth", "Lillian", "Kylie", "Audrey", "Lucy", "Maya", "Annabelle", "Makayla", "Gabriella", "Elena", "Victoria", "Claire", "Savannah", "Peyton", "Maria", "Alaina", "Kennedy", "Stella", "Liliana", "Allison", "Samantha", "Keira", "Alyssa", "Reagan", "Molly", "Alexandra", "Violet", "Charlie", "Julia", "Sadie", "Ruby", "Eva", "Alice", "Eliana", "Taylor", "Callie", "Penelope", "Camilla", "Bailey", "Kaelyn", "Alexis", "Kayla", "Katherine", "Sydney", "Lauren", "Jasmine", "London", "Bella", "Adeline", "Caroline", "Vivian", "Juliana", "Gianna", "Skyler", "Jordyn"]
@@ -28,7 +29,7 @@ function computeBodyCost(body: BodyPartConstant[]): number {
   return ret;
 }
 
-function calculateBodyFromSet(room: Room, set: BodyPartConstant[], maxSets: number) {
+export function calculateBodyFromSet(room: Room, set: BodyPartConstant[], maxSets: number) {
   let nrSets = Math.floor((room.energyCapacityAvailable * 0.8) / computeBodyCost(set));
   nrSets = Math.min(maxSets, nrSets);
   let body: BodyPartConstant[] = [];
@@ -52,19 +53,6 @@ function getStarterBody(room: Room): BodyPartConstant[] {
 
 export function getBuilderBody(room: Room): BodyPartConstant[] {
   return calculateBodyFromSet(room, [WORK, WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE], 5);
-}
-
-export function nrCreepInQue(colony : Colony, type: CreepConstant) : number {
-  let count = 0;
-  for (let que of colony.creepBuildQueRef) {
-    if (que.memory.type == type) 
-      count++;
-  }
-  for (let que of colony.spawns) {
-    if (que.memory.currentlySpawning && que.memory.currentlySpawning.memory.type == type)
-      count++
-  }
-  return count;
 }
 
 function getHarvesterBody(room: Room): BodyPartConstant[] {
@@ -255,30 +243,6 @@ function calculateBuilderQue(colony: Colony) {
       console.log(colony.name, "ordered new builders", limit - current);
     }
   }
-}
-
-function calculateScoutQue(room: Room): queData[] {
-  let ret: queData[] = [];
-  const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
-  for (let flag of wflags) {
-    const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.alreadyTarget(flag.name); });
-    if (creeps.length == 0 && flag.room == null) {
-      const targ: targetData = { ID: flag.name, type: targetT.CONTROLLER, pos: flag.pos, range: 1 };
-      const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, permTarget: null, moveTarget: { pos: flag.pos, range: 2 }, targetQue: [targ] };
-      ret.push({ memory: mem, body: [CLAIM, MOVE], prio: 1, eTresh: 0.9});
-    }
-  }
-  if (room.controller && room.controller.my && room.controller.level > 2) {
-    if (room.controller.sign == null || (room.controller.sign.username != "Gorgar")) {
-      const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == creepT.SCOUT && creep.alreadyTarget("controller"); });
-      if (creeps.length == 0) {
-        const targ: targetData = { ID: "controller", type: targetT.CONTROLLER, pos: room.controller.pos, range: 1 };
-        const mem: CreepMemory = { type: creepT.SCOUT, creationRoom: room.name, permTarget: targ, moveTarget: { pos: room.controller.pos, range: 1 }, targetQue: [targ] };
-        ret.push({ memory: mem, body: [MOVE], prio: 1, eTresh: 0.9});
-      }
-    }
-  }
-  return ret;
 }
 
 function calculateExpansiontQue(colonies: { [name: string]: Colony }): queData[] {

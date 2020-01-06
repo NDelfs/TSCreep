@@ -8,6 +8,7 @@ import profiler from "Profiler/screeps-profiler";
 import { Market } from "./Base/Market";
 import { Spawner, spawnFromReq, RefreshQue } from "./Spawners/Spawner";
 import { NukeResourceReq } from "./Base/NukePlaner";
+import { NewColonyHandler } from "./Base/NewColonyHandler";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
@@ -19,6 +20,7 @@ export class _PishiMaster {
   memory: PishiMasterMemory;
   ticksAlive: number;
   colonies: { [name: string]: Colony };
+  newColHandler: NewColonyHandler;
   labMaster: LabMaster;
   market: Market;
   constructor() {
@@ -38,6 +40,7 @@ export class _PishiMaster {
         }
       }
     }
+    this.newColHandler = new NewColonyHandler(this.colonies);
     this.labMaster = new LabMaster(this.colonies);
     this.market = new Market(this.colonies);
   }
@@ -47,7 +50,7 @@ export class _PishiMaster {
     for (let colonyID in this.colonies) {
       this.colonies[colonyID].refresh();
     }
-
+    this.newColHandler.refresh(this.colonies);
   }
 
   run() {
@@ -59,7 +62,7 @@ export class _PishiMaster {
       colony.runTowers();
       baseExpansion(colony);
     }
-
+    this.newColHandler.run();
     this.labMaster.run();
     this.market.run();
     for (let colonyID in this.colonies) {

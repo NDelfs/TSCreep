@@ -6,6 +6,7 @@ import { resetDeliverTarget, getNewDeliverTarget, useDeliverTarget } from "./Fun
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
 import { HARVESTER } from "Types/CreepType";
 import { getTransportTarget } from "./Transporter";
+import { getRandomInt } from "../utils/minorUtils";
 
 function printRes(creep: Creep, iErr: number, name: string): void {
   if (iErr == OK)
@@ -37,9 +38,14 @@ export function Starter(creep: Creep) {
     if (creep.getTarget() == null) {
       const harvesters = _.filter(creep.room.getCreeps(HARVESTER), function (creepF) { return creepF.memory.permTarget && creep.memory.permTarget && creepF.memory.permTarget.ID == creep.memory.permTarget.ID });
       if (harvesters.length == 0) {
-        if (creep.memory.permTarget == null)
-          throw ("no permanent target on starter");
-        let source: Source | null = Game.getObjectById(creep.memory.permTarget.ID);
+        let source: Source | null = null;
+        if (creep.memory.permTarget == null) {
+          let sources = creep.room.find(FIND_SOURCES);
+          source = sources[getRandomInt(sources.length)];
+          //throw ("no permanent target on starter");
+        }
+        else
+           source = Game.getObjectById(creep.memory.permTarget.ID);
         if (source) {
           let sourceMem: SourceMemory = Memory.Resources[source.id];
           creep.say("go mining");

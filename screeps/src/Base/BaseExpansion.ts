@@ -1,7 +1,6 @@
 import { ExtensionFlagPlacement } from "./ExtensionFlagPlacement";
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
-import { CONSTRUCTIONSTORAGE } from "../Types/Constants";
-import { restorePos, storePos, isBuildable } from "utils/posHelpers";
+import { restorePos, storePos, isBuildable, isEqualPos } from "utils/posHelpers";
 import { Colony } from "Colony"
 
 function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange: number) {
@@ -105,6 +104,20 @@ function buildBaseLink(colony: Colony) {
   }
 }
 
+function buildSpawns(colony: Colony, pos: RoomPosition) {
+  let found = false;
+  for (let spawn of colony.spawns) {
+    found = found || isEqualPos(spawn.pos, pos);
+  }
+  if (!found) {
+    let spawnscons = colony.room.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_SPAWN } });
+    if (spawnscons.length == 0) {
+      let err = pos.createConstructionSite(STRUCTURE_SPAWN);
+      buildPrint(err, "spawn", colony.name);
+    }
+  }
+}
+
 
 export function baseExpansion(colony: Colony) {
   if (Game.time % 10 != 1)
@@ -119,6 +132,11 @@ export function baseExpansion(colony: Colony) {
   }
   try {
     //we have some stuff that should be verified and rebuilt if destroyed
+    if (colony.controller.my) {
+      if (colony.memory.startSpawnPos) {
+        buildSpawns(colony, restorePos(colony.memory.startSpawnPos));
+      }
+    }
     if (colony.controller.level >= 2) {
       colony.memory.controllerStoreID=buildControlerStruct(colony, STRUCTURE_CONTAINER, 1, colony.memory.controllerStoreID);
     }
@@ -144,28 +162,16 @@ export function baseExpansion(colony: Colony) {
 
     if (colony.controller.level > colony.memory.ExpandedLevel) {
       let buildFlag = cRoom.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
-      let spawns = cRoom.find(FIND_MY_SPAWNS);
+     
       if (colony.memory.ExpandedLevel == 0) {
-        if (spawns.length == 0) {
-          let spawnscons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_SPAWN } });
-          if (spawnscons.length == 0) {
-            let flags = cRoom.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
-            if (flags.length > 0) {
-              let middle = flags[0].pos;
-              middle.y += -2;
-              let err = middle.createConstructionSite(STRUCTURE_SPAWN);
-              buildPrint(err, "spawn", colony.name);
-            }
-          }
-        }
-        colony.memory.ExpandedLevel = 2;
-
+        if (colony.spawns.length >0)
+          colony.memory.ExpandedLevel = 2;
       }
       else if (colony.memory.ExpandedLevel == 2) {
         let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
         let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
         if (towers.length == 0 && towercons.length == 0) {
-          let pos = spawns[0].pos;
+          let pos = colony.spawns[0].pos;
           pos.x += 1;
           pos.y += 5;
           let err = pos.createConstructionSite(STRUCTURE_TOWER);
@@ -184,7 +190,7 @@ export function baseExpansion(colony: Colony) {
       } else if (colony.memory.ExpandedLevel == 3) {
         let storagecons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
         if (cRoom.storage == null && storagecons.length == 0) {
-          let pos = spawns[0].pos;
+          let pos = colony.spawns[0].pos;
           pos.x += 0;
           pos.y += 3;
           let err = pos.createConstructionSite(STRUCTURE_STORAGE);
@@ -218,7 +224,7 @@ export function baseExpansion(colony: Colony) {
         let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
         let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
         if (towers.length == 1 && towercons.length == 0) {
-          let pos = spawns[0].pos;
+          let pos = colony.spawns[0].pos;
           pos.x -= 1;
           pos.y += 5;
           let err = pos.createConstructionSite(STRUCTURE_TOWER);
@@ -227,25 +233,6 @@ export function baseExpansion(colony: Colony) {
         colony.memory.ExpandedLevel = 5;
       }
       else if (colony.memory.ExpandedLevel == 5 && cRoom.storage) {
-        let link = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_LINK } });
-        let linkcons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_LINK } });
-        if (link.length + linkcons.length < 3) {
-          let pos = spawns[0].pos; //for the 7 one
-          pos.y += 2;
-          let obj: Structure[] = pos.lookFor(LOOK_STRUCTURES);
-          if (obj.length > 0 && obj[0].structureType != STRUCTURE_ROAD)
-            console.log("something else is built on link main spot", pos.x, pos.y, pos.roomName);
-          else {
-            let err = pos.createConstructionSite(STRUCTURE_LINK);
-            buildPrint(err, "linkMain ", colony.name);
-          }
-          //put close to harvesters
-          for (let sourceID of colony.memory.sourcesUsed) {
-            let source = Memory.Resources[sourceID];
-            let err2 = findAndBuildLink(restorePos(source.workPos));
-            buildPrint(err2, "link", colony.name);
-          }
-        }
         for (let sourceID of colony.memory.mineralsUsed) {
           if (restorePos(Memory.Resources[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
             let goal = restorePos(Memory.Resources[sourceID].workPos);
@@ -254,18 +241,7 @@ export function baseExpansion(colony: Colony) {
             buildRoad(goal, sStoreP, 5);
           }
         }
-
-        if (link.length == 3) {
-          for (let sourceID of colony.memory.sourcesUsed) {
-            let source = Memory.Resources[sourceID];
-            let pos = restorePos(source.workPos);
-            let structures: StructureLink[] = pos.findInRange(FIND_MY_STRUCTURES, 1, { filter: { structuceType: STRUCTURE_LINK } }) as StructureLink[];
-            if (structures.length > 0) {
-              source.linkID = structures[0].id;
-            }
-          }
-          colony.memory.ExpandedLevel = 6
-        }
+        colony.memory.ExpandedLevel = 6
       } if (colony.memory.ExpandedLevel == 6 && cRoom.storage) {
 
       }

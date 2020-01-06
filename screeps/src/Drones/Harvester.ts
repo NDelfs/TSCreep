@@ -4,6 +4,9 @@ import { Colony } from "Colony"
 import { sendEnergy } from "Base/LinkOperation"
 import { updateSource } from "../utils/DataUpdate";
 import { resourceRequest } from "../Base/ResourceHandler";
+//@ts-ignore
+import profiler from "Profiler/screeps-profiler";
+
 
 export function Harvester(creep: Creep): void {
   //if (creep.room.name == "E48N47")
@@ -12,9 +15,9 @@ export function Harvester(creep: Creep): void {
   if (creep.inPlace && target) {
     let source = Game.getObjectById(target.ID) as Source | Mineral;
     if (source.memory.resourceType == RESOURCE_ENERGY)
-      mineSource(creep, source as Source);
+      profiler.registerFN(mineSource)(creep, source as Source);
     else
-      mineMineral(creep, source as Mineral);
+      profiler.registerFN(mineMineral)(creep, source as Mineral);
   }
 }
 

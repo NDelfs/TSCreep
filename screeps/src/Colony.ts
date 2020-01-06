@@ -113,10 +113,10 @@ export class Colony {
     this.room = iRoom;
     this.name = iRoom.name;
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
-    if (!this.memory.creepBuildQue) {//for first time running new code, can be deleted when code have been live
-      this.memory.creepBuildQue = [];
-      this.memory.boosts = [];
-    }
+    //if (!this.memory.creepBuildQue) {//for first time running new code, can be deleted when code have been live
+    //  this.memory.creepBuildQue = [];
+    //  this.memory.boosts = [];
+    //}
     if (!this.memory.labMemories) {
       this.memory.labMemories = [];
     }
@@ -174,7 +174,11 @@ export class Colony {
     this.refreshEnergyDemand(true);
 
     this.outposts = _.compact(_.map(this.outpostIDs, outpost => Game.rooms[outpost]));
-    expandResources(this, this.spawns[0].pos);
+    if (this.memory.startSpawnPos)
+      expandResources(this, restorePos(this.memory.startSpawnPos));
+    else if (this.spawns.length > 0) {
+      this.memory.startSpawnPos = this.spawns[0].pos;
+    }
   }
 
   public refresh() {
