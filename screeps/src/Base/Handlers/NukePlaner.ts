@@ -1,5 +1,5 @@
 import { Colony } from 'Colony'
-import { resourceRequest } from "Base/ResourceHandler"
+import { resourceRequest } from "Base/Handlers/ResourceHandler"
 
 export function NukeResourceReq(colony: Colony): void {
   let nuker = colony.nuker;

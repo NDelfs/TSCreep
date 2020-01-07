@@ -1,6 +1,6 @@
 import { Colony } from "Colony"
 import { REACTION_CHAIN, IReaction, REACTION } from "Types/Constants"
-import { ResourceHandler, resourceRequest } from "Base/ResourceHandler";
+import { ResourceHandler, resourceRequest } from "Base/Handlers/ResourceHandler";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 

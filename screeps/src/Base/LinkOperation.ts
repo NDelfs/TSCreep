@@ -1,5 +1,5 @@
-import { Colony } from "../Colony";
-import { resourceRequest } from "./ResourceHandler";
+import { Colony } from "Colony";
+import { resourceRequest } from "Base/Handlers/ResourceHandler";
 
 export function sendEnergy(colony: Colony, link: StructureLink) {
   if (link.energy >= 400 && link.cooldown == 0) {

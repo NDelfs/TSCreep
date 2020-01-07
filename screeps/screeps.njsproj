@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
+    <Folder Include="src\Base\Handlers\" />
     <Folder Include="src\Drones\" />
     <Folder Include="src\Base\" />
     <Folder Include="src\Drones\Funcs\" />
@@ -59,6 +60,9 @@
     <TypeScriptCompile Include="src\Base\ExtensionFlagPlacement.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\Base\Handlers\AttackHandler.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\LabMaster.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
@@ -69,19 +73,19 @@
     <TypeScriptCompile Include="src\Base\Market.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\Base\NewColonyHandler.ts">
+    <TypeScriptCompile Include="src\Base\Handlers\NewColonyHandler.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\Base\NukePlaner.ts">
+    <TypeScriptCompile Include="src\Base\Handlers\NukePlaner.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\Base\ResourceHandler.ts">
+    <TypeScriptCompile Include="src\Base\Handlers\ResourceHandler.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Base\TowerOperation.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\Base\BoostHandler.ts">
+    <TypeScriptCompile Include="src\Base\Handlers\BoostHandler.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Colony.ts">
@@ -168,6 +172,9 @@
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Declarations\types.d.ts" />
     <TypeScriptCompile Include="src\Types\TargetTypes.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="src\utils\ColonyUtils.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\utils\DataUpdate.ts">

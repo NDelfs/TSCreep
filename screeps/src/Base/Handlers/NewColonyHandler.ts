@@ -1,8 +1,9 @@
 import { Colony } from "Colony"
-import { nrCreepInQue } from "../utils/minorUtils";
-import { SCOUT, STARTER } from "../Types/CreepType";
-import { CONTROLLER } from "../Types/TargetTypes";
-import { calculateBodyFromSet } from "../Spawners/Spawner";
+import { nrCreepInQue } from "utils/minorUtils";
+import { SCOUT, STARTER } from "Types/CreepType";
+import { CONTROLLER } from "Types/TargetTypes";
+import { calculateBodyFromSet } from "Spawners/Spawner";
+import { findClosestColony } from "utils/ColonyUtils";
 
 function calculateScoutQue(spawCol: Colony, flag: Flag) {
   //const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
@@ -32,59 +33,11 @@ class newColony {
   closestColony: Colony;
   flag: Flag;
   scoutSpawned: boolean;
-  private findClosest(colonies: { [name: string]: Colony }) : Colony {
-    let newName = this.flag.pos.roomName;
-    let dists: { name: string, dist: number }[] = [];
-    for (let colName in colonies) {
-      
-      let col = colonies[colName];
-      if (colName != newName && col.controller.level >= 3) {
-        dists.push({ name: col.name, dist: Game.map.getRoomLinearDistance(col.name, newName) - col.controller.level });//balance in the controller level
-      }
-    }
-    dists.sort((a, b) => { return a.dist - b.dist });
-    console.log("Find closest got first as", JSON.stringify(dists[0]), JSON.stringify(_.last(dists)));
-
-    let closest: { name: string, dist: number }= { name: "", dist: 999};
-    for (let dist of dists) {
-      if (dist.dist > closest.dist)
-        break;//abort early if linear is more expensive than closest real Path
-      let colony = colonies[dist.name];
-      let route =Game.map.findRoute(colony.name, this.flag.pos.roomName, {
-        routeCallback(roomName) {
-          let room = Game.rooms[roomName];
-          let parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName)!;
-          let isHighway = (parseInt(parsed[1]) % 10 === 0) || (parseInt(parsed[2]) % 10 === 0);
-         // let isMyRoom = room && room.controller && room.controller.my;
-          if (isHighway) {
-            return 1;
-          } else {
-            return 2;
-          }
-        }
-      })
- 
-      //updade dist and closest
-      if (route != -2) {
-        console.log("find closest real dist to room =", route.length, dist.name, "col level", colonies[dist.name].controller.level);
-        dist.dist = route.length - colonies[dist.name].controller.level;//balance in the controller level
-        if (dist.dist < closest.dist)
-          closest = dist;
-      }
-      else {
-        dist.dist = 999;
-      }
-    }
-    if (closest.dist < 999)
-      return colonies[closest.name];
-    else {
-      throw "Can not find path to room" + this.flag.pos.roomName;
-    }
-  }
+  
  
   constructor(colonies: { [name: string]: Colony }, flag: Flag) {
     this.flag = flag;
-    this.closestColony = this.findClosest(colonies);
+    this.closestColony = findClosestColony(colonies, flag.pos.roomName);
     this.scoutSpawned = false;
   }
 
@@ -95,6 +48,7 @@ class newColony {
     if (this.newColony && !this.newColony.memory.startSpawnPos) {
       this.newColony.memory.startSpawnPos = this.flag.pos;
       this.newColony.memory.startSpawnPos.y += -2;
+      console.log("added new start spawn pos for new colony");
     }
   }
 
@@ -102,6 +56,7 @@ class newColony {
     if (!this.newColony) {
       if (!this.scoutSpawned || (Game.time % 500 == 8)) {
         calculateScoutQue(this.closestColony, this.flag);
+        console.log("spawned new scout for the new colony");
         this.scoutSpawned = true;
       }
     }
@@ -112,6 +67,7 @@ class newColony {
         if (nrStart < 2) {
           const mem: CreepMemory = { type: STARTER, creationRoom: this.newColony.name, permTarget: null, moveTarget: null, targetQue: [] };
           this.closestColony.queNewCreep(mem, calculateBodyFromSet(this.closestColony.room, [WORK, CARRY, MOVE], 10));
+          console.log("spawned new starter for the new colony");
         }
       }
     }
@@ -122,10 +78,24 @@ export class NewColonyHandler {
   newColonies: newColony[];
   constructor(colonies: { [name: string]: Colony }) {
     this.newColonies = [];
+    this.findNew(colonies);
+  }
+
+  private findNew(colonies: { [name: string]: Colony }) {
     const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
     for (let flag of wflags) {
       try {
-        this.newColonies.push(new newColony(colonies, flag));
+        let found = this.newColonies.find((col) => { return col.flag == flag });
+        if (!found) {
+          this.newColonies.push(new newColony(colonies, flag));
+          console.log('created new colony handler');
+        }
+        else {
+          if (found.newColony && found.newColony.controller.level >= 3) {
+            _.remove(this.newColonies, (col) => { return col.newColony && col.newColony.name == flag.pos.roomName });
+            flag.remove();
+          }
+        }
       }
       catch (e) {
         console.log("failed to create new Colony", e);
@@ -134,12 +104,30 @@ export class NewColonyHandler {
   }
 
   public refresh(colonies: { [name: string]: Colony }) {
-    for (let newC of this.newColonies)
-      newC.refresh(colonies);
+    if (Game.time % 100 == 0) {
+      this.findNew(colonies);
+    }
+  
+      
+    for (let newC of this.newColonies) {
+      try {
+        newC.refresh(colonies);
+      }
+      catch (e) {
+        console.log("New colony handler failed refresh with", e)
+      }
+    }
   }
 
   public run() {
-    for (let newC of this.newColonies)
-      newC.run();
+    for (let newC of this.newColonies) {
+      try {
+        newC.run();
+
+      }
+      catch (e) {
+        console.log("New colony handler failed run with", e)
+      }
+    }
   }
 }

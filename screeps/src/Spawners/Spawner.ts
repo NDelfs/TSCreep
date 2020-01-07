@@ -274,26 +274,26 @@ function calculateDefQue(room: Room): queData[] {
   return ret;
 }
 
-function calculateAttackQue(): queData[] {
-  let ret: queData[] = [];
-  let attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_BLUE });
-  if (attackFlag.length > 0) {
-    let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKER });
-    if (creeps.length < 2) {
-      const mem: CreepMemory = { type: creepT.ATTACKER, creationRoom: "", permTarget: null, moveTarget: { pos: attackFlag[0].pos, range: 2 }, targetQue: [] };
-      ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, TOUGH, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, RANGED_ATTACK], prio: 1, eTresh: 0.9});
-    }
-  }
-  attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_CYAN });
-  if (attackFlag.length > 0) {
-    let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKERCONTROLLER });
-    if (creeps.length < 1) {
-      const mem: CreepMemory = { type: creepT.ATTACKERCONTROLLER, creationRoom: "", permTarget: null, moveTarget: { pos: attackFlag[0].pos, range: 2 }, targetQue: [] };
-      ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, CLAIM, CLAIM, CLAIM], prio: 1, eTresh: 0.9});
-    }
-  }
-  return ret;
-}
+//function calculateAttackQue(): queData[] {
+//  let ret: queData[] = [];
+//  let attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_BLUE });
+//  if (attackFlag.length > 0) {
+//    let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKER });
+//    if (creeps.length < 2) {
+//      const mem: CreepMemory = { type: creepT.ATTACKER, creationRoom: "", permTarget: null, moveTarget: { pos: attackFlag[0].pos, range: 2 }, targetQue: [] };
+//      ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, TOUGH, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, RANGED_ATTACK], prio: 1, eTresh: 0.9});
+//    }
+//  }
+//  attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_CYAN });
+//  if (attackFlag.length > 0) {
+//    let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKERCONTROLLER });
+//    if (creeps.length < 1) {
+//      const mem: CreepMemory = { type: creepT.ATTACKERCONTROLLER, creationRoom: "", permTarget: null, moveTarget: { pos: attackFlag[0].pos, range: 2 }, targetQue: [] };
+//      ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, CLAIM, CLAIM, CLAIM], prio: 1, eTresh: 0.9});
+//    }
+//  }
+//  return ret;
+//}
 
 function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, colonies: { [name: string]: Colony }): number {
   if (que.length > 0 && spawner.spawning == null) {
@@ -307,6 +307,7 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
         spawner.memory.currentlySpawning = que[0];
         if (que[0].memory.type != creepT.HARVESTER && que[0].memory.type != creepT.TRANSPORTER && que[0].memory.type != creepT.UPGRADER)
           console.log("spawned", PrettyPrintCreep(que[0].memory.type), "at", spawner.room.name);
+
         colonies[spawner.room.name].forceUpdateEnergy = true;
         que.shift();
         colony.memory.inCreepEmergency = null;
@@ -329,7 +330,7 @@ export function spawnFromReq(colony: Colony, colonies: { [name: string]: Colony 
 
 function isFailedEconomy(colony: Colony, spawns: StructureSpawn[]): void {
   let room = colony.room;
-  if (colony.memory.inCreepEmergency == null) {
+  if (colony.memory.inCreepEmergency == null && colony.controller.level>=3 ) {//until lvl 3 it should have a NewColonyHandler looking out for it or being the first colony it does not have help to get
     for (const spawn of spawns) {
       const spawning = spawn.spawning;
       if (spawning) {
@@ -368,15 +369,15 @@ export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
   let attackQue = calculateAttackQue();
   try {
     let cRoom = colony.room;
-    const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
+    //const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
 
-    if (wflags.length > 0) {
-      let froom = wflags[0].room;
-      if (froom) {
-        let struct = colony.room.find(FIND_MY_CONSTRUCTION_SITES);
-        colonies[froom.name].memory.inCreepEmergency = 0;
-      }
-    }
+    //if (wflags.length > 0) {
+    //  let froom = wflags[0].room;
+    //  if (froom) {
+    //    let struct = colony.room.find(FIND_MY_CONSTRUCTION_SITES);
+    //    colonies[froom.name].memory.inCreepEmergency = 0;
+    //  }
+    //}
 
     if (colony.spawns.length > 0) {
       isFailedEconomy(colony, colony.spawns);

@@ -12,7 +12,7 @@ import { restorePos } from "./utils/posHelpers";
 import { getBuilderBody } from "./Spawners/Spawner";
 import { BOOST } from "Types/TargetTypes";
 import { PrettyPrintErr } from "./utils/PrettyPrintErr";
-import { ResourceHandler, resourceRequest } from "Base/ResourceHandler";
+import { ResourceHandler, resourceRequest } from "Base/Handlers/ResourceHandler";
 import { BOOSTING } from "Types/Constants";
 
 
@@ -364,8 +364,11 @@ export class Colony {
       //    }
       //}
       let conStore = Game.getObjectById(this.memory.controllerStoreID!);
-      if (conStore && this.resourceHandler.getReq(this.memory.controllerStoreID!, RESOURCE_ENERGY) == null && (conStore as AnyStoreStructure).store.energy < 2000 - C.Controler_AllowedDef) {
-        this.resourceHandler.addRequest(new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - C.Controler_AllowedDef, 2000, this.room));
+      let def = C.Controler_AllowedDef;
+      if (this.memory.controllerLinkID)
+        def = 1000;
+      if (conStore && this.resourceHandler.getReq(this.memory.controllerStoreID!, RESOURCE_ENERGY) == null && (conStore as AnyStoreStructure).store.energy < 2000 - def) {
+        this.resourceHandler.addRequest(new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - def, 2000, this.room));
       }
       if (this.room.terminal && this.resourceHandler.getReq(this.room.terminal.id, RESOURCE_ENERGY) == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
         this.resourceHandler.addRequest(new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room));

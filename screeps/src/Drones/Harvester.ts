@@ -3,7 +3,7 @@ import { PM } from "PishiMaster";
 import { Colony } from "Colony"
 import { sendEnergy } from "Base/LinkOperation"
 import { updateSource } from "../utils/DataUpdate";
-import { resourceRequest } from "../Base/ResourceHandler";
+import { resourceRequest } from "Base/Handlers/ResourceHandler";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
 
@@ -66,7 +66,7 @@ function mineSource(creep: Creep, res: Source) {
   creep.harvest(res);
   creep.say("Mine");
   let amount = creep.carryAmount;
-  if (creep.carryCapacity != 0 && amount > creep.carryCapacity * 0.8) {
+  if (creep.carryCapacity != 0 && amount > creep.carryCapacity * 0.6) {
     if (res.memory.linkID) {
       let link = Game.getObjectById(res.memory.linkID) as StructureLink;
       if (link.energy < link.energyCapacity) {
@@ -74,9 +74,10 @@ function mineSource(creep: Creep, res: Source) {
         creep.transfer(link, RESOURCE_ENERGY);
       }
       let col = PM.colonies[creep.memory.creationRoom];
-      sendEnergy(col, link);    
+      sendEnergy(col, link);
+      updateSource(res);//just to be sure it get emptied. could be better with some checks, but the cpu price should be low enough
     }
-    if (amount > creep.carryCapacity * 0.8) {
+    if (amount > creep.carryCapacity * 0.9) {
       creep.drop(RESOURCE_ENERGY, amount);
       updateSource(res);
     }
