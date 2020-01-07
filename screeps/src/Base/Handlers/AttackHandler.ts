@@ -1,6 +1,8 @@
 import {Colony} from "Colony"
 import { findClosestColonies } from "../../utils/ColonyUtils";
 import { ATTACKER } from "../../Types/CreepType";
+import { calculateBodyFromSet } from "../../Spawners/Spawner";
+import { nrCreepInQue } from "../../utils/minorUtils";
 
 class RoomAttack {
   room: string;
@@ -14,30 +16,45 @@ class RoomAttack {
     this.closestColonies = findClosestColonies(colonies, this.room, 4);
     this.creeps = [];
     this.spawnQueCreeps = [];
+    for (let col of this.closestColonies)//temporary, dependant on only one attack at a time. 
+      this.creeps.concat(col.room.getCreeps(ATTACKER));
+    console.log("Room attack created", this.room, "with nr of creeps", this.creeps.length);
   }
 
   public refresh(colonies: { [name: string]: Colony }) {
     this.closestColonies = this.closestColonies.map((col) => { return colonies[col.name]; });
     this.flag = Game.getObjectById(this.flag.name) as Flag;
-    this.creeps = this.creeps.map((creep) => { return Game.creeps[creep.name]; });
-    //if creeps got spawned lets move them to current creeps
-    for (let i = 0; i < this.spawnQueCreeps.length; i++) {
-      let creep = Game.creeps[this.spawnQueCreeps[i]];
-      if (creep) {
-        this.creeps.push(creep);
-        this.spawnQueCreeps[i] = "";
-      }
+    if (Game.time % 10 == 0 && this.creeps.length < 3) {
+      this.creeps = [];
+      for (let col of this.closestColonies)//temporary, dependant on only one attack at a time. 
+        this.creeps.concat(col.room.getCreeps(ATTACKER));
+      console.log("room attack added creeps, found", this.creeps.length);
     }
-    _.remove(this.spawnQueCreeps, (sp) => { return sp.length == 0 });
+    else
+      this.creeps = this.creeps.map((creep) => { return Game.creeps[creep.name]; });
+    //if creeps got spawned lets move them to current creeps
+    //for (let i = 0; i < this.spawnQueCreeps.length; i++) {
+    //  let creep = Game.creeps[this.spawnQueCreeps[i]];
+    //  if (creep) {
+    //    this.creeps.push(creep);
+    //    this.spawnQueCreeps[i] = "";
+    //  }
+    //}
+    //_.remove(this.spawnQueCreeps, (sp) => { return sp.length == 0 });
   }
 
   public run() {
-    let nrAttack = this.creeps.length + this.spawnQueCreeps.length;
+    let nrAttack = this.creeps.length;
+    for (let col of this.closestColonies) {
+      nrAttack += nrCreepInQue(col, ATTACKER);
+    }
+
     if (nrAttack < 3) {
-      for (let i = nrAttack; i < nrAttack; i++) {
-        const mem: CreepMemory = { type: ATTACKER, creationRoom: "", permTarget: null, moveTarget: { pos: this.flag.pos, range: 2 }, targetQue: [] };
+      for (let i = 0; i < 3 - nrAttack; i++) {
+        const mem: CreepMemory = { type: ATTACKER, creationRoom: this.closestColonies[i].name, permTarget: null, moveTarget: { pos: this.flag.pos, range: 2 }, targetQue: [] };
         //ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, TOUGH, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, RANGED_ATTACK], prio: 1, eTresh: 0.9});
-        this.closestColonies[i].queNewCreep(mem,);
+        this.closestColonies[i].queNewCreep(mem, calculateBodyFromSet(this.closestColonies[i].room, [TOUGH, MOVE, ATTACK], 30, true));
+        console.log("room attack qued new creeps", nrAttack);
       }
     }
   }

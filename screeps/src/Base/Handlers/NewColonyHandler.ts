@@ -37,7 +37,11 @@ class newColony {
  
   constructor(colonies: { [name: string]: Colony }, flag: Flag) {
     this.flag = flag;
-    this.closestColony = findClosestColony(colonies, flag.pos.roomName);
+    let closest = findClosestColony(colonies, flag.pos.roomName);
+    if (closest)
+      this.closestColony = closest;
+    else
+      throw "Failed to create a boosting new colony";
     this.scoutSpawned = false;
   }
 

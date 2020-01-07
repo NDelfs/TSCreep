@@ -9,6 +9,7 @@ import { Market } from "./Base/Market";
 import { Spawner, spawnFromReq, RefreshQue } from "./Spawners/Spawner";
 import { NukeResourceReq } from "Base/Handlers/NukePlaner";
 import { NewColonyHandler } from "Base/Handlers/NewColonyHandler";
+import { AttackHandler } from "./Base/Handlers/AttackHandler";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
@@ -21,6 +22,7 @@ export class _PishiMaster {
   ticksAlive: number;
   colonies: { [name: string]: Colony };
   //newColHandler: NewColonyHandler;
+  attackHand: AttackHandler;
   labMaster: LabMaster;
   market: Market;
   constructor() {
@@ -41,6 +43,7 @@ export class _PishiMaster {
       }
     }
     //this.newColHandler = new NewColonyHandler(this.colonies);
+    this.attackHand = new AttackHandler(this.colonies);
     this.labMaster = new LabMaster(this.colonies);
     this.market = new Market(this.colonies);
   }
@@ -50,6 +53,7 @@ export class _PishiMaster {
     for (let colonyID in this.colonies) {
       this.colonies[colonyID].refresh();
     }
+    this.attackHand.refresh(this.colonies);
     //this.newColHandler.refresh(this.colonies);
   }
 
@@ -63,6 +67,7 @@ export class _PishiMaster {
       baseExpansion(colony);
     }
     //this.newColHandler.run();
+    this.attackHand.run();
     this.labMaster.run();
     this.market.run();
     for (let colonyID in this.colonies) {

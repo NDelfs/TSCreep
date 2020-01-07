@@ -29,13 +29,22 @@ function computeBodyCost(body: BodyPartConstant[]): number {
   return ret;
 }
 
-export function calculateBodyFromSet(room: Room, set: BodyPartConstant[], maxSets: number) {
+export function calculateBodyFromSet(room: Room, set: BodyPartConstant[], maxSets: number, inOrder?: boolean) {
   let nrSets = Math.floor((room.energyCapacityAvailable * 0.8) / computeBodyCost(set));
   nrSets = Math.min(maxSets, nrSets);
   let body: BodyPartConstant[] = [];
-  for (let i = 0; i < nrSets; i++) {
-    body = body.concat(set);
+  if (inOrder) {
+    body = Array<BodyPartConstant>(nrSets * set.length);
+    for (let i = 0; i < set.length; i++) {
+      body.fill(set[i], i * nrSets, (i + 1) * nrSets - 1);
+    }
   }
+  else {
+    for (let i = 0; i < nrSets; i++) {
+      body = body.concat(set);
+    }
+  }
+  
   return body;
 }
 
@@ -366,7 +375,7 @@ export function RefreshQue(colony: Colony) {
 
 export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
   //let expQue = calculateExpansiontQue();
-  let attackQue = calculateAttackQue();
+  //let attackQue = calculateAttackQue();
   try {
     let cRoom = colony.room;
     //const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
@@ -403,11 +412,11 @@ export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
         nrNewSpawns += spawnCreep(starterQue, spawn, colony, colonies);
         if (cRoom.availEnergy > 800 && cRoom.creepsAll.length > 2) {
           nrNewSpawns += spawnCreep(upgradeQue, spawn, colony, colonies);
-          if (cRoom.energyAvailable > cRoom.energyCapacityAvailable * 0.9) {
+          //if (cRoom.energyAvailable > cRoom.energyCapacityAvailable * 0.9) {
             //nrNewSpawns += spawnCreep(scoutQue, spawns[spawnID]);
             //nrNewSpawns += spawnCreep(expQue, spawns[spawnID]);
-            spawnCreep(attackQue, spawn, colony, colonies);
-          }
+            //spawnCreep(attackQue, spawn, colony, colonies);
+          //}
         }
         // }
         //else {
