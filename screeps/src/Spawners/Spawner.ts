@@ -31,12 +31,12 @@ function computeBodyCost(body: BodyPartConstant[]): number {
 
 export function calculateBodyFromSet(room: Room, set: BodyPartConstant[], maxSets: number, inOrder?: boolean) {
   let nrSets = Math.floor((room.energyCapacityAvailable * 0.8) / computeBodyCost(set));
-  nrSets = Math.min(maxSets, nrSets);
+  nrSets = Math.min(maxSets, nrSets, Math.floor(50 / set.length));
   let body: BodyPartConstant[] = [];
   if (inOrder) {
     body = Array<BodyPartConstant>(nrSets * set.length);
     for (let i = 0; i < set.length; i++) {
-      body.fill(set[i], i * nrSets, (i + 1) * nrSets - 1);
+      body.fill(set[i], i * nrSets, (i + 1) * nrSets);
     }
   }
   else {
@@ -285,8 +285,10 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
       else
         console.log("failed to spawn", PrettyPrintCreep(que[0].memory.type), " due to ", PrettyPrintErr(err));
     }
-    else if (err != ERR_NOT_ENOUGH_ENERGY)
-      console.log(spawner.room.name, "spawn failed to spawn", PrettyPrintCreep(que[0].memory.type), PrettyPrintErr(err));
+    else if (err != ERR_NOT_ENOUGH_ENERGY) {
+      console.log(spawner.room.name, "spawn failed to spawn", PrettyPrintCreep(que[0].memory.type), PrettyPrintErr(err), "now removed: length, memory", que[0].body.length, JSON.stringify(que[0].memory));
+      que.shift();
+    }
   }
   return 0;
 }

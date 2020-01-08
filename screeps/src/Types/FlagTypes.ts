@@ -3,6 +3,14 @@ export function isFlagColor(flag: Flag, colors: flagColors) {
   return flag.color == colors.first && flag.secondaryColor == colors.second;
 }
 
+export function getFlags(colors: flagColors) {
+  return _.filter(Game.flags, function (flag) { return isFlagColor(flag, colors) });
+}
+
+export function getFlagsInRoom(colors: flagColors, room: string) {
+  return _.filter(Game.flags, function (flag) { return isFlagColor(flag, colors) && flag.pos.roomName == room });
+}
+
 export const FLAG_ROOM_ATTACK: flagColors = { first: COLOR_BLUE, second: COLOR_BLUE };
 export const FLAG_TARGET_ATTACK: flagColors = { first: COLOR_BLUE, second: COLOR_BROWN };
 export const FLAG_ATTACK_CONTROLLER: flagColors = { first: COLOR_BLUE, second: COLOR_CYAN };

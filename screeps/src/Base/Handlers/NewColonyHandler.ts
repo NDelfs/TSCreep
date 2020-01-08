@@ -45,7 +45,7 @@ class newColony {
   }
 
   public refresh(colonies: { [name: string]: Colony }) {
-    this.flag = Game.getObjectById(this.flag.name) as Flag;
+    this.flag = Game.flags[this.flag.name];;
     this.closestColony = colonies[this.closestColony.name];
     this.newColony = colonies[this.flag.pos.roomName];
     if (this.newColony && !this.newColony.memory.startSpawnPos) {

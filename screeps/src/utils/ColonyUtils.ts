@@ -14,7 +14,7 @@ export function findClosestColonies(colonies: { [name: string]: Colony }, target
 
   let closest: { name: string, dist: number }[] = [/*{ name: "", dist: 999 }*/];
   for (let dist of dists) {
-    if (closest.length >= maxNr && dist.dist > closest[maxNr].dist)
+    if (closest.length >= maxNr && dist.dist > closest[maxNr-1].dist)
       break;//abort early if linear is more expensive than closest real Path
     let colony = colonies[dist.name];
     let route = Game.map.findRoute(colony.name, targetRoom, {
@@ -35,7 +35,7 @@ export function findClosestColonies(colonies: { [name: string]: Colony }, target
     if (route != -2) {
       console.log("find closest real dist to room =", route.length, dist.name, "col level", colonies[dist.name].controller.level);
       dist.dist = route.length - colonies[dist.name].controller.level;//balance in the controller level
-      if (closest.length <= maxNr || dist.dist < closest[maxNr].dist) {
+      if (closest.length <= maxNr || dist.dist < closest[maxNr-1].dist) {
         closest.push(dist);
         closest.sort((a, b) => { return a.dist - b.dist });
       }
