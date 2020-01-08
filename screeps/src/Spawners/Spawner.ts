@@ -254,25 +254,6 @@ function calculateBuilderQue(colony: Colony) {
   }
 }
 
-function calculateExpansiontQue(colonies: { [name: string]: Colony }): queData[] {
-  let ret: queData[] = [];
-  const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
-  for (let flag of wflags) {
-    if (flag.room != null && (flag.room.controller == null || flag.room.controller.level < 3)) {
-      //if (creeps.length < 4) {
-      ret = calculateStarterQue(colonies[flag.room.name]);
-
-      if (ret.length > 0) {
-        ret[0].body = [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE];
-        ret[0].memory.moveTarget = { pos: flag.pos, range: 10 };
-        return ret;
-      }
-      //}
-    }
-  }
-  return ret;
-}
-
 function calculateDefQue(room: Room): queData[] {
   let ret: queData[] = [];
   if (room.getCreeps(creepT.DEFENDER).length < 2) {
@@ -282,27 +263,6 @@ function calculateDefQue(room: Room): queData[] {
   }
   return ret;
 }
-
-//function calculateAttackQue(): queData[] {
-//  let ret: queData[] = [];
-//  let attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_BLUE });
-//  if (attackFlag.length > 0) {
-//    let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKER });
-//    if (creeps.length < 2) {
-//      const mem: CreepMemory = { type: creepT.ATTACKER, creationRoom: "", permTarget: null, moveTarget: { pos: attackFlag[0].pos, range: 2 }, targetQue: [] };
-//      ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, TOUGH, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, RANGED_ATTACK], prio: 1, eTresh: 0.9});
-//    }
-//  }
-//  attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_CYAN });
-//  if (attackFlag.length > 0) {
-//    let creeps = _.filter(Game.creeps, function (creep: Creep) { return creep.memory.type == creepT.ATTACKERCONTROLLER });
-//    if (creeps.length < 1) {
-//      const mem: CreepMemory = { type: creepT.ATTACKERCONTROLLER, creationRoom: "", permTarget: null, moveTarget: { pos: attackFlag[0].pos, range: 2 }, targetQue: [] };
-//      ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, CLAIM, CLAIM, CLAIM], prio: 1, eTresh: 0.9});
-//    }
-//  }
-//  return ret;
-//}
 
 function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, colonies: { [name: string]: Colony }): number {
   if (que.length > 0 && spawner.spawning == null) {
@@ -374,19 +334,9 @@ export function RefreshQue(colony: Colony) {
 }
 
 export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
-  //let expQue = calculateExpansiontQue();
-  //let attackQue = calculateAttackQue();
   try {
     let cRoom = colony.room;
-    //const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
 
-    //if (wflags.length > 0) {
-    //  let froom = wflags[0].room;
-    //  if (froom) {
-    //    let struct = colony.room.find(FIND_MY_CONSTRUCTION_SITES);
-    //    colonies[froom.name].memory.inCreepEmergency = 0;
-    //  }
-    //}
 
     if (colony.spawns.length > 0) {
       isFailedEconomy(colony, colony.spawns);
@@ -394,8 +344,6 @@ export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
       if (colony.memory.controllerStoreID == null)
         starterQue = calculateStarterQue(colony);
       let harvestQue = calculateHarvesterQue(colony);
-
-      //let scoutQue = calculateScoutQue(room);
 
       let TransQue = calculateTransportQue(colony);
       let upgradeQue = calculateUpgraderQue(colony);

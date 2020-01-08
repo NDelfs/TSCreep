@@ -4,10 +4,9 @@ import { SCOUT, STARTER } from "Types/CreepType";
 import { CONTROLLER } from "Types/TargetTypes";
 import { calculateBodyFromSet } from "Spawners/Spawner";
 import { findClosestColony } from "utils/ColonyUtils";
+import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_NEW_COLONY } from "../../Types/FlagTypes";
 
 function calculateScoutQue(spawCol: Colony, flag: Flag) {
-  //const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
-  //for (let flag of wflags) {
   const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == SCOUT && creep.alreadyTarget(flag.name); });
   let nrCreep = nrCreepInQue(spawCol, SCOUT) + creeps.length;
   if (nrCreep == 0 && flag.room == null) {
@@ -84,9 +83,9 @@ export class NewColonyHandler {
     this.newColonies = [];
     this.findNew(colonies);
   }
-
+  
   private findNew(colonies: { [name: string]: Colony }) {
-    const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_WHITE; });
+    const wflags = _.filter(Game.flags, function (flag) { return isFlagColor(flag, FLAG_NEW_COLONY) });
     for (let flag of wflags) {
       try {
         let found = this.newColonies.find((col) => { return col.flag == flag });

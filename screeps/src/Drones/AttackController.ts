@@ -1,8 +1,9 @@
 import * as targetT from "Types/TargetTypes";
+import { isFlagColor, FLAG_ATTACK_CONTROLLER } from "../Types/FlagTypes";
 
 export function AttackerController(creep: Creep) {
-    if (creep.getTarget() == null && creep.inPlace) {
-        let attackFlag = _.filter(Game.flags, function (flag) { return flag.color == COLOR_CYAN });
+  if (creep.getTarget() == null && creep.inPlace) {
+    let attackFlag = _.filter(Game.flags, function (flag) { return isFlagColor(flag, FLAG_ATTACK_CONTROLLER); });
         if (attackFlag.length > 0 && attackFlag[0].pos.roomName != creep.pos.roomName) {
             creep.walkTo(attackFlag[0].pos,  5);
         }

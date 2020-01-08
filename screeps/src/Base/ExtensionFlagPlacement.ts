@@ -1,5 +1,6 @@
 import { restorePos, storePos, isBuildable } from "utils/posHelpers";
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
+import { isFlagColor, FLAG_EXTENSION_BUILD } from "../Types/FlagTypes";
 
 
 function getMaxCap(level: number): number {
@@ -37,7 +38,7 @@ function buildAt(x: number, y: number, room: string): number {
 }
 
 export function ExtensionFlagPlacement(room: Room) {
-  let buildFlag = _.first(room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED && flag.secondaryColor == COLOR_RED } }));
+  let buildFlag = _.first(room.find(FIND_FLAGS, { filter: function (flag) { return isFlagColor(flag, FLAG_EXTENSION_BUILD) } }));
   let xDir: number;
   let yDir: number;
 

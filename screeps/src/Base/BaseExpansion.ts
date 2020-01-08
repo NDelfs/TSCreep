@@ -2,6 +2,7 @@ import { ExtensionFlagPlacement } from "./ExtensionFlagPlacement";
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { restorePos, storePos, isBuildable, isEqualPos } from "utils/posHelpers";
 import { Colony } from "Colony"
+import { isFlagColor, FLAG_LABS } from "../Types/FlagTypes";
 
 function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange: number) {
   let goal = { pos: goalPos, range: iRange };
@@ -261,7 +262,7 @@ export function findAndBuildLab(col: Colony, labs: StructureLab[]) {
   let level = room.controller!.level - 5;
   let maxLab = (level * 3 + Number(level == 3));
   if (labs.length < maxLab) {
-    let buildFlag = room.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_BROWN && flag.secondaryColor == COLOR_BROWN } });
+    let buildFlag = room.find(FIND_FLAGS, { filter: function (flag) { return isFlagColor(flag, FLAG_LABS); } });
     if (buildFlag.length == 1) {
       let positions: { x: number; y: number }[] = [{ x: -1, y: -1 }, { x: 0, y: 0 }, { x: 1, y: 1 },
       { x: 0, y: -1 }, { x: 1, y: 0 },

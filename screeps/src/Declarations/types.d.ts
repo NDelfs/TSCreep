@@ -17,7 +17,9 @@ type TargetConstant =
   | FLAG_WHITE
   | DEFEND
   | BOOST
-  | UNBOOST;
+  | UNBOOST
+  | ATTACK_STRUCTURE
+  | ATTACK_CONTROLLER;
 
 type CONTROLLER = 1;
 type POWERUSER = 11;
@@ -36,6 +38,8 @@ type BOOST = 71;
 type UNBOOST = 75;
 type FLAG_RED = 100;
 type FLAG_WHITE = 190;
+type ATTACK_STRUCTURE = 200;
+type ATTACK_CONTROLLER = 201;
 
 type CreepConstant =
   | STARTER
@@ -54,7 +58,7 @@ type UPGRADER = 21;
 type TRANSPORTER = 31;
 type BUILDER = 41;
 type SCOUT = 51;
-type DEFENDER = 61
+type DEFENDER = 61; //all the military types could get into one
 type ATTACKER = 71;
 type ATTACKERCONTROLLER = 75;
 
@@ -106,7 +110,10 @@ interface queData {
   eTresh: number;//min energy to build, 1 is full
 }
 
-
+interface flagColors {
+  first: ColorConstant;
+  second: ColorConstant;
+}
 
 // `global` extension samples
 declare namespace NodeJS {

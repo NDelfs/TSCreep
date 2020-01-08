@@ -15,6 +15,8 @@ export const BOOST = 71;
 export const UNBOOST = 75;
 export const FLAG_RED = 100;
 export const FLAG_WHITE = 190;
+export const ATTACK_STRUCTURE = 200;
+export const ATTACK_CONTROLLER = 201;
 
 
 

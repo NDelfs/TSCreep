@@ -3,19 +3,23 @@ import { findClosestColonies } from "../../utils/ColonyUtils";
 import { ATTACKER } from "../../Types/CreepType";
 import { calculateBodyFromSet } from "../../Spawners/Spawner";
 import { nrCreepInQue } from "../../utils/minorUtils";
+import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_TARGET_ATTACK } from "../../Types/FlagTypes";
+import { ATTACK_STRUCTURE } from "../../Types/TargetTypes";
 
 class RoomAttack {
   room: string;
   flag: Flag;
   closestColonies: Colony[];
   creeps: Creep[];
-  spawnQueCreeps: string[];
+  structTarget: Structure | null; 
+  //spawnQueCreeps: string[];
   constructor(colonies: { [name: string]: Colony },flag: Flag) {
     this.flag = flag;
     this.room = flag.pos.roomName;
     this.closestColonies = findClosestColonies(colonies, this.room, 4);
     this.creeps = [];
-    this.spawnQueCreeps = [];
+    this.structTarget = null;
+    //this.spawnQueCreeps = [];
     for (let col of this.closestColonies)//temporary, dependant on only one attack at a time. 
       this.creeps.concat(col.room.getCreeps(ATTACKER));
     console.log("Room attack created", this.room, "with nr of creeps", this.creeps.length);
@@ -24,6 +28,8 @@ class RoomAttack {
   public refresh(colonies: { [name: string]: Colony }) {
     this.closestColonies = this.closestColonies.map((col) => { return colonies[col.name]; });
     this.flag = Game.getObjectById(this.flag.name) as Flag;
+    if(this.structTarget)
+      this.structTarget = Game.getObjectById(this.structTarget.id);
     if (Game.time % 10 == 0 && this.creeps.length < 3) {
       this.creeps = [];
       for (let col of this.closestColonies)//temporary, dependant on only one attack at a time. 
@@ -57,6 +63,44 @@ class RoomAttack {
         console.log("room attack qued new creeps", nrAttack);
       }
     }
+    try {
+      this.planAttacks();
+    }
+    catch (e) {
+      console.log("Plan of attack in room", this.room, "failed with error", e);
+    }
+  }
+
+  private findTarget() {
+    let room = Game.rooms[this.room];
+    if (flags with FLAG_TARGET_ATTACK will be handled first)// remove after there is nothing left at the spot
+
+
+    let spawns = room.find(FIND_HOSTILE_SPAWNS);
+    if (spawns.length > 0)
+      this.structTarget = spawns[0];
+
+  }
+
+  private planAttacks() {
+    if (!this.structTarget && Game.rooms[this.room]) {
+      this.findTarget();
+      console.log("searched for new target, found", this.structTarget);
+    }
+    //verify or distribute target for each screep;
+    for (let creep of this.creeps) {
+      if (!creep.memory.moveTarget && creep.room.name != this.room) {//walk to room
+        creep.walkTo(this.flag.pos, 5);
+        console.log("added walk target to creep", creep.name);
+      }
+      else if (this.structTarget) {
+        let target = creep.getTarget();
+        if (creep.room.name == this.room && (!target || target.ID != this.structTarget.id)) {
+          creep.addTargetFirst({ ID: this.structTarget.id, pos: this.structTarget.pos, range: 1, type: ATTACK_STRUCTURE })
+          console.log("added attack structure target to creep", creep.name);
+        }
+      }
+    }
   }
 }
 
@@ -68,7 +112,7 @@ export class AttackHandler {
   }
 
   private findNew(colonies: { [name: string]: Colony }) {
-    const wflags = _.filter(Game.flags, function (flag) { return flag.color == COLOR_BLUE; });//TODO: What color?
+    const wflags = _.filter(Game.flags, function (flag) { return isFlagColor(flag, FLAG_ROOM_ATTACK) });
     for (let flag of wflags) {
       try {
         let found = this.rooms.find((col) => { return col.flag == flag });
