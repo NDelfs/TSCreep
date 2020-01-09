@@ -21,6 +21,7 @@ function getRandomInt(min: number, max: number) {
 }
 
 const ColonyMemoryDef: ColonyMemory = {
+  colonyType: 2,
   outposts: [],
   inCreepEmergency: null,
   sourcesUsed: [],
@@ -113,10 +114,12 @@ export class Colony {
     this.room = iRoom;
     this.name = iRoom.name;
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
-    //if (!this.memory.creepBuildQue) {//for first time running new code, can be deleted when code have been live
-    //  this.memory.creepBuildQue = [];
-    //  this.memory.boosts = [];
-    //}
+    if (!this.memory.colonyType) {
+      if (this.room.controller!.level > 4)
+        this.memory.colonyType = 1;
+      else
+        this.memory.colonyType = 2;
+    }
     if (!this.memory.labMemories) {
       this.memory.labMemories = [];
     }

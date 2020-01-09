@@ -23,7 +23,8 @@ export function DataUpdate(): void {
 function filterCreeps() {
   let creepsGrouped = _.groupBy(Game.creeps, (c: Creep) => c.creationRoom);
   for (let roomID in creepsGrouped) {
-    Game.rooms[roomID].creepsAll = creepsGrouped[roomID];
+    if (Game.rooms[roomID])
+      Game.rooms[roomID].creepsAll = creepsGrouped[roomID];
   }
 }
 

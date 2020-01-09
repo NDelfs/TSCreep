@@ -39,6 +39,7 @@ interface LabMemory {
 }
 
 interface ColonyMemory {
+  colonyType: number;
   outposts: string[];
 
   inCreepEmergency: number | null;

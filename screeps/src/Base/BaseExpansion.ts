@@ -105,8 +105,18 @@ function buildBaseLink(colony: Colony) {
   }
 }
 
+function buildStructAt(colony: Colony, pos: RoomPosition, type: BuildableStructureConstant) {
+  
+  implement such that we can get the towers
+}
+
 function buildSpawns(colony: Colony, pos: RoomPosition) {
   let found = false;
+  let roomSpawns = colony.room.find(FIND_MY_SPAWNS);
+  if (roomSpawns.length != colony.spawns.length) {
+    colony.spawns = roomSpawns;
+  }
+
   for (let spawn of colony.spawns) {
     found = found || isEqualPos(spawn.pos, pos);
   }
@@ -131,6 +141,7 @@ export function baseExpansion(colony: Colony) {
   catch (e) {
     console.log("flag expansion failed in ", colony.name, " with ", e);
   }
+
   try {
     //we have some stuff that should be verified and rebuilt if destroyed
     if (colony.controller.my) {
@@ -139,7 +150,7 @@ export function baseExpansion(colony: Colony) {
       }
     }
     if (colony.controller.level >= 2) {
-      colony.memory.controllerStoreID=buildControlerStruct(colony, STRUCTURE_CONTAINER, 1, colony.memory.controllerStoreID);
+      colony.memory.controllerStoreID = buildControlerStruct(colony, STRUCTURE_CONTAINER, 1, colony.memory.controllerStoreID);
     }
     let sources = colony.room.find(FIND_SOURCES);
     if (colony.controller.level >= 3) {
@@ -157,94 +168,102 @@ export function baseExpansion(colony: Colony) {
       if (colony.memory.mineralsUsed.length >= 1)
         buildSourceCon(colony, Memory.Resources[colony.memory.mineralsUsed[0]]);
     }
-    if (colony.controller.level >= 7) {
-      buildBaseLink(colony);
+
+
+    if (colony.memory.colonyType == 2) {
+      baseExpansionV2(colony);
+      return;
     }
+    else {
+      if (colony.controller.level >= 7) {
+        buildBaseLink(colony);
+      }
 
-    if (colony.controller.level > colony.memory.ExpandedLevel) {
-      let buildFlag = cRoom.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
-     
-      if (colony.memory.ExpandedLevel == 0) {
-        if (colony.spawns.length >0)
-          colony.memory.ExpandedLevel = 2;
-      }
-      else if (colony.memory.ExpandedLevel == 2) {
-        let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
-        let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
-        if (towers.length == 0 && towercons.length == 0) {
-          let pos = colony.spawns[0].pos;
-          pos.x += 1;
-          pos.y += 5;
-          let err = pos.createConstructionSite(STRUCTURE_TOWER);
-          if (err == OK) {
-            console.log("built Tower in ", colony.name);
-            let flags = cRoom.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
-            if (flags.length > 0)
-              flags[0].remove();
-          }
-          else {
-            console.log("failed to build Tower in ", colony.name, PrettyPrintErr(err));
-            return;
-          }
+      if (colony.controller.level > colony.memory.ExpandedLevel) {
+        let buildFlag = cRoom.find(FIND_FLAGS, { filter: function (flag) { return flag.color == COLOR_RED } });
+
+        if (colony.memory.ExpandedLevel == 0) {
+          if (colony.spawns.length > 0)
+            colony.memory.ExpandedLevel = 2;
         }
-        colony.memory.ExpandedLevel = 3;
-      } else if (colony.memory.ExpandedLevel == 3) {
-        let storagecons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
-        if (cRoom.storage == null && storagecons.length == 0) {
-          let pos = colony.spawns[0].pos;
-          pos.x += 0;
-          pos.y += 3;
-          let err = pos.createConstructionSite(STRUCTURE_STORAGE);
-          buildPrint(err, "storage", colony.name);
-        }
-        if (cRoom.storage) {
-          let sStoreP = cRoom.storage.pos;
-          for (let sourceID of colony.memory.sourcesUsed) {
-            let goal = restorePos(Memory.Resources[sourceID].workPos);
-            buildRoad(goal, sStoreP, 5);
-            goal.createConstructionSite(STRUCTURE_CONTAINER);
+        else if (colony.memory.ExpandedLevel == 2) {
+          let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
+          let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
+          if (towers.length == 0 && towercons.length == 0) {
+            let pos = colony.spawns[0].pos;
+            pos.x += 1;
+            pos.y += 5;
+            let err = pos.createConstructionSite(STRUCTURE_TOWER);
+            if (err == OK) {
+              console.log("built Tower in ", colony.name);
+              let flags = cRoom.find(FIND_FLAGS, { filter: { color: COLOR_WHITE } });
+              if (flags.length > 0)
+                flags[0].remove();
+            }
+            else {
+              console.log("failed to build Tower in ", colony.name, PrettyPrintErr(err));
+              return;
+            }
           }
-          for (let flag of buildFlag) {
-            buildRoad(flag.pos, sStoreP, 5);
+          colony.memory.ExpandedLevel = 3;
+        } else if (colony.memory.ExpandedLevel == 3) {
+          let storagecons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_STORAGE } });
+          if (cRoom.storage == null && storagecons.length == 0) {
+            let pos = colony.spawns[0].pos;
+            pos.x += 0;
+            pos.y += 3;
+            let err = pos.createConstructionSite(STRUCTURE_STORAGE);
+            buildPrint(err, "storage", colony.name);
           }
-          //base roads
-          (new RoomPosition(sStoreP.x, sStoreP.y + 2, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//3
-          (new RoomPosition(sStoreP.x - 1, sStoreP.y + 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//2
-          (new RoomPosition(sStoreP.x + 1, sStoreP.y + 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//2
-          (new RoomPosition(sStoreP.x - 1, sStoreP.y + 0, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//1
-          (new RoomPosition(sStoreP.x + 1, sStoreP.y + 0, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//1
-          (new RoomPosition(sStoreP.x - 1, sStoreP.y - 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//0
-          (new RoomPosition(sStoreP.x + 1, sStoreP.y - 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//0
-          (new RoomPosition(sStoreP.x, sStoreP.y - 2, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-1
-          (new RoomPosition(sStoreP.x - 1, sStoreP.y - 3, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-2
-          (new RoomPosition(sStoreP.x + 1, sStoreP.y - 3, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-2
-          //-3
-          colony.memory.ExpandedLevel = 4;
-        }
-      } else if (colony.memory.ExpandedLevel == 4) {
-        let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
-        let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
-        if (towers.length == 1 && towercons.length == 0) {
-          let pos = colony.spawns[0].pos;
-          pos.x -= 1;
-          pos.y += 5;
-          let err = pos.createConstructionSite(STRUCTURE_TOWER);
-          buildPrint(err, "tower", colony.name);
-        }
-        colony.memory.ExpandedLevel = 5;
-      }
-      else if (colony.memory.ExpandedLevel == 5 && cRoom.storage) {
-        for (let sourceID of colony.memory.mineralsUsed) {
-          if (restorePos(Memory.Resources[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
-            let goal = restorePos(Memory.Resources[sourceID].workPos);
-            restorePos(Memory.Resources[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
+          if (cRoom.storage) {
             let sStoreP = cRoom.storage.pos;
-            buildRoad(goal, sStoreP, 5);
+            for (let sourceID of colony.memory.sourcesUsed) {
+              let goal = restorePos(Memory.Resources[sourceID].workPos);
+              buildRoad(goal, sStoreP, 5);
+              goal.createConstructionSite(STRUCTURE_CONTAINER);
+            }
+            for (let flag of buildFlag) {
+              buildRoad(flag.pos, sStoreP, 5);
+            }
+            //base roads
+            (new RoomPosition(sStoreP.x, sStoreP.y + 2, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//3
+            (new RoomPosition(sStoreP.x - 1, sStoreP.y + 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//2
+            (new RoomPosition(sStoreP.x + 1, sStoreP.y + 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//2
+            (new RoomPosition(sStoreP.x - 1, sStoreP.y + 0, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//1
+            (new RoomPosition(sStoreP.x + 1, sStoreP.y + 0, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//1
+            (new RoomPosition(sStoreP.x - 1, sStoreP.y - 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//0
+            (new RoomPosition(sStoreP.x + 1, sStoreP.y - 1, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//0
+            (new RoomPosition(sStoreP.x, sStoreP.y - 2, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-1
+            (new RoomPosition(sStoreP.x - 1, sStoreP.y - 3, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-2
+            (new RoomPosition(sStoreP.x + 1, sStoreP.y - 3, sStoreP.roomName)).createConstructionSite(STRUCTURE_ROAD);//-2
+            //-3
+            colony.memory.ExpandedLevel = 4;
           }
+        } else if (colony.memory.ExpandedLevel == 4) {
+          let towers = cRoom.find(FIND_MY_STRUCTURES, { filter: { structureType: STRUCTURE_TOWER } });
+          let towercons = cRoom.find(FIND_MY_CONSTRUCTION_SITES, { filter: { structureType: STRUCTURE_TOWER } });
+          if (towers.length == 1 && towercons.length == 0) {
+            let pos = colony.spawns[0].pos;
+            pos.x -= 1;
+            pos.y += 5;
+            let err = pos.createConstructionSite(STRUCTURE_TOWER);
+            buildPrint(err, "tower", colony.name);
+          }
+          colony.memory.ExpandedLevel = 5;
         }
-        colony.memory.ExpandedLevel = 6
-      } if (colony.memory.ExpandedLevel == 6 && cRoom.storage) {
+        else if (colony.memory.ExpandedLevel == 5 && cRoom.storage) {
+          for (let sourceID of colony.memory.mineralsUsed) {
+            if (restorePos(Memory.Resources[sourceID].pos).lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
+              let goal = restorePos(Memory.Resources[sourceID].workPos);
+              restorePos(Memory.Resources[sourceID].pos).createConstructionSite(STRUCTURE_EXTRACTOR);
+              let sStoreP = cRoom.storage.pos;
+              buildRoad(goal, sStoreP, 5);
+            }
+          }
+          colony.memory.ExpandedLevel = 6
+        } if (colony.memory.ExpandedLevel == 6 && cRoom.storage) {
 
+        }
       }
     }
   }
@@ -309,4 +328,12 @@ function findAndBuildLink(workPos: RoomPosition): number {
     }
   }
   return ERR_INVALID_TARGET;
+}
+
+
+
+function baseExpansionV2(colony: Colony){
+  if (colony.controller.level >= 7) {
+    buildBaseLink(colony);
+  }
 }

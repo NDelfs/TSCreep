@@ -21,7 +21,7 @@ export class _PishiMaster {
   memory: PishiMasterMemory;
   ticksAlive: number;
   colonies: { [name: string]: Colony };
-  //newColHandler: NewColonyHandler;
+  newColHandler: NewColonyHandler;
   attackHand: AttackHandler;
   labMaster: LabMaster;
   market: Market;
@@ -42,7 +42,7 @@ export class _PishiMaster {
         }
       }
     }
-    //this.newColHandler = new NewColonyHandler(this.colonies);
+    this.newColHandler = new NewColonyHandler(this.colonies);
     this.attackHand = new AttackHandler(this.colonies);
     this.labMaster = new LabMaster(this.colonies);
     this.market = new Market(this.colonies);
@@ -53,8 +53,9 @@ export class _PishiMaster {
     for (let colonyID in this.colonies) {
       this.colonies[colonyID].refresh();
     }
+
     this.attackHand.refresh(this.colonies);
-    //this.newColHandler.refresh(this.colonies);
+    this.newColHandler.refresh(this.colonies);
   }
 
   run() {
@@ -66,7 +67,7 @@ export class _PishiMaster {
       colony.runTowers();
       baseExpansion(colony);
     }
-    //this.newColHandler.run();
+    this.newColHandler.run();
     this.attackHand.run();
     this.labMaster.run();
     this.market.run();

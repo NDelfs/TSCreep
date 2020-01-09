@@ -19,7 +19,7 @@ export function Starter(creep: Creep) {
   resetDeliverTarget(creep);
 
   //got no energy, find where
-  if (creep.getTarget() == null) {
+  if (creep.getTarget() == null && !creep.memory.moveTarget) {
     getTransportTarget(creep, false);
     if (creep.getTarget() == null && creep.store.energy > 0) {
       let controller = creep.room.controller;
@@ -49,7 +49,7 @@ export function Starter(creep: Creep) {
         if (source) {
           let sourceMem: SourceMemory = Memory.Resources[source.id];
           creep.say("go mining");
-          creep.addTarget(source.id, targetT.SOURCE, sourceMem.pos, 1);
+          creep.addTarget(source.id, targetT.SOURCE, sourceMem.workPos, 0);
         }
       }
     }
@@ -85,9 +85,9 @@ export function Starter(creep: Creep) {
         return;
       }
       case targetT.SOURCE: {
-        if (creep.memory.permTarget == null)
-          throw ("no permanent target on starter");
-        let source: Source | null = Game.getObjectById(creep.memory.permTarget.ID);
+        //if (creep.memory.permTarget == null)
+        //throw ("no permanent target on starter");
+        let source: Source | null = Game.getObjectById(target.ID);
         if (source) {
           const err = creep.harvest(source);
           if (err == OK && creep.carry.energy == creep.carryCapacity)

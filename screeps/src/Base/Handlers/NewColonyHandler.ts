@@ -4,15 +4,18 @@ import { SCOUT, STARTER } from "Types/CreepType";
 import { CONTROLLER } from "Types/TargetTypes";
 import { calculateBodyFromSet } from "Spawners/Spawner";
 import { findClosestColony } from "utils/ColonyUtils";
-import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_NEW_COLONY } from "../../Types/FlagTypes";
+import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_NEW_COLONY, getFlags } from "../../Types/FlagTypes";
+import { isEqualPos } from "../../utils/posHelpers";
 
 function calculateScoutQue(spawCol: Colony, flag: Flag) {
   const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == SCOUT && creep.alreadyTarget(flag.name); });
+  console.log('in calculate scout que, already in que', nrCreepInQue(spawCol, SCOUT));
   let nrCreep = nrCreepInQue(spawCol, SCOUT) + creeps.length;
   if (nrCreep == 0 && flag.room == null) {
     const targ: targetData = { ID: flag.name, type: CONTROLLER, pos: flag.pos, range: 1 };
     const mem: CreepMemory = { type: SCOUT, creationRoom: flag.pos.roomName, permTarget: null, moveTarget: { pos: flag.pos, range: 2 }, targetQue: [targ] };
     spawCol.queNewCreep(mem, [CLAIM, MOVE]);
+    console.log("spawned new scout for the new colony");
   }
   //}
   //if (room.controller && room.controller.my && room.controller.level > 2) {
@@ -50,25 +53,37 @@ class newColony {
     this.newColony = colonies[this.flag.pos.roomName];
     if (this.newColony && !this.newColony.memory.startSpawnPos) {
       this.newColony.memory.startSpawnPos = this.flag.pos;
-      this.newColony.memory.startSpawnPos.y += -2;
+      this.newColony.memory.startSpawnPos.y += 1;//since V2 the start spawn is downwards
       console.log("added new start spawn pos for new colony");
+    }
+    if (!this.newColony && this.flag.room && this.flag.room.controller!.my) {
+      colonies[this.flag.room.name] = new Colony(this.flag.room);
+      this.newColony = colonies[this.flag.room.name];
     }
   }
 
   public run() {
     if (!this.newColony) {
-      if (!this.scoutSpawned || (Game.time % 500 == 8)) {
+      if ((!this.scoutSpawned || (Game.time % 500 == 8))) {
         calculateScoutQue(this.closestColony, this.flag);
-        console.log("spawned new scout for the new colony");
         this.scoutSpawned = true;
       }
     }
     else {
-      let nrStart = this.newColony.room.getCreeps(STARTER).length;
+      let starters = this.newColony.room.getCreeps(STARTER);
+      for (let creep of starters) {
+        if (creep.room.name != this.newColony.name && (!creep.memory.moveTarget || (creep.memory.moveTarget && !isEqualPos(creep.memory.moveTarget.pos, this.flag.pos)))) {//walk to room
+          creep.walkTo(this.flag.pos, 5);
+          console.log("added walk target to creep", creep.name);
+        }
+      }
+      let nrStart = starters.length;
       if (nrStart < 2) {
+        console.log("try to spawn new starter", nrStart, nrCreepInQue(this.closestColony, STARTER));
         nrStart += nrCreepInQue(this.closestColony, STARTER);
         if (nrStart < 2) {
-          const mem: CreepMemory = { type: STARTER, creationRoom: this.newColony.name, permTarget: null, moveTarget: null, targetQue: [] };
+          const mem: CreepMemory = {
+            type: STARTER, creationRoom: this.newColony.name, permTarget: null, moveTarget: { pos: this.flag.pos, range: 3 }, targetQue: []};
           this.closestColony.queNewCreep(mem, calculateBodyFromSet(this.closestColony.room, [WORK, CARRY, MOVE], 10));
           console.log("spawned new starter for the new colony");
         }
@@ -85,10 +100,10 @@ export class NewColonyHandler {
   }
   
   private findNew(colonies: { [name: string]: Colony }) {
-    const wflags = _.filter(Game.flags, function (flag) { return isFlagColor(flag, FLAG_NEW_COLONY) });
+    const wflags = getFlags(FLAG_NEW_COLONY);
     for (let flag of wflags) {
       try {
-        let found = this.newColonies.find((col) => { return col.flag == flag });
+        let found = this.newColonies.find((col) => { return col.flag.name == flag.name });
         if (!found) {
           this.newColonies.push(new newColony(colonies, flag));
           console.log('created new colony handler');

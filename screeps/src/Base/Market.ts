@@ -64,7 +64,7 @@ export class Market {
       let buyOrder: { [key: string]: string } = {}; //name for one of the colonies needing the resource
       for (let roomID in this.colonies) {
         let terminal = this.colonies[roomID].room.terminal;
-        if (terminal == null)
+        if (terminal == null || !terminal.my)
           continue;
 
         let keys = Object.keys(terminal.store) as ResourceConstant[];
