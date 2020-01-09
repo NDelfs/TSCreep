@@ -77,31 +77,6 @@ export function getTransportBody(room: Room): BodyPartConstant[] {
   return calculateBodyFromSet(room, [CARRY, CARRY, MOVE], 10);
 }
 
-function getUpgradeBody(room: Room, size: number): BodyPartConstant[] {
-  switch (size) {
-    case 5:
-      if (room.energyCapacityAvailable >= 1800)
-        return Array(15).fill(WORK).concat([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE]);
-    //return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
-    case 4:
-      if (room.energyCapacityAvailable >= 1500)
-        return Array(12).fill(WORK).concat([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE]);
-    //return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
-    case 3:
-      if (room.energyCapacityAvailable >= 1250)
-        return Array(10).fill(WORK).concat([CARRY, CARRY, CARRY, MOVE, MOVE]);
-    case 2:
-      if (room.energyCapacityAvailable >= 1050)
-        return Array(8).fill(WORK).concat([CARRY, CARRY, CARRY, MOVE, MOVE]);
-    case 1:
-      if (room.energyCapacityAvailable >= 750)
-        return Array(6).fill(WORK).concat([CARRY, MOVE, MOVE]);
-  }
-  //throw ("cant get upgrader body with current index");
-  console.log(room.name, "cant get upgrader body with current index", size);
-  return [];
-}
-
 function calculateTransportQue(colony: Colony): queData[] {
   let ret: queData[] = [];
   let cRoom = colony.room;
@@ -125,14 +100,14 @@ function calculateTransportQue(colony: Colony): queData[] {
       limit = 3;
     if (roomEne > transportSize * 8 && (controllerNeed > 500 || cRoom.storage))
       limit = 4;
-    const creeps = cRoom.getCreeps(creepT.TRANSPORTER);
-    for (const source of colony.memory.sourcesUsed) {
+    const nrcreeps = cRoom.getCreeps(creepT.TRANSPORTER).length + nrCreepInQue(colony, creepT.TRANSPORTER);
+
       //const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == source });     
-      if (creeps.length < limit) {
+    if (nrcreeps < limit) {
         const mem: CreepMemory = { type: creepT.TRANSPORTER, creationRoom: colony.name, permTarget: null, moveTarget: null, targetQue: [] };
         ret.push({ memory: mem, body: getTransportBody(cRoom), prio: 1, eTresh:0.9 });
       }
-    }
+    
   }
   return ret;
 }
@@ -193,14 +168,12 @@ function calculateHarvesterQue(colony: Colony): queData[] {
   return ret;
 }
 
-function calculateUpgraderQue(colony: Colony): queData[] {
-  let ret: queData[] = [];
+function calculateUpgraderQue(colony: Colony) {
   let cRoom = colony.room;
   if (colony.memory.controllerStoreID) {
     let store: StructureContainer | null = Game.getObjectById(colony.memory.controllerStoreID);
     if (store) {
       let limit = 1;
-      let size = 1;
       let roomEne = 0;
       for (let sourceID of colony.memory.sourcesUsed) {
         roomEne += Memory.Resources[sourceID].AvailResource;
@@ -213,28 +186,34 @@ function calculateUpgraderQue(colony: Colony): queData[] {
         }
       }
 
-
-      if (cRoom.storage) {
-        size = 2;
+      let range = 0
+      let body: BodyPartConstant[] = Array(6).fill(WORK).concat([CARRY, MOVE, MOVE]);
+      if (cRoom.storage && cRoom.energyCapacityAvailable >=1050) {
+        body = Array(8).fill(WORK).concat([CARRY, CARRY, CARRY, MOVE, MOVE]);
         if (cRoom.storage.store.energy > 1e5 && cRoom.energyCapacityAvailable >=1250)
-          size = 3;
+          body = Array(10).fill(WORK).concat([CARRY, CARRY, CARRY, MOVE, MOVE]);
         if (cRoom.storage.store.energy > 2e5 && cRoom.energyCapacityAvailable >= 1600)
-          size = 4;
+          body = Array(12).fill(WORK).concat([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE]);
         if (cRoom.storage.store.energy > 3e5 && cRoom.energyCapacityAvailable >= 2000)
-          size = 5;
+          body = Array(15).fill(WORK).concat([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE]);
       }
-      else if (roomEne > 4000 && controllerNeed < 500) {
+      if ((!cRoom.storage && roomEne > 4000 && controllerNeed < 500)) {
         limit = 2;
+        range = 1;
+      }
+      if ((cRoom.storage && !cRoom.storage.my)) {
+        limit = 3;
+        range = 1;
       }
 
-      if (cRoom.getCreeps(creepT.UPGRADER).length < limit) {
-        const targ: targetData = { ID: colony.controller.id, type: targetT.CONTROLLER, pos: store.pos, range: 0 };
-        const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: store.pos, range: 0 }, targetQue: [targ] };
-        ret.push({ memory: mem, body: getUpgradeBody(cRoom, size), prio: 1, eTresh: 0.9 });
+      let current = nrCreepInQue(colony, creepT.UPGRADER) + cRoom.getCreeps(creepT.UPGRADER).length;
+      if (current < limit) {
+        const targ: targetData = { ID: colony.controller.id, type: targetT.CONTROLLER, pos: store.pos, range: range };
+        const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: store.pos, range: range }, targetQue: [targ] };
+        colony.queNewCreep(mem, body);
       }
     }
   }
-  return ret;
 }
 
 function calculateBuilderQue(colony: Colony) {
@@ -256,16 +235,6 @@ function calculateBuilderQue(colony: Colony) {
       console.log(colony.name, "ordered new builders", limit - current);
     }
   }
-}
-
-function calculateDefQue(room: Room): queData[] {
-  let ret: queData[] = [];
-  if (room.getCreeps(creepT.DEFENDER).length < 2) {
-    //const targ: targetData = { ID: "", type: targetT., pos: flag.pos, range: 2 };
-    const mem: CreepMemory = { type: creepT.DEFENDER, creationRoom: room.name, permTarget: null, moveTarget: null, targetQue: [] };
-    ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK], prio: 1, eTresh: 0.9 });
-  }
-  return ret;
 }
 
 function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, colonies: { [name: string]: Colony }): number {
@@ -298,8 +267,10 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
 }
 
 export function spawnFromReq(colony: Colony, colonies: { [name: string]: Colony }) {
-  for (let spawn of colony.spawns) {
-    spawnCreep(colony.creepBuildQueRef, spawn, colony, colonies);
+  if (colony.room.availEnergy > 800 && colony.room.creepsAll.length > 2 && (colony.room.energyAvailable >= 1500 || colony.room.energyAvailable > 0.9 * colony.room.energyCapacityAvailable)) {
+    for (let spawn of colony.spawns) {
+      spawnCreep(colony.creepBuildQueRef, spawn, colony, colonies);
+    }
   }
 }
 
@@ -331,6 +302,7 @@ export function RefreshQue(colony: Colony) {
       }
       if (avail) {
         calculateBuilderQue(colony);
+        calculateUpgraderQue(colony);
       }
     }
   }
@@ -347,57 +319,43 @@ export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
     if (colony.spawns.length > 0) {
       isFailedEconomy(colony, colony.spawns);
       let starterQue: queData[] = [];
-      if (colony.memory.controllerStoreID == null)
+      if (colony.memory.controllerStoreID == null) {
         starterQue = calculateStarterQue(colony);
+        if (starterQue.length > 0)
+          spawnCreep(starterQue, colony.spawns[0], colony, colonies);
+        return;
+      }
       let harvestQue = calculateHarvesterQue(colony);
 
       let TransQue = calculateTransportQue(colony);
-      let upgradeQue = calculateUpgraderQue(colony);
-      let nrNewSpawns: number = 0;
 
       for (let spawnID in colony.spawns) {
         let spawn = colony.spawns[spawnID];
-        // if (enemy.length == 0) {
-
-        nrNewSpawns += spawnCreep(harvestQue, spawn, colony, colonies);
+        spawnCreep(harvestQue, spawn, colony, colonies);
         if (cRoom.availEnergy > 800) {
-          nrNewSpawns += spawnCreep(TransQue, spawn, colony, colonies);
-        }
-        nrNewSpawns += spawnCreep(starterQue, spawn, colony, colonies);
-        if (cRoom.availEnergy > 800 && cRoom.creepsAll.length > 2) {
-          nrNewSpawns += spawnCreep(upgradeQue, spawn, colony, colonies);
-          //if (cRoom.energyAvailable > cRoom.energyCapacityAvailable * 0.9) {
-            //nrNewSpawns += spawnCreep(scoutQue, spawns[spawnID]);
-            //nrNewSpawns += spawnCreep(expQue, spawns[spawnID]);
-            //spawnCreep(attackQue, spawn, colony, colonies);
-          //}
-        }
-        // }
-        //else {
-        if (cRoom.hostiles.length > 0 && colony.controller.level <= 3) {
-          spawnCreep(calculateDefQue(colony.room), spawn, colony, colonies);
+          spawnCreep(TransQue, spawn, colony, colonies);
         }
       }
     }
-    if (colony.memory.inCreepEmergency != null /*&& room.name != "E49N51"*/) {
-      let starterQue = calculateStarterQue(colony);
+    //if (colony.memory.inCreepEmergency != null /*&& room.name != "E49N51"*/) {
+    //  let starterQue = calculateStarterQue(colony);
 
-      for (let room2ID in Game.rooms) {
-        if (colony.memory.inCreepEmergency == 0 && starterQue.length > 0) {
-          let room2 = Game.rooms[room2ID];
-          starterQue[0].body = getStarterBody(room2);
-          //if (room2.energyAvailable>)//need to compute cost
-          var spawns2 = room2.find(FIND_MY_SPAWNS);
-          for (let spawn2ID in spawns2) {
-            colony.memory.inCreepEmergency = spawnCreep(starterQue, spawns2[spawn2ID], colony, colonies);
-            if (colony.memory.inCreepEmergency > 0) {
-              console.log(colony.name, "Emergency build of starter remotely from", room2.name);
-            }
-          }
-        }
+    //  for (let room2ID in Game.rooms) {
+    //    if (colony.memory.inCreepEmergency == 0 && starterQue.length > 0) {
+    //      let room2 = Game.rooms[room2ID];
+    //      starterQue[0].body = getStarterBody(room2);
+    //      //if (room2.energyAvailable>)//need to compute cost
+    //      var spawns2 = room2.find(FIND_MY_SPAWNS);
+    //      for (let spawn2ID in spawns2) {
+    //        colony.memory.inCreepEmergency = spawnCreep(starterQue, spawns2[spawn2ID], colony, colonies);
+    //        if (colony.memory.inCreepEmergency > 0) {
+    //          console.log(colony.name, "Emergency build of starter remotely from", room2.name);
+    //        }
+    //      }
+    //    }
 
-      }
-    }
+    //  }
+    //}
 
 
   }

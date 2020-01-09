@@ -106,8 +106,22 @@ function buildBaseLink(colony: Colony) {
 }
 
 function buildStructAt(colony: Colony, pos: RoomPosition, type: BuildableStructureConstant) {
-  
-  implement such that we can get the towers
+  let list = pos.lookFor(LOOK_STRUCTURES);
+  let found = false;
+  for (let obj of list) {
+    found = found || obj.structureType == type
+  }
+  if (!found) {
+    let list = pos.lookFor(LOOK_CONSTRUCTION_SITES);
+    for (let obj of list) {
+      found = found || obj.structureType == type
+    }
+    if (!found) {
+      let err = pos.createConstructionSite(type);
+      buildPrint(err, type, colony.name);
+    }
+  }
+  //implement such that we can get the towers
 }
 
 function buildSpawns(colony: Colony, pos: RoomPosition) {
@@ -145,6 +159,8 @@ export function baseExpansion(colony: Colony) {
   try {
     //we have some stuff that should be verified and rebuilt if destroyed
     if (colony.controller.my) {
+      if (colony.room.storage && !colony.room.storage.my && colony.room.storage.store.energy < 1000)
+        colony.room.storage.destroy();
       if (colony.memory.startSpawnPos) {
         buildSpawns(colony, restorePos(colony.memory.startSpawnPos));
       }
@@ -169,7 +185,7 @@ export function baseExpansion(colony: Colony) {
         buildSourceCon(colony, Memory.Resources[colony.memory.mineralsUsed[0]]);
     }
 
-
+    ///Below code is differend between versions
     if (colony.memory.colonyType == 2) {
       baseExpansionV2(colony);
       return;
@@ -332,7 +348,24 @@ function findAndBuildLink(workPos: RoomPosition): number {
 
 
 
-function baseExpansionV2(colony: Colony){
+function baseExpansionV2(colony: Colony) {
+  if (colony.controller.level >= 3) {
+    let pos: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+    pos.x -= 1;
+    buildStructAt(colony, pos, STRUCTURE_TOWER);
+  }
+  if (colony.controller.level >= 4) {
+    let pos: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+    pos.x += 1;
+    if (!colony.room.storage) {
+      buildStructAt(colony, pos, STRUCTURE_STORAGE);
+    }
+  }
+  if (colony.controller.level >= 5) {
+    let pos: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+    pos.y -= 2;
+    buildStructAt(colony, pos, STRUCTURE_TOWER);
+  }
   if (colony.controller.level >= 7) {
     buildBaseLink(colony);
   }

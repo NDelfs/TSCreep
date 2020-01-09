@@ -81,11 +81,11 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
 
 export function getStorageDeliverTarget(room: Room, resourceType: ResourceConstant): targetData | null {
   //base dump mineral
-  if (resourceType != RESOURCE_ENERGY && room.terminal) {
+  if (resourceType != RESOURCE_ENERGY && room.terminal && room.terminal.my) {
     return { ID: room.terminal.id, type: targetT.POWERSTORAGE, resType: resourceType, pos: room.terminal.pos, range: 1 };
   }
   //base dump energy
-  if (room.storage) {
+  if (room.storage && room.storage.my) {
     let colony = PM.colonies[room.name];
     if (colony.nuker && room.storage.store.energy > 1e5 && colony.nuker.store.energy < 3e5) {
       console.log(colony.name, "transport to nuker");

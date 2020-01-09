@@ -211,6 +211,11 @@ export class Colony {
     if (Game.time % 100) {
       findAndBuildLab(this, this.labs);
     }
+    if (Game.time % 200 * this.controller.level == 0) {
+      this.spawns = _.filter(this.room.myStructures, { structureType: STRUCTURE_SPAWN }) as StructureSpawn[];
+      this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
+      this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
+    }
 
     this.computeLists();
     this.refreshEnergyDemand(this.forceUpdateEnergy);
@@ -238,7 +243,7 @@ export class Colony {
 
   public computeWallList() {
     try {
-      let walls = this.room.structures.filter((struct) => { return (struct.structureType == STRUCTURE_WALL || struct.structureType == STRUCTURE_RAMPART) && struct.hits != undefined });
+      let walls = this.room.structures.filter((struct) => { return (struct.structureType == STRUCTURE_WALL || (struct.structureType == STRUCTURE_RAMPART && (struct as StructureRampart).my)) && struct.hits != undefined });
       this.wallSites = [];
       if (walls.length > 0) {
         walls.sort((a, b) => { return a.hits - b.hits });
@@ -301,7 +306,7 @@ export class Colony {
       }
     } catch (e) { console.log(this.name, "failed repairSites", e); };
 
-    if (this.room.storage) {
+    if (this.room.storage && this.controller.level >=4) {
       let timeBetween = 1e4;
       let proportion = 0.05;
       try {
@@ -513,7 +518,13 @@ export class Colony {
         }
       }
       else {
-        console.log(lab.room.name, "waiting for boost res");
+        if (!this.resourceHandler.getReq(this.labs[boostInfo.labID].id, boostInfo.boost)) {
+          this.resourceHandler.addRequest(new resourceRequest(this.labs[boostInfo.labID].id, boostInfo.boost, boostInfo.boostCost - 1, boostInfo.boostCost, this.room));
+          console.log(lab.room.name, "added late resource request due to missing resource for boost")
+        }
+        else {
+          console.log(lab.room.name, "waiting for boost res");
+        }
         return ERR_NOT_ENOUGH_RESOURCES;
       }
 

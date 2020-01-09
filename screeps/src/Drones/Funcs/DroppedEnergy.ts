@@ -70,10 +70,10 @@ export function getFromStoreTarget(creep: Creep, resource: ResourceConstant, iAm
     amount = Math.min(amount, iAmount);
   }
   let room = Game.rooms[creep.memory.creationRoom];
-  if (room.storage && room.storage.store[resource] >= amount) {
+  if (room.storage && (room.storage.store[resource] >= amount || !room.storage.my)) {
     return { ID: room.storage.id, type: targetT.STORAGE_RESOURCE, resType: resource, pos: room.storage.pos, range: 1 }
   }
-  else if (room.terminal && room.terminal.store[resource] >= amount) {
+  else if (room.terminal && (room.terminal.store[resource] >= amount || !room.terminal.my)) {
     return { ID: room.terminal.id, type: targetT.STORAGE_RESOURCE, resType: resource, pos: room.terminal.pos, range: 1 }
   }
   return null;
