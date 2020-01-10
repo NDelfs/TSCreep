@@ -4,7 +4,7 @@ import { getSourceTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
 import { restorePos } from "../utils/posHelpers";
 import { resetDeliverTarget, getNewDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
-import { HARVESTER } from "Types/CreepType";
+import { HARVESTER, STARTER } from "Types/CreepType";
 import { getTransportTarget } from "./Transporter";
 import { getRandomInt } from "../utils/minorUtils";
 
@@ -35,26 +35,27 @@ export function Starter(creep: Creep) {
 
       }
     }
+    if (creep.carry.energy == 0 && !creep.getTarget()) {
+      let t = getSourceTarget(creep, RESOURCE_ENERGY);
+      if(t)
+        creep.addTargetT(t);
+    }
+
     if (creep.getTarget() == null) {
-      const harvesters = _.filter(creep.room.getCreeps(HARVESTER), function (creepF) { return creepF.memory.permTarget && creep.memory.permTarget && creepF.memory.permTarget.ID == creep.memory.permTarget.ID });
-      if (harvesters.length == 0) {
-        let source: Source | null = null;
-        if (creep.memory.permTarget == null) {
-          let sources = creep.room.find(FIND_SOURCES);
-          source = sources[getRandomInt(sources.length)];
-          //throw ("no permanent target on starter");
-        }
-        else
-           source = Game.getObjectById(creep.memory.permTarget.ID);
-        if (source) {
-          let sourceMem: SourceMemory = Memory.Resources[source.id];
-          creep.say("go mining");
-          creep.addTarget(source.id, targetT.SOURCE, sourceMem.workPos, 0);
+      let sources = creep.room.find(FIND_SOURCES);
+      for (let source of sources) {
+        const harvesters = _.filter(creep.room.getCreeps(HARVESTER), function (creepF) { return creepF.getTarget() && creepF.getTarget()!.ID == source.id; });
+        if (harvesters.length == 0) {
+          const starters = _.filter(creep.room.getCreeps(STARTER), function (creepF) { return creepF.getTarget() && creepF.getTarget()!.ID == source.id; });
+          if (starters.length < source.memory.maxUser && (source.energy > creep.carryCapacity * starters.length || source.ticksToRegeneration < 50)) {
+            creep.addTarget(source.id, targetT.SOURCE, source.memory.workPos, 0);
+            creep.say("go mining");
+          }
         }
       }
     }
     if (creep.getTarget() == null) {
-      console.warn("Starter could not find a target");
+      console.log("Starter could not find a target");
       return;
     }
   }

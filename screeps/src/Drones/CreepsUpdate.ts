@@ -11,7 +11,7 @@ import { Upgrader } from "Drones/Upgrader";
 import { PrettyPrintCreep, PrettyPrintErr } from "utils/PrettyPrintErr";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
-import { BOOST } from "../Types/TargetTypes";
+import { BOOST, POSITION } from "../Types/TargetTypes";
 import { PM } from "../PishiMaster";
 
 
@@ -32,7 +32,7 @@ export function CreepUpdate() {
         if (target.type == BOOST) {
           if (creep.inPlace) {
             try {
-              let err = PM.colonies[creep.memory.creationRoom].boostCreep(creep, target);
+              let err = PM.colonies[creep.room.name].boostCreep(creep, target);
               if (err != OK) {
                 console.log(creep.room.name, "failed boost", PrettyPrintErr(err));
               }
@@ -43,7 +43,13 @@ export function CreepUpdate() {
           }
           continue;
         }
-
+        if (target.type == POSITION) {
+          if (!creep.memory.moveTarget)
+            creep.walkTo(target.pos, target.range);
+          if (creep.inPlace)
+            creep.completeTarget();
+          continue;
+        }
       }
 
       switch (creep.type) {

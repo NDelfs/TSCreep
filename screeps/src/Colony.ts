@@ -27,6 +27,7 @@ const ColonyMemoryDef: ColonyMemory = {
   sourcesUsed: [],
   mineralsUsed: [],
   startSpawnPos: null,
+  labPos: null,
   ExpandedLevel: 0,
   controllerStoreID: null,
   controllerLinkID: null,
@@ -391,20 +392,31 @@ export class Colony {
     //    console.log(this.name, "energy need new vs old", this.spawnEnergyNeed, this.room.memory.EnergyNeed, "struct new vs old", this.energyNeedStruct.length, this.room.memory.EnergyNeedStruct.length, "nr trans", this.energyTransporters.length);
   }
 
+  towerFirePower(tower: StructureTower, pos: RoomPosition) {
+    return 600 - Math.min(Math.max(tower.pos.getRangeTo(pos) - 5, 0), 20) * 30;
+  }
+
   runTowers() {
     let room = this.room;
-    let healer = false;
-    if (room.hostiles.length > 0) {
+    let healingPower: number = 0;
+    let firePower: number = 0;
+    let hostiles = room.hostiles;
+    if (hostiles.length > 0) {
       for (let creep of room.hostiles) {
-        if (creep.getActiveBodyparts(HEAL) > 0)
-          healer = true;
+        healingPower = healingPower+ creep.getActiveBodyparts(HEAL) * 24;//12,24,36   no boost, first, max
+      }
+      for (let tower of this.towers) {
+        firePower = firePower + this.towerFirePower(tower, hostiles[0].pos);
+      }
+      if (Game.time % 10 == 0) {
+        console.log(this.name, "are under attack: healing vs firePower", healingPower, firePower);
       }
     }
     for (let tower of this.towers) {
       try {
-        if (room.hostiles.length > 0) {
-          if (!healer) {
-            tower.attack(room.hostiles[0]);
+        if (hostiles.length > 0) {
+          if (firePower > healingPower) {
+            tower.attack(hostiles[0]);
             continue;
           }
           else {
@@ -445,7 +457,7 @@ export class Colony {
     try {
       let boostType: MineralBoostConstant | null = null;
       let boostCost = 1e9;
-      if (creepData.memory.type == creepT.BUILDER) {
+      if (creepData.memory.type == creepT.BUILDER || (creepData.memory.type == creepT.STARTER && creepData.body.length > 29)) {//only externaly called starters are that big. Nice to get some help building in new places
         boostType = RESOURCE_LEMERGIUM_HYDRIDE;
         boostCost = countBodyPart(creepData.body, WORK) * 30;
       }
@@ -566,7 +578,6 @@ function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MI
       container: null,
       linkID: null,
       AvailResource: 0,
-      nrUsers: 0,
       resourceType: RESOURCE_ENERGY,
     };
 

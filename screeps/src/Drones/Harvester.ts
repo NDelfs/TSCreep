@@ -82,4 +82,6 @@ function mineSource(creep: Creep, res: Source) {
       updateSource(res);
     }
   }
+  if (creep.carryCapacity == 0 && Game.time%10 == 0)
+    updateSource(res);
 }

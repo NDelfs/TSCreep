@@ -46,6 +46,7 @@ interface ColonyMemory {
   sourcesUsed: string[];
   mineralsUsed: string[];
   startSpawnPos: posData | null;
+  labPos: posData | null;
 
   ExpandedLevel: number;
   controllerStoreID: string | null;
@@ -71,7 +72,6 @@ interface SourceMemory {
   container: string | null;
   linkID: string | null;
   AvailResource: number;
-  nrUsers: number;
   resourceType: ResourceConstant;
 }
 

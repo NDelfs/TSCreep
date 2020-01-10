@@ -4,7 +4,7 @@ import { ATTACKER } from "../../Types/CreepType";
 import { calculateBodyFromSet } from "../../Spawners/Spawner";
 import { nrCreepInQue } from "../../utils/minorUtils";
 import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_TARGET_ATTACK, getFlagsInRoom } from "../../Types/FlagTypes";
-import { ATTACK_STRUCTURE } from "../../Types/TargetTypes";
+import { ATTACK_STRUCTURE, POSITION } from "../../Types/TargetTypes";
 import { isEqualPos } from "../../utils/posHelpers";
 
 const NRATTACKER = 3;
@@ -74,7 +74,7 @@ class RoomAttack {
 
     if (nrAttack < NRATTACKER) {
       for (let i = 0; i < NRATTACKER - nrAttack; i++) {
-        const mem: CreepMemory = { type: ATTACKER, creationRoom: this.closestColonies[i].name, permTarget: null, moveTarget: { pos: this.flag.pos, range: 2 }, targetQue: [] };
+        const mem: CreepMemory = { type: ATTACKER, creationRoom: this.closestColonies[i].name, permTarget: null, moveTarget: null, targetQue: [{ ID: "", type: POSITION, pos: this.flag.pos, range: 2 }] };
         //ret.push({ memory: mem, body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, TOUGH, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, RANGED_ATTACK], prio: 1, eTresh: 0.9});
         if (!this.enemyCreeps && this.owner == "") {
           this.closestColonies[i].queNewCreep(mem, calculateBodyFromSet(this.closestColonies[i].room, [MOVE, ATTACK, ATTACK, ATTACK], 30, true));

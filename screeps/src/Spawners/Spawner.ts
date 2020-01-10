@@ -120,16 +120,17 @@ function calculateStarterQue(colony: Colony): queData[] {
     return [];
   for (const source of colony.memory.sourcesUsed) {
     const excist = _.filter(cRoom.getCreeps(creepT.STARTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
+    let nrExc = excist.length + nrCreepInQue(colony, creepT.STARTER);
     const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
     const mem: CreepMemory = { type: creepT.STARTER, creationRoom: colony.name, permTarget: targ, moveTarget: null, targetQue: [] };
     if (cRoom.energyCapacityAvailable < 550) {
-      if (excist.length < Memory.Resources[source].maxUser * 2)
+      if (nrExc < Memory.Resources[source].maxUser * 2)
         ret.push({ memory: mem, body: getStarterBody(cRoom), prio: 1, eTresh: 0.9});
     }
     else {
-      if (cRoom.energyCapacityAvailable < 800 && excist.length < 4)// the old limits does not mater when harvesters excist
+      if (cRoom.energyCapacityAvailable < 800 && nrExc < 4)// the old limits does not mater when harvesters excist
         ret.push({ memory: mem, body: getStarterBody(cRoom), prio: 1, eTresh: 0.9 });
-      else if (cRoom.energyCapacityAvailable >= 800 && excist.length < 3)// the old limits does not mater when harvesters excist
+      else if (cRoom.energyCapacityAvailable >= 800 && nrExc < 3)// the old limits does not mater when harvesters excist
         ret.push({ memory: mem, body: getStarterBody(cRoom), prio: 1, eTresh: 0.9 });
     }
   }
@@ -142,7 +143,8 @@ function calculateHarvesterQue(colony: Colony): queData[] {
   if (cRoom.energyCapacityAvailable >= 550) {
     for (let source of colony.memory.sourcesUsed) {
       const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
-      if (current.length == 0) {
+      let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
+      if (nr == 0) {
         const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
         const mem: CreepMemory = {
           type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]
@@ -156,7 +158,8 @@ function calculateHarvesterQue(colony: Colony): queData[] {
       const min = Game.getObjectById(source) as Mineral | null;
       if (min && min.mineralAmount > 0) {
         const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
-        if (current.length == 0) {
+        let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
+        if (nr == 0) {
           const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
           const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ] };
           ret.push({ memory: mem, body: Array(16).fill(WORK).concat([MOVE, MOVE, MOVE, MOVE]), prio: 1, eTresh: 0.9});

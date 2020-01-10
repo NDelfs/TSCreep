@@ -4,6 +4,7 @@ import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from
 import * as targetT from "Types/TargetTypes";
 import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
 import { PM } from "PishiMaster";
+import { DROPPED_RESOURCE } from "Types/TargetTypes";
 
 export function Builder(creep: Creep) {
   //resetDeliverTarget(creep);
@@ -42,7 +43,8 @@ export function Builder(creep: Creep) {
       let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
       if (range1 < range2) {
         creep.addTargetFirst(target1);
-        Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
+        if (target1.type == DROPPED_RESOURCE)
+          Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
       }
       else {
         creep.addTargetFirst(target2);
@@ -50,7 +52,8 @@ export function Builder(creep: Creep) {
     }
     else if (target1) {
       creep.addTargetFirst(target1);
-      Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
+      if (target1.type == DROPPED_RESOURCE)
+        Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
     }
     else if (target2) {
       creep.addTargetFirst(target2);

@@ -49,20 +49,20 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
     return targets;
     //PM.colonies[creep.memory.creationRoom].addEnergyTran(creep);
   }
-  //if (roomPos.roomName == "E49N47")
-  //console.log("looking for resource reg")
+  //if (roomPos.roomName == "E49N42")
+    //console.log("looking for resource reg")
 
   for (let [id, reqs] of Object.entries(colony.resourceHandler._resourceRequests)) {
     for (let req of reqs) {
       if (resourceType == null || req.resource == resourceType) {
         let obj = Game.getObjectById(id) as AnyStoreStructure;
-        //if (roomPos.roomName == "E49N47")
-        //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
+        //if (roomPos.roomName == "E49N42")
+          //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
         let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.store[req.resource!] != 0);
         let amount = req.amount();
-        if (obj && haveRes && amount < req.ThreshouldAmount) {
-          //if (roomPos.roomName == "E49N47")
-          //console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
+        if (obj && amount < req.ThreshouldAmount && (haveRes|| creep.carry[req.resource]>0)) {
+          //if (roomPos.roomName == "E49N42")
+            //console.log(roomPos.roomName, obj.structureType, "used new target (amound, store, onWay, Threshold)", req.amount(), obj.store[req.resource], req.resOnWay, req.ThreshouldAmount);
           let target: targetData = { ID: id, type: targetT.TRANSPORT, pos: obj.pos, range: 1, resType: req.resource, targetVal: req.ThreshouldHard - amount };
           let targets = getMatchingSource(creep, target, resourceType);
           if (targets.length > 0)

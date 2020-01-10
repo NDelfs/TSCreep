@@ -2,7 +2,7 @@ import { ExtensionFlagPlacement } from "./ExtensionFlagPlacement";
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { restorePos, storePos, isBuildable, isEqualPos } from "utils/posHelpers";
 import { Colony } from "Colony"
-import { isFlagColor, FLAG_LABS } from "../Types/FlagTypes";
+import { isFlagColor, FLAG_LABS, getFlagsInRoom } from "../Types/FlagTypes";
 
 function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange: number) {
   let goal = { pos: goalPos, range: iRange };
@@ -95,19 +95,22 @@ function buildSourceCon(colony: Colony, memory: SourceMemory) {
   }
 }
 
-function buildBaseLink(colony: Colony) {
+function buildBaseLink(colony: Colony, pos?: RoomPosition) {
   if (colony.baseLink == null && colony.room.storage) {
     let pos = colony.room.storage.pos;
     colony.memory.baseLinkID = getIdInRange(pos, 1, STRUCTURE_LINK);
     if (colony.memory.baseLinkID == null) {
+      if (pos)
+        buildStructAt(colony, pos, STRUCTURE_LINK);
       console.log(colony.name, "could not find base link");
     }
   }
 }
 
-function buildStructAt(colony: Colony, pos: RoomPosition, type: BuildableStructureConstant) {
+function buildStructAt(colony: Colony, pos: RoomPosition, type: BuildableStructureConstant): boolean {
   let list = pos.lookFor(LOOK_STRUCTURES);
   let found = false;
+  let err: number = ERR_FULL;
   for (let obj of list) {
     found = found || obj.structureType == type
   }
@@ -117,10 +120,11 @@ function buildStructAt(colony: Colony, pos: RoomPosition, type: BuildableStructu
       found = found || obj.structureType == type
     }
     if (!found) {
-      let err = pos.createConstructionSite(type);
+      err = pos.createConstructionSite(type);  
       buildPrint(err, type, colony.name);
     }
   }
+  return err==OK;
   //implement such that we can get the towers
 }
 
@@ -183,6 +187,15 @@ export function baseExpansion(colony: Colony) {
         buildSourceLink(colony, sources[1].memory)
       if (colony.memory.mineralsUsed.length >= 1)
         buildSourceCon(colony, Memory.Resources[colony.memory.mineralsUsed[0]]);
+
+      let LabFlag = getFlagsInRoom(FLAG_LABS, colony.name);
+      if (LabFlag.length > 0)
+        colony.memory.labPos = LabFlag[0].pos;
+      if (!colony.memory.labPos) {
+        let pos = restorePos(colony.memory.startSpawnPos!);
+        pos.y -= 5;
+        colony.memory.labPos = pos;
+      }
     }
 
     ///Below code is differend between versions
@@ -297,14 +310,13 @@ export function findAndBuildLab(col: Colony, labs: StructureLab[]) {
   let level = room.controller!.level - 5;
   let maxLab = (level * 3 + Number(level == 3));
   if (labs.length < maxLab) {
-    let buildFlag = room.find(FIND_FLAGS, { filter: function (flag) { return isFlagColor(flag, FLAG_LABS); } });
-    if (buildFlag.length == 1) {
+    if (col.memory.labPos) {
       let positions: { x: number; y: number }[] = [{ x: -1, y: -1 }, { x: 0, y: 0 }, { x: 1, y: 1 },
       { x: 0, y: -1 }, { x: 1, y: 0 },
       { x: 0, y: -2 }, { x: 1, y: -1 }, { x: 2, y: 0 },
       { x: 1, y: -2 }, { x: 2, y: -1 }];
 
-      let fPos = buildFlag[0].pos;
+      let fPos = restorePos(col.memory.labPos);
       for (let i = labs.length; i < maxLab; i++) {
         let pos = new RoomPosition(fPos.x + positions[i].x, fPos.y + positions[i].y, fPos.roomName);
         //console.log(i, pos.x, pos.y)
@@ -366,7 +378,46 @@ function baseExpansionV2(colony: Colony) {
     pos.y -= 2;
     buildStructAt(colony, pos, STRUCTURE_TOWER);
   }
+  if (colony.controller.level >= 6) {
+    if (!colony.room.terminal) {
+      let pos: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+      pos.y -= 2;
+      pos.x += 1;
+      buildStructAt(colony, pos, STRUCTURE_TERMINAL);
+    }
+    if (colony.room.storage) {
+      for (let sourceID of colony.memory.mineralsUsed) {
+        let pos = restorePos(Memory.Resources[sourceID].pos);
+        let built = buildStructAt(colony, pos, STRUCTURE_EXTRACTOR);
+        if (built) {
+          let sStoreP = colony.room.storage.pos;
+          buildRoad(pos, sStoreP, 5);
+        }
+      }
+    }
+  }
   if (colony.controller.level >= 7) {
-    buildBaseLink(colony);
+    let pos: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+    pos.y -= 1;
+    pos.x += 1;
+    buildBaseLink(colony, pos);
+    if (colony.spawns.length < 2) {
+      pos = restorePos(colony.memory.startSpawnPos!);
+      pos.x += 1;
+      pos.y += 3;
+      buildStructAt(colony, pos, STRUCTURE_SPAWN);
+    }
+  }
+  if (colony.controller.level == 8) {
+    let pos: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+    //pos.y -= 1;
+    //pos.x -= 1;
+    //buildStructAt(colony, pos, STRUCTURE_POWER_SPAWN);
+    if (colony.spawns.length < 2) {
+      pos = restorePos(colony.memory.startSpawnPos!);
+      pos.x -= 1;
+      pos.y += 3;
+      buildStructAt(colony, pos, STRUCTURE_SPAWN);
+    }
   }
 }

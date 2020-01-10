@@ -1,7 +1,7 @@
 import { Colony } from "Colony"
 import { nrCreepInQue } from "utils/minorUtils";
 import { SCOUT, STARTER } from "Types/CreepType";
-import { CONTROLLER } from "Types/TargetTypes";
+import { CONTROLLER, POSITION } from "Types/TargetTypes";
 import { calculateBodyFromSet } from "Spawners/Spawner";
 import { findClosestColony } from "utils/ColonyUtils";
 import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_NEW_COLONY, getFlags } from "../../Types/FlagTypes";
@@ -83,7 +83,8 @@ class newColony {
         nrStart += nrCreepInQue(this.closestColony, STARTER);
         if (nrStart < 2) {
           const mem: CreepMemory = {
-            type: STARTER, creationRoom: this.newColony.name, permTarget: null, moveTarget: { pos: this.flag.pos, range: 3 }, targetQue: []};
+            type: STARTER, creationRoom: this.newColony.name, permTarget: null, moveTarget: null, targetQue: [{ ID: "", type: POSITION, pos: this.flag.pos, range: 3 }]
+          };
           this.closestColony.queNewCreep(mem, calculateBodyFromSet(this.closestColony.room, [WORK, CARRY, MOVE], 10));
           console.log("spawned new starter for the new colony");
         }
@@ -109,7 +110,7 @@ export class NewColonyHandler {
           console.log('created new colony handler');
         }
         else {
-          if (found.newColony && found.newColony.controller.level >= 3) {
+          if (found.newColony && found.newColony.controller.level >= 5 && found.newColony.extensions.length>=10) {
             _.remove(this.newColonies, (col) => { return col.newColony && col.newColony.name == flag.pos.roomName });
             flag.remove();
           }
