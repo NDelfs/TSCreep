@@ -86,7 +86,7 @@ function structWithdraw(creep: Creep, struct: AnyStoreStructure, resType: Resour
   if (retErr == OK)
     freeSpace -= amount;
   else
-    console.log(creep.room.name, "A creep failed to pickup from store", PrettyPrintErr(retErr));
+    console.log(creep.room.name, creep.memory.type, "A creep failed to pickup from store", PrettyPrintErr(retErr));
   return retErr;
 }
 

@@ -58,7 +58,7 @@ export function getNewDeliverTarget(creep: Creep, resourceType?: ResourceConstan
         let obj = Game.getObjectById(id) as AnyStoreStructure;
         //if (roomPos.roomName == "E49N42")
           //console.log("found resource reg", req.resource, obj, req.amount(), "amount in transport", req.resOnWay);
-        let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.store[req.resource!] != 0);
+        let haveRes = (colony.room.storage && colony.room.storage.store[req.resource!] != 0) || (colony.room.terminal && colony.room.terminal.my && colony.room.terminal.store[req.resource!] != 0);
         let amount = req.amount();
         if (obj && amount < req.ThreshouldAmount && (haveRes|| creep.carry[req.resource]>0)) {
           //if (roomPos.roomName == "E49N42")
@@ -124,25 +124,35 @@ export function useDeliverTarget(creep: Creep): number {
   //console.log("in use deliver", creep.memory.targetQue.length, targetObj!.pos.x, targetObj!.pos.y)
   if (targetObj) {
     let key = _.findKey(creep.carry) as ResourceConstant;
-    if (key)
+    let placeForRes = 0;
+    if (key) {
+      placeForRes = targetObj.store.getFreeCapacity(key);
       err = creep.transfer(targetObj, key);
+    }
     //if (creep.room.name == "E49N47")
     //console.log("transfered", PrettyPrintErr(err), targetObj, targetObj.pos.x, targetObj.pos.y)
     if (err == OK && target.type == targetT.TRANSPORT) {
       PM.colonies[creep.memory.creationRoom].resourceHandler.removeTranReq(targetObj.id, target.resType!, creep);
     }
     else {
-      if (err == ERR_FULL || err == OK) {
+      if (err == ERR_FULL || err == OK /*|| err == ERR_NOT_ENOUGH_ENERGY*/) {
         creep.completeTarget();
-        if (creep.carry.energy >= 50 && target.type == targetT.POWERUSER) {
+        if (creep.carry.energy > placeForRes && target.type == targetT.POWERUSER) {
           getCloseDeliverTarget(creep);
           return OK;
         }
         PM.colonies[creep.memory.creationRoom].removeEnergyTran(creep);
         err = OK;
       }
+      else {
+        console.log(creep.room, "got strange error in useDeliverTarget", target.ID, PrettyPrintErr(err));
+      }
     }
   }
+  else {
+    console.log(creep.room, "did not find structure", target.ID);
+  }
+
 
   creep.completeTarget();
   //if (creep.room.name == "E49N47")

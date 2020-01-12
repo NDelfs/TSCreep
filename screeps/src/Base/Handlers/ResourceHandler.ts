@@ -70,7 +70,7 @@ export class resourceRequest {
     if (removed.length > 0) {
       this.resOnWay -= preknownAmount || creep.carry[this.resource];
       if (this.resOnWay < 0) {
-        console.log(creep.room.name, "res on way went negative, carry", creep.carry[this.resource], preknownAmount || creep.carry[this.resource]);
+        console.log(creep.room.name, creep.name, this.id, "res on way went negative, carry", creep.carry[this.resource], preknownAmount || creep.carry[this.resource], "Soft, hard", this.ThreshouldAmount, this.ThreshouldHard);
         this.resOnWay = Math.max(this.resOnWay, 0);
       }
     }

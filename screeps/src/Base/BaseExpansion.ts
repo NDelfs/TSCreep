@@ -3,6 +3,7 @@ import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { restorePos, storePos, isBuildable, isEqualPos } from "utils/posHelpers";
 import { Colony } from "Colony"
 import { isFlagColor, FLAG_LABS, getFlagsInRoom } from "../Types/FlagTypes";
+import { resourceRequest } from "./Handlers/ResourceHandler";
 
 function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange: number) {
   let goal = { pos: goalPos, range: iRange };
@@ -181,6 +182,20 @@ export function baseExpansion(colony: Colony) {
       colony.memory.controllerLinkID = buildControlerStruct(colony, STRUCTURE_LINK, 0, colony.memory.controllerLinkID);
       if (sources.length > 0)
         buildSourceLink(colony, sources[0].memory)
+
+      let term = colony.room.terminal;//empty enemy terminal before destroying
+      if (colony.room.storage && colony.room.storage.my && term && !term.my) {
+        if (term.store.getUsedCapacity() == 0) {
+          term.destroy();
+        }
+        else {
+          for (let key in term.store) {
+            if (term.store[key as ResourceConstant] > 0 && colony.resourceHandler.resourcePush[key] == null) {
+              colony.resourceHandler.resourcePush[term.id] = new resourceRequest(term.id, key as ResourceConstant, 0, 0, colony.room);
+            }
+          }
+        }
+      }
     }
     if (colony.controller.level >= 6) {
       if (sources.length > 1)
@@ -195,6 +210,16 @@ export function baseExpansion(colony: Colony) {
         let pos = restorePos(colony.memory.startSpawnPos!);
         pos.y -= 5;
         colony.memory.labPos = pos;
+      }
+
+      for (let min of colony.memory.mineralsUsed) {//verify extractors
+        let resMem = Memory.Resources[min];
+        if (resMem.linkID == null) {//abuse code because we do not find it anywhere else
+          let extractors = restorePos(resMem.pos).lookFor(LOOK_STRUCTURES) as StructureExtractor[];
+          if (extractors.length > 0) {
+            resMem.linkID = extractors[0].id;
+          }
+        }
       }
     }
 

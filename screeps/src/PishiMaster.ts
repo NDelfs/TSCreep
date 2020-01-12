@@ -10,6 +10,7 @@ import { Spawner, spawnFromReq, RefreshQue } from "./Spawners/Spawner";
 import { NukeResourceReq } from "Base/Handlers/NukePlaner";
 import { NewColonyHandler } from "Base/Handlers/NewColonyHandler";
 import { AttackHandler } from "./Base/Handlers/AttackHandler";
+import { findClosestColony } from "./utils/ColonyUtils";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
@@ -51,7 +52,14 @@ export class _PishiMaster {
     this.memory = Mem.wrap(Memory, "PishiMasterMem", PishiMasterMemoryDef);
     this.ticksAlive++;
     for (let colonyID in this.colonies) {
-      this.colonies[colonyID].refresh();
+      let col = this.colonies[colonyID];
+      col.refresh();
+      //find and update closest colony for boosting or helping curent col
+      if (Game.time % 1e5 == 0 || (!col.memory.closestBoostCol && Game.time % 10 ==0 )) {//increase 10 to maybe 1e3 or more later
+        let closeC = findClosestColony(this.colonies, colonyID);
+        if (closeC)
+          this.colonies[colonyID].memory.closestBoostCol = closeC.name;
+      }
     }
 
     this.attackHand.refresh(this.colonies);

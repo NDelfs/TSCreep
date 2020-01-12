@@ -38,10 +38,20 @@ interface LabMemory {
   resource: string;//or id to boost or reaction if reaction is tracable
 }
 
+interface FightInfo {
+  nrAttack: number;
+  target: string|null;
+  lastT: string|null;
+  healMult: number;
+  healPower: number;
+}
+
 interface ColonyMemory {
   colonyType: number;
   outposts: string[];
+  closestBoostCol: string | null;
 
+  figthInfo: FightInfo | null;
   inCreepEmergency: number | null;
   sourcesUsed: string[];
   mineralsUsed: string[];

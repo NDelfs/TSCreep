@@ -1,11 +1,15 @@
 import { Colony } from "Colony";
 
-export function findClosestColonies(colonies: { [name: string]: Colony }, targetRoom : string, maxNr : number): Colony[] {
+export function findClosestColonies(colonies: { [name: string]: Colony }, targetRoom: string, maxNr: number): Colony[] {
+  let maxLvl = 3+1;// min we at all want to find +2 because we want to look for lower levels later
+  for (let colName in colonies) {
+    maxLvl = Math.max(colonies[colName].controller.level, maxLvl);
+  }
+
   let dists: { name: string, dist: number }[] = [];
   for (let colName in colonies) {
-
     let col = colonies[colName];
-    if (colName != targetRoom && col.controller.level >= 3) {
+    if (colName != targetRoom && col.controller.level >= maxLvl-1) {
       dists.push({ name: col.name, dist: Game.map.getRoomLinearDistance(col.name, targetRoom) - col.controller.level });//balance in the controller level
     }
   }

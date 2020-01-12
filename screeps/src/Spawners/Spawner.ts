@@ -153,10 +153,10 @@ function calculateHarvesterQue(colony: Colony): queData[] {
       }
     }
   }
-  if (cRoom.terminal && ret.length == 0 && cRoom.availEnergy > 4e4) {
+  if (cRoom.terminal && colony.controller.level >=6 && ret.length == 0 && cRoom.availEnergy > 4e4) {
     for (let source of colony.memory.mineralsUsed) {
       const min = Game.getObjectById(source) as Mineral | null;
-      if (min && min.mineralAmount > 0) {
+      if (min && min.mineralAmount > 0 && min.memory.linkID) {
         const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
         let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
         if (nr == 0) {
@@ -206,7 +206,7 @@ function calculateUpgraderQue(colony: Colony) {
       }
       if ((cRoom.storage && !cRoom.storage.my)) {
         limit = 3;
-        range = 1;
+        range = 1;//a rare special case to use a lot of energy
       }
 
       let current = nrCreepInQue(colony, creepT.UPGRADER) + cRoom.getCreeps(creepT.UPGRADER).length;

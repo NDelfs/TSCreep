@@ -7,7 +7,7 @@ export function Upgrader(creep: Creep) {
     let err = creep.upgradeController(creep.room.controller);
     let colony = PM.colonies[creep.memory.creationRoom];
     if (creep.carry.energy < 20) {
-      if (colony.controllerLink && colony.controllerLink.energy >= creep.carryCapacity) {
+      if (colony.controllerLink && colony.controllerLink.energy >= creep.carryCapacity && colony.controllerLink.pos.inRangeTo(creep.pos,1)) {
         creep.withdraw(colony.controllerLink, RESOURCE_ENERGY);
       }
       else if (colony.controllerContainer) {

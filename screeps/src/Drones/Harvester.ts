@@ -22,17 +22,10 @@ export function Harvester(creep: Creep): void {
 }
 
 function mineMineral(creep: Creep, res: Mineral) {
-  let extractor: StructureExtractor| null = null;
-  if (res.memory.linkID == null) {//abuse code because we do not find it anywhere else
-    let extractors = res.pos.lookFor(LOOK_STRUCTURES) as StructureExtractor[];
-    if (extractors.length > 0) {
-      extractor = extractors[0];
-      res.memory.linkID = extractor.id;
-    }
-  }
-  else
-    extractor = Game.getObjectById(res.memory.linkID);
+  if (!res.memory.linkID)
+    return;
 
+  let extractor = Game.getObjectById(res.memory.linkID) as StructureExtractor;
   if (extractor) {
     if (extractor.cooldown) {
       creep.say("Wait");

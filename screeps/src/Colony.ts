@@ -23,6 +23,8 @@ function getRandomInt(min: number, max: number) {
 const ColonyMemoryDef: ColonyMemory = {
   colonyType: 2,
   outposts: [],
+  closestBoostCol: null,
+  figthInfo: null,
   inCreepEmergency: null,
   sourcesUsed: [],
   mineralsUsed: [],
@@ -41,7 +43,6 @@ const ColonyMemoryDef: ColonyMemory = {
 function refreshArray(array: any[]) {
   array = _.compact(_.map(array, obj => Game.getObjectById(obj.id)));
 }
-
 
 
 export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant): number {
@@ -68,6 +69,7 @@ export class Colony {
   room: Room;
   outpostIDs: string[];//all rooms ids;
   outposts: Room[];
+  closestBoostCol: Colony | null;
   controller: StructureController;
   controllerContainer: StructureContainer | null;
   controllerLink: StructureLink | null;
@@ -125,7 +127,9 @@ export class Colony {
       this.memory.labMemories = [];
     }
     this.creepBuildQueRef = this.memory.creepBuildQue;
-
+    this.closestBoostCol = null;
+    if (this.memory.closestBoostCol)
+      this.closestBoostCol = Game.getObjectById(this.memory.closestBoostCol);
 
     this.mRebuild = getRandomInt(2000, 5000); //rebuil about every hour
     this.forceUpdateEnergy = false;
@@ -172,7 +176,7 @@ export class Colony {
       for (let target of obj.memory.targetQue) {//would be nice to have the same system for extensions as every thing else. Maybe with new que its possible to just que them up?
         ret = ret || target.type == targetT.POWERUSER && obj.carry.energy > 0;
       }
-      return false;
+      return ret;
 
     });
     this.refreshEnergyDemand(true);
@@ -202,6 +206,8 @@ export class Colony {
       if (!spawn.spawning)
         spawn.memory.currentlySpawning = null;
     }
+    if (this.memory.closestBoostCol)
+      this.closestBoostCol = Game.getObjectById(this.memory.closestBoostCol);
     //refreshArray(this.extensions);
     this.extensions = _.compact(_.map(this.extensions, obj => Game.getObjectById(obj.id))) as StructureExtension[];
     //refreshArray(this.energyTransporters);
@@ -222,24 +228,39 @@ export class Colony {
     this.refreshEnergyDemand(this.forceUpdateEnergy);
     this.forceUpdateEnergy = false;
 
-    this.refreshStorageIDs();
-
     this.resourceHandler.postRun();//should be moved to postrun
+
+    this.lookForHostiles();
   }
 
-  private refreshStorageID(id: string | null, obj: Structure | null, structT: StructureConstant, level : number) {
-    if (id) {
-      obj = Game.getObjectById(id);
-      if (obj == null) {
-        id = null;
+  lookForHostiles() {
+    if (this.room.hostiles.length >0) {
+      
+        let healingPower = 0;
+      let target: string | null = null;
+      let healT : string | null = null;
+        for (let creep of this.room.hostiles) {
+          let healP = creep.getActiveBodyparts(HEAL);
+          healingPower = healingPower + healP * 12;//12,24,48   no boost, first, max
+          if (healP == 0)
+            target = creep.id;
+          else
+            healT = creep.id;
+        }
+      if (!target)
+        target = healT;
+        
+      if (!this.memory.figthInfo) {
+        this.memory.figthInfo = { target: target, healMult: 1, nrAttack: 0, healPower: healingPower, lastT: null };
+      }
+      else {
+        this.memory.figthInfo.target = target;
+        this.memory.figthInfo.healPower = healingPower;
       }
     }
-
-    
-  }
-
-  private refreshStorageIDs() {
-   
+    else {
+      delete this.memory.figthInfo;
+    }
 }
 
   public computeWallList() {
@@ -379,7 +400,7 @@ export class Colony {
       if (conStore && this.resourceHandler.getReq(this.memory.controllerStoreID!, RESOURCE_ENERGY) == null && (conStore as AnyStoreStructure).store.energy < 2000 - def) {
         this.resourceHandler.addRequest(new resourceRequest(this.memory.controllerStoreID!, RESOURCE_ENERGY, 2000 - def, 2000, this.room));
       }
-      if (this.room.terminal && this.resourceHandler.getReq(this.room.terminal.id, RESOURCE_ENERGY) == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
+      if (this.room.terminal && this.room.terminal.my && this.resourceHandler.getReq(this.room.terminal.id, RESOURCE_ENERGY) == null && this.room.terminal.store.energy < C.TERMINAL_STORE - 800 && this.room.storage && this.room.storage.store.energy > C.TERMINAL_MIN_STORAGE) {
         this.resourceHandler.addRequest(new resourceRequest(this.room.terminal.id, RESOURCE_ENERGY, C.TERMINAL_STORE - 800, C.TERMINAL_STORE, this.room));
       }
 
@@ -393,30 +414,47 @@ export class Colony {
   }
 
   towerFirePower(tower: StructureTower, pos: RoomPosition) {
-    return 600 - Math.min(Math.max(tower.pos.getRangeTo(pos) - 5, 0), 20) * 30;
+    return 600 - Math.min(Math.max(tower.pos.getRangeTo(pos) - 5, 0), 15) * 30;
   }
 
   runTowers() {
     let room = this.room;
-    let healingPower: number = 0;
-    let firePower: number = 0;
-    let hostiles = room.hostiles;
-    if (hostiles.length > 0) {
-      for (let creep of room.hostiles) {
-        healingPower = healingPower+ creep.getActiveBodyparts(HEAL) * 24;//12,24,36   no boost, first, max
-      }
-      for (let tower of this.towers) {
-        firePower = firePower + this.towerFirePower(tower, hostiles[0].pos);
-      }
-      if (Game.time % 10 == 0) {
-        console.log(this.name, "are under attack: healing vs firePower", healingPower, firePower);
+    let hostileTarget: Creep | null = null;
+    let firePower = 0;
+    let healingPower = 0;
+    let fInfo = this.memory.figthInfo;
+    if (fInfo && fInfo.target) {
+      hostileTarget = Game.getObjectById(fInfo.target);
+      if (!hostileTarget)
+        fInfo.target = null;
+      else {
+        if (fInfo.nrAttack > 0 && fInfo.lastT != fInfo.target) {
+          fInfo.nrAttack = 0;
+          fInfo.healPower = 1;
+        }
+        if (hostileTarget.hits == hostileTarget.hitsMax && fInfo!.nrAttack >= 5) {
+          fInfo!.healMult++;
+          fInfo!.nrAttack = 0;
+        }
+        for (let tower of this.towers) {
+          firePower = firePower + this.towerFirePower(tower, hostileTarget.pos);
+        }
+
+        healingPower = fInfo!.healPower * fInfo!.healMult;
+        if (firePower > healingPower) {
+          fInfo!.nrAttack++;
+          fInfo!.lastT = fInfo!.target;
+        }
+
+        console.log(this.name, "are under attack: healing vs firePower", healingPower, firePower, JSON.stringify(fInfo!));
       }
     }
+    
     for (let tower of this.towers) {
       try {
-        if (hostiles.length > 0) {
+        if (hostileTarget) {
           if (firePower > healingPower) {
-            tower.attack(hostiles[0]);
+            tower.attack(hostileTarget);
             continue;
           }
           else {
