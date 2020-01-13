@@ -106,7 +106,7 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
     if (freeSpace > 0) {
       let structs = workPos.lookFor(LOOK_STRUCTURES);//id can be stored in resource, then below code can be used instead
       for (let struct of structs) {
-        if (struct.structureType != STRUCTURE_ROAD) {
+        if (struct.structureType != STRUCTURE_ROAD && struct.structureType != STRUCTURE_RAMPART) {
           let storageObj = struct as AnyStoreStructure;
           structWithdraw(creep, storageObj, target.resType!, freeSpace);
         }

@@ -27,7 +27,7 @@ export function isBuildable(pos: RoomPosition): number {
             case LOOK_STRUCTURES:
                 return 1;
             case LOOK_CONSTRUCTION_SITES:
-                return 1;
+            return 1;
             default:
         }
     }

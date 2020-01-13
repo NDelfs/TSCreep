@@ -21,7 +21,7 @@ function buildRoad(startPos: RoomPosition, goalPos: RoomPosition, iRange: number
       let costs = new PathFinder.CostMatrix;
 
       room.find(FIND_STRUCTURES).forEach(function (struct) {
-        if (struct.structureType !== STRUCTURE_CONTAINER && struct.structureType !== STRUCTURE_ROAD &&
+        if (struct.structureType !== STRUCTURE_ROAD &&
           (struct.structureType !== STRUCTURE_RAMPART ||
             !struct.my)) {
           // Can't walk through non-walkable buildings
@@ -93,6 +93,9 @@ function buildSourceCon(colony: Colony, memory: SourceMemory) {
     memory.container = getIdInRange(workPos, 1, STRUCTURE_CONTAINER);
     if (memory.container)
       console.log(colony.name, "found source container");
+    else if (memory.resourceType != RESOURCE_ENERGY) {
+      buildStructAt(colony, workPos, STRUCTURE_CONTAINER);
+    }
   }
 }
 
@@ -416,7 +419,7 @@ function baseExpansionV2(colony: Colony) {
         let built = buildStructAt(colony, pos, STRUCTURE_EXTRACTOR);
         if (built) {
           let sStoreP = colony.room.storage.pos;
-          buildRoad(pos, sStoreP, 5);
+          buildRoad(restorePos(Memory.Resources[sourceID].workPos), sStoreP, 5);
         }
       }
     }
