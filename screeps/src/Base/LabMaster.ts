@@ -261,7 +261,7 @@ export class LabMaster {
   }
 
   private distibuteReactions() {
-    if (this.colLabs.length >= 3) {
+    if (this.colLabs.length >= 3) {//this is outdated, for G we needed atleast 3 rooms with 3 labs. But LH are beneficial at one col with 3 labs 
       for (let labInfo of this.colLabs) {
 
         labInfo.nrLabs = this.availLabs(labInfo);//because we reset react everytime we can run this code
@@ -273,8 +273,8 @@ export class LabMaster {
 
           if (REACTION_CHAIN[rect.r.needs[0]].needs.length == 0, REACTION_CHAIN[rect.r.needs[1]].needs.length == 0) {
             let reactT = REACTION_TIME_TYPED[rect.r.r];
-            let nrLabs = Math.ceil(rect.perTick * this.colLabs.length * 5 / reactT);
-            console.log("nr labs needed for ", rect.r.r, nrLabs, rect.perTick * this.colLabs.length * 5 / reactT)
+            let nrLabs = Math.ceil(rect.perTick * this.colLabs.length * reactT / 5);
+            console.log("nr labs needed for ", rect.r.r, nrLabs, rect.perTick * this.colLabs.length * reactT / 5)
             if (nrLabs > 1) {
               console.log("more reactors needed but not implemented");
               //if (labInfo.nrLabUsed != 1)
