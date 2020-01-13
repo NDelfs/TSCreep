@@ -587,8 +587,27 @@ export class Colony {
 }
 profiler.registerClass(Colony, 'Colony');
 
+function serializePath(path: RoomPosition[]) {
+  let retString = String(path[0].x).padStart(2, '0') + String(path[0].y).padStart(2, '0');
+  for (let i = 1; i < path.length; i++) {
+    retString += getDirection(path[i - 1], path[i]);
+  }
+  return retString;
+}
 
+function getDirection(p1: RoomPosition | posData, p2: RoomPosition | posData): number {
 
+  let yDir = p2.y - p1.y;
+  let xDir = p2.x - p2.x;
+  //if (xDir == 0)
+  //  ret = 3 + yDir * 2;
+  //else
+  //  ret = (5 - xDir * 2) + xDir * yDir;
+  let ret = 5 + xDir * (yDir - 2);//x not zero
+  ret = ret + (1- yDir)*(xDir * xDir - 1) * 2;//if x zero this add value
+  return +(p1.roomName == p2.roomName) * ret;
+
+}
 
 function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MINERALS | FIND_SOURCES) {
   const sources = colony.room.find(findType);
@@ -634,6 +653,11 @@ function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MI
 
     let pathObj = PathFinder.search(homeRoomPos, goal, options);//ignore object need something better later. cant use for desirialize
     let newWorkPos = _.last(pathObj.path);
+    let myPath = serializePath(pathObj.path);
+    console.log(myPath);
+    let autoPath = homeRoomPos.findPathTo(goal, { ignoreCreeps: true, serialize: true });
+    console.log(autoPath);
+
     let mem: SourceMemory = {
       pos: source.pos,
       usedByRoom: homeRoomPos.roomName,
