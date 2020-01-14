@@ -586,42 +586,12 @@ export class Colony {
     return OK;
   }
 
-  public testPath(x: number, y: number, x2: number, y2: number, roomName?:string) {
-    let start = new RoomPosition(x, y, this.name);
-    let goal = { pos: new RoomPosition(x2,y2,roomName || this.name), range: 1 };
+  public testPath(x2: number, y2: number, roomName?: string, maxOps?: number) {
+    let start = new RoomPosition(x2, y2, roomName|| this.name);
 
-    let options: PathFinderOpts = {
-      // We still want to avoid some swamp purely out of upkeep cost
-      plainCost: 2,
-      swampCost: 7,
-
-      //here we only add avodance to building that we cant pass
-      roomCallback: function (roomName: string) {
-        let room = Game.rooms[roomName];
-        // In this example `room` will always exist, but since 
-        // PathFinder supports searches which span multiple rooms 
-        // you should be careful!
-        if (!room) return false;
-        let costs = new PathFinder.CostMatrix;
-
-        room.find(FIND_STRUCTURES).forEach(function (struct) {
-          if (struct.structureType == STRUCTURE_ROAD && costs.get(struct.pos.x, struct.pos.y) != 0xff) {
-            costs.set(struct.pos.x, struct.pos.y, 1);
-          }
-          else if (/*struct.structureType !== STRUCTURE_CONTAINER && */(struct.structureType !== STRUCTURE_RAMPART || !struct.my)) {
-            // Can't walk through non-walkable buildings
-            costs.set(struct.pos.x, struct.pos.y, 0xff);
-          }
-        });
-        return costs;
-      },
-    }
-
-    let pathObj = PathFinder.search(start, goal, options);//ignore object need something better later. cant use for desirialize
+    let pathObj = findPathToSource(this, start, maxOps);
     let myPath = serializePath(pathObj.path);
-    console.log(myPath.length-4, myPath);
-    let autoPath = start.findPathTo(goal, { ignoreCreeps: true, serialize: true });
-    console.log(autoPath.length-4, autoPath);
+    console.log(pathObj.incomplete,"length", myPath.length - 4, "cost", pathObj.cost, myPath);
   }
 }
 profiler.registerClass(Colony, 'Colony');
@@ -654,6 +624,7 @@ function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MI
       maxUser: nrNeig,
       workPos: newWorkPos,
       path: myPath,
+      pathCost: pathObj.cost,
       container: null,
       linkID: null,
       AvailResource: 0,

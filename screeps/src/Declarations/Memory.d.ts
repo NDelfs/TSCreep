@@ -80,6 +80,7 @@ interface SourceMemory {
   maxUser: number;
   workPos: posData;
   path: string;
+  pathCost: number;
   container: string | null;
   linkID: string | null;
   AvailResource: number;
