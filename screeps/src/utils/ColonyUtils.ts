@@ -1,4 +1,5 @@
 import { Colony } from "Colony";
+import { restorePos } from "./posHelpers";
 
 export function findClosestColonies(colonies: { [name: string]: Colony }, targetRoom: string, maxNr: number): Colony[] {
   let maxLvl = 3+1;// min we at all want to find +2 because we want to look for lower levels later
@@ -66,4 +67,65 @@ export function findClosestColony(colonies: { [name: string]: Colony }, targetRo
     return cols[0];
   else
     return null;
+}
+
+
+export function findPathToSource(colony: Colony, sourcePos: RoomPosition) {
+  let goal = { pos: sourcePos, range: 1 };
+  let start: RoomPosition = restorePos(colony.memory.startSpawnPos!);
+  if (colony.room.storage)
+    start = colony.room.storage.pos;
+  let options: PathFinderOpts = {
+    // We still want to avoid some swamp purely out of upkeep cost
+    plainCost: 2,
+    swampCost: 7,
+
+    //here we only add avodance to building that we cant pass
+    roomCallback: function (roomName: string) {
+      let room = Game.rooms[roomName];
+      // In this example `room` will always exist, but since 
+      // PathFinder supports searches which span multiple rooms 
+      // you should be careful!
+      if (!room) return false;
+      let costs = new PathFinder.CostMatrix;
+
+      room.find(FIND_STRUCTURES).forEach(function (struct) {
+        if (struct.structureType == STRUCTURE_ROAD && costs.get(struct.pos.x, struct.pos.y) != 0xff) {
+          costs.set(struct.pos.x, struct.pos.y, 1);
+        }
+        else if (/*struct.structureType !== STRUCTURE_CONTAINER && */(struct.structureType !== STRUCTURE_RAMPART || !struct.my)) {
+          // Can't walk through non-walkable buildings
+          costs.set(struct.pos.x, struct.pos.y, 0xff);
+        }
+      });
+      return costs;
+    },
+  }
+
+  return PathFinder.search(start, goal, options);//ignore object need something better later. cant use for desirialize
+}
+
+export function serializePath(path: RoomPosition[]) {
+  let retString = String(path[0].x).padStart(2, '0') + String(path[0].y).padStart(2, '0');
+  for (let i = 0; i < path.length - 1; i++) {
+    console.log(i);
+    retString += getDirection(path[i], path[i + 1]);
+  }
+  return retString;
+}
+
+export function getDirection(p1: RoomPosition | posData, p2: RoomPosition | posData): number {
+
+  let yDir = p2.y - p1.y;
+  let xDir = p2.x - p1.x;
+  //if (xDir == 0)
+  //  ret = 3 + yDir * 2;
+  //else
+  //  ret = (5 - xDir * 2) + xDir * yDir;
+  let ret = 5 + xDir * (yDir - 2);//x not zero
+  let ret2 = ret + (1 - yDir) * (xDir * xDir - 1) * 2;//if x zero this add value
+  let res = +(p1.roomName == p2.roomName) * ret2;
+  console.log('1', p1.x, p1.y, '2', p2.x, p2.y, 'dir', xDir, yDir, 'steps', ret, ret2, res);
+  return res;
+
 }

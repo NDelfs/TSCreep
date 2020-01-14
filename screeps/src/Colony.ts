@@ -14,6 +14,7 @@ import { BOOST } from "Types/TargetTypes";
 import { PrettyPrintErr } from "./utils/PrettyPrintErr";
 import { ResourceHandler, resourceRequest } from "Base/Handlers/ResourceHandler";
 import { BOOSTING } from "Types/Constants";
+import { findPathToSource, serializePath } from "./utils/ColonyUtils";
 
 
 function getRandomInt(min: number, max: number) {
@@ -584,30 +585,48 @@ export class Colony {
 
     return OK;
   }
+
+  public testPath(x: number, y: number, x2: number, y2: number, roomName?:string) {
+    let start = new RoomPosition(x, y, this.name);
+    let goal = { pos: new RoomPosition(x2,y2,roomName || this.name), range: 1 };
+
+    let options: PathFinderOpts = {
+      // We still want to avoid some swamp purely out of upkeep cost
+      plainCost: 2,
+      swampCost: 7,
+
+      //here we only add avodance to building that we cant pass
+      roomCallback: function (roomName: string) {
+        let room = Game.rooms[roomName];
+        // In this example `room` will always exist, but since 
+        // PathFinder supports searches which span multiple rooms 
+        // you should be careful!
+        if (!room) return false;
+        let costs = new PathFinder.CostMatrix;
+
+        room.find(FIND_STRUCTURES).forEach(function (struct) {
+          if (struct.structureType == STRUCTURE_ROAD && costs.get(struct.pos.x, struct.pos.y) != 0xff) {
+            costs.set(struct.pos.x, struct.pos.y, 1);
+          }
+          else if (/*struct.structureType !== STRUCTURE_CONTAINER && */(struct.structureType !== STRUCTURE_RAMPART || !struct.my)) {
+            // Can't walk through non-walkable buildings
+            costs.set(struct.pos.x, struct.pos.y, 0xff);
+          }
+        });
+        return costs;
+      },
+    }
+
+    let pathObj = PathFinder.search(start, goal, options);//ignore object need something better later. cant use for desirialize
+    let myPath = serializePath(pathObj.path);
+    console.log(myPath.length-4, myPath);
+    let autoPath = start.findPathTo(goal, { ignoreCreeps: true, serialize: true });
+    console.log(autoPath.length-4, autoPath);
+  }
 }
 profiler.registerClass(Colony, 'Colony');
 
-function serializePath(path: RoomPosition[]) {
-  let retString = String(path[0].x).padStart(2, '0') + String(path[0].y).padStart(2, '0');
-  for (let i = 1; i < path.length; i++) {
-    retString += getDirection(path[i - 1], path[i]);
-  }
-  return retString;
-}
 
-function getDirection(p1: RoomPosition | posData, p2: RoomPosition | posData): number {
-
-  let yDir = p2.y - p1.y;
-  let xDir = p2.x - p2.x;
-  //if (xDir == 0)
-  //  ret = 3 + yDir * 2;
-  //else
-  //  ret = (5 - xDir * 2) + xDir * yDir;
-  let ret = 5 + xDir * (yDir - 2);//x not zero
-  ret = ret + (1- yDir)*(xDir * xDir - 1) * 2;//if x zero this add value
-  return +(p1.roomName == p2.roomName) * ret;
-
-}
 
 function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MINERALS | FIND_SOURCES) {
   const sources = colony.room.find(findType);
@@ -624,45 +643,17 @@ function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MI
     for (let [ind, spot] of Object.entries(res)) {
       nrNeig += Number(spot.terrain != "wall");
     }
-    let goal = { pos: pos, range: 1 };
 
-    let options: PathFinderOpts = {
-      // We still want to avoid some swamp purely out of upkeep cost
-      plainCost: 1,
-      swampCost: 3,
-      //here we only add avodance to building that we cant pass
-      roomCallback: function (roomName: string) {
-        let room = Game.rooms[roomName];
-        // In this example `room` will always exist, but since 
-        // PathFinder supports searches which span multiple rooms 
-        // you should be careful!
-        if (!room) return false;
-        let costs = new PathFinder.CostMatrix;
-
-        room.find(FIND_STRUCTURES).forEach(function (struct) {
-          if (struct.structureType !== STRUCTURE_ROAD &&
-            (struct.structureType !== STRUCTURE_RAMPART ||
-              !struct.my)) {
-            // Can't walk through non-walkable buildings
-            costs.set(struct.pos.x, struct.pos.y, 0xff);
-          }
-        });
-        return costs;
-      },
-    }
-
-    let pathObj = PathFinder.search(homeRoomPos, goal, options);//ignore object need something better later. cant use for desirialize
+    let pathObj = findPathToSource(colony, pos);
     let newWorkPos = _.last(pathObj.path);
     let myPath = serializePath(pathObj.path);
-    console.log(myPath);
-    let autoPath = homeRoomPos.findPathTo(goal, { ignoreCreeps: true, serialize: true });
-    console.log(autoPath);
 
     let mem: SourceMemory = {
       pos: source.pos,
       usedByRoom: homeRoomPos.roomName,
       maxUser: nrNeig,
       workPos: newWorkPos,
+      path: myPath,
       container: null,
       linkID: null,
       AvailResource: 0,

@@ -79,6 +79,7 @@ interface SourceMemory {
   usedByRoom: string;
   maxUser: number;
   workPos: posData;
+  path: string;
   container: string | null;
   linkID: string | null;
   AvailResource: number;
