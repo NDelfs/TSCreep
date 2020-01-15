@@ -118,12 +118,6 @@ export class Colony {
     this.room = iRoom;
     this.name = iRoom.name;
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
-    if (!this.memory.colonyType) {
-      if (this.room.controller!.level > 4)
-        this.memory.colonyType = 1;
-      else
-        this.memory.colonyType = 2;
-    }
     if (!this.memory.labMemories) {
       this.memory.labMemories = [];
     }
@@ -615,31 +609,36 @@ function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MI
     }
 
     let pathObj = findPathToSource(colony, pos);
-    let newWorkPos = _.last(pathObj.path);
-    let myPath = serializePath(pathObj.path);
+    if (!pathObj.incomplete) {
+      let newWorkPos = _.last(pathObj.path);
+      let myPath = serializePath(pathObj.path);
 
-    let mem: SourceMemory = {
-      pos: source.pos,
-      usedByRoom: homeRoomPos.roomName,
-      maxUser: nrNeig,
-      workPos: newWorkPos,
-      path: myPath,
-      pathCost: pathObj.cost,
-      container: null,
-      linkID: null,
-      AvailResource: 0,
-      resourceType: RESOURCE_ENERGY,
-    };
+      let mem: SourceMemory = {
+        pos: source.pos,
+        usedByRoom: homeRoomPos.roomName,
+        maxUser: nrNeig,
+        workPos: newWorkPos,
+        path: myPath,
+        pathCost: pathObj.cost,
+        container: null,
+        linkID: null,
+        AvailResource: 0,
+        resourceType: RESOURCE_ENERGY,
+      };
 
-    if (findType == FIND_SOURCES) {
-      Memory.Resources[source.id] = mem;
-      colony.memory.sourcesUsed.push(source.id);
+      if (findType == FIND_SOURCES) {
+        Memory.Resources[source.id] = mem;
+        colony.memory.sourcesUsed.push(source.id);
+      }
+      else if (findType == FIND_MINERALS) {
+        let min = source as Mineral;
+        mem.resourceType = min.mineralType;
+        Memory.Resources[source.id] = mem;
+        colony.memory.mineralsUsed.push(source.id);
+      }
     }
-    else if (findType == FIND_MINERALS) {
-      let min = source as Mineral;
-      mem.resourceType = min.mineralType;
-      Memory.Resources[source.id] = mem;
-      colony.memory.mineralsUsed.push(source.id);
+    else {
+      console.log("failed to fill in path information to source, did not add source information")
     }
   }
 }

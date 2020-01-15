@@ -10,7 +10,8 @@ import { Spawner, spawnFromReq, RefreshQue } from "./Spawners/Spawner";
 import { NukeResourceReq } from "Base/Handlers/NukePlaner";
 import { NewColonyHandler } from "Base/Handlers/NewColonyHandler";
 import { AttackHandler } from "./Base/Handlers/AttackHandler";
-import { findClosestColony } from "./utils/ColonyUtils";
+import { findClosestColony, findPathToSource, serializePath } from "./utils/ColonyUtils";
+import { restorePos } from "./utils/posHelpers";
 
 const PishiMasterMemoryDef: PishiMasterMemory = {
 }
@@ -47,6 +48,18 @@ export class _PishiMaster {
     this.attackHand = new AttackHandler(this.colonies);
     this.labMaster = new LabMaster(this.colonies);
     this.market = new Market(this.colonies);
+
+    for (let sourceID in Memory.Resources) {//temporary to fill in information of old memories
+      let sourceMem = Memory.Resources[sourceID];
+      let path = findPathToSource(this.colonies[sourceMem.usedByRoom], restorePos(sourceMem.workPos));
+      if (!path.incomplete) {
+        sourceMem.pathCost = path.cost;
+        sourceMem.path = serializePath(path.path);
+      }
+      else {
+        console.log("failed to fill in path information to source")
+      }
+    }
   }
   refresh() {
     this.memory = Mem.wrap(Memory, "PishiMasterMem", PishiMasterMemoryDef);
