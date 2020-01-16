@@ -304,7 +304,7 @@ export class Colony {
 
   private computeLists(force?: boolean) {
     try {
-      if (Game.time % 100 == 0 || force) {
+      if (Game.time % 50 == 0 || force) {
         let emergstructs = _.filter(this.room.structures, function (struct: Structure) {
           return (struct.hits < struct.hitsMax && struct.hits < 1500);
         });
@@ -317,8 +317,10 @@ export class Colony {
           return (struct.hitsMax < 5e5) && (struct.hits < struct.hitsMax - 3000 && struct.hits < 0.6 * struct.hitsMax);
         });
         structs.sort((obj, obj2) => { return (obj2.hitsMax - obj2.hits) - (obj.hitsMax - obj.hits); });
-        if (emergstructs.length > 0)
+        if (emergstructs.length > 0) {
           console.log(this.name, emergstructs[0].structureType, emergstructs[0].pos.x, emergstructs[0].pos.y, 'first has diff', emergstructs[0].hits, "second", _.last(emergstructs).hits);
+          this.computeWallList();//if it excist that low it may be new built and we need it added fast
+        }
         this.repairSites = structs.map((obj) => { return obj.id; });
       }
     } catch (e) { console.log(this.name, "failed repairSites", e); };
@@ -453,8 +455,6 @@ export class Colony {
             continue;
           }
           else {
-            if (Game.time % 100 == 0)
-              this.computeWallList();
             let struct = Game.getObjectById(this.wallSites[0].id) as Structure;
             if (struct && struct.hits < 5e5)
               tower.repair(struct);
@@ -465,7 +465,7 @@ export class Colony {
           let struct = Game.getObjectById(this.emergencyRepairSites[0]) as Structure;
           if (struct) {
             tower.repair(struct);
-            if (struct.hits > struct.hitsMax - 100 || room.controller && (struct.hits >= room.controller.level * 100000))
+            if (struct.hits > struct.hitsMax - 100 || struct.hits >= 5000)
               this.emergencyRepairSites.shift();
           }
           else {

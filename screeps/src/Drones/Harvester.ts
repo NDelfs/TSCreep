@@ -59,9 +59,16 @@ function mineSource(creep: Creep, res: Source) {
   creep.harvest(res);
   creep.say("Mine");
   let amount = creep.carryAmount;
-  if (creep.carryCapacity != 0 && amount > creep.carryCapacity * 0.6) {
-    if (res.memory.linkID) {
-      let link = Game.getObjectById(res.memory.linkID) as StructureLink;
+  let link: StructureLink | null = null;
+  if (res.memory.linkID) {
+    link = Game.getObjectById(res.memory.linkID) as StructureLink;
+  //  if (link.energy < 400) {
+  //here some code for picking up droped resource and move to link should be. But that should be found colony wise to not waste cpu to much
+  //  }
+  }
+
+  if (creep.carryCapacity != 0 && amount >= creep.carryCapacity * 0.6) {
+    if (link) {
       if (link.energy < link.energyCapacity) {
         amount = amount - (link.energyCapacity - link.energy);
         creep.transfer(link, RESOURCE_ENERGY);
@@ -70,7 +77,7 @@ function mineSource(creep: Creep, res: Source) {
       sendEnergy(col, link);
       updateSource(res);//just to be sure it get emptied. could be better with some checks, but the cpu price should be low enough
     }
-    if (amount > creep.carryCapacity * 0.9) {
+    if (amount >= creep.carryCapacity -10) {//current does not get added yet
       creep.drop(RESOURCE_ENERGY, amount);
       updateSource(res);
     }

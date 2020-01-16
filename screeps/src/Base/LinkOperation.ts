@@ -15,5 +15,10 @@ export function sendEnergy(colony: Colony, link: StructureLink) {
         colony.resourceHandler.resourcePush[baseLink.id] = new resourceRequest(baseLink.id, RESOURCE_ENERGY, 200, 0, baseLink.room);
       }
     }
+    else if(baseLink) {//this is in case it got reset from earlier. if we save req in mem this is pointless
+      if (!colony.resourceHandler.resourcePush[baseLink.id]) {
+        colony.resourceHandler.resourcePush[baseLink.id] = new resourceRequest(baseLink.id, RESOURCE_ENERGY, 200, 0, baseLink.room);
+      }
+    }
   }
 }

@@ -65,7 +65,10 @@ export function getBuilderBody(room: Room): BodyPartConstant[] {
   return calculateBodyFromSet(room, [WORK, WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE], 5);
 }
 
-function getHarvesterBody(room: Room): BodyPartConstant[] {
+function getHarvesterBody(colony: Colony): BodyPartConstant[] {
+  let room = colony.room;
+  if (colony.memory.baseLinkID && room.energyCapacityAvailable >= 800)//to reduce probability of puting on ground, also reduce cpu usage
+    return [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
   if (room.energyCapacityAvailable >= 750)
     return [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE];
   else if (room.energyCapacityAvailable >= 550)
@@ -144,14 +147,14 @@ function calculateHarvesterQue(colony: Colony): queData[] {
     for (let source of colony.memory.sourcesUsed) {
       let mem = Memory.Resources[source];
       //if a harvester excist for this source, we ignore it if it will die befeore a new creep reach the spot
-      const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && creep.ticksToLive && creep.ticksToLive > mem.pathCost + creep.body.length * 3 });
+      const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && (!creep.ticksToLive || creep.ticksToLive > mem.pathCost + creep.body.length * 3 )});
       let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
       if (nr == 0) {
         const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
         const mem: CreepMemory = {
           type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]
         };
-        ret.push({ memory: mem, body: getHarvesterBody(cRoom), prio: 1, eTresh: 0.9 });
+        ret.push({ memory: mem, body: getHarvesterBody(colony), prio: 1, eTresh: 0.9 });
       }
     }
   }
@@ -160,7 +163,7 @@ function calculateHarvesterQue(colony: Colony): queData[] {
       const min = Game.getObjectById(source) as Mineral | null;
       if (min && min.mineralAmount > 0 && min.memory.linkID) {
         //if a harvester excist for this source, we ignore it if it will die befeore a new creep reach the spot
-        const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && creep.ticksToLive && creep.ticksToLive > min.memory.pathCost + creep.body.length * 3  });
+        const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && (!creep.ticksToLive || creep.ticksToLive > min.memory.pathCost + creep.body.length * 3) });
         let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
         if (nr == 0) {
           const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };

@@ -51,7 +51,7 @@ export class _PishiMaster {
 
     for (let sourceID in Memory.Resources) {//temporary to fill in information of old memories
       let sourceMem = Memory.Resources[sourceID];
-      if (!sourceMem.path) {
+      if (!sourceMem.path || Game.time % 1e5 == sourceMem.workPos.x) {//just have a somewhat rand nummr to not do all computation at the same time
         let path = findPathToSource(this.colonies[sourceMem.usedByRoom], restorePos(sourceMem.workPos));
         if (!path.incomplete) {
           sourceMem.pathCost = path.cost;
