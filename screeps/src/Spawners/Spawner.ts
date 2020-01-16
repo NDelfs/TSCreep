@@ -142,7 +142,9 @@ function calculateHarvesterQue(colony: Colony): queData[] {
   let cRoom = colony.room;
   if (cRoom.energyCapacityAvailable >= 550) {
     for (let source of colony.memory.sourcesUsed) {
-      const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
+      let mem = Memory.Resources[source];
+      //if a harvester excist for this source, we ignore it if it will die befeore a new creep reach the spot
+      const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && creep.ticksToLive && creep.ticksToLive > mem.pathCost + creep.body.length * 3 });
       let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
       if (nr == 0) {
         const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
@@ -157,7 +159,8 @@ function calculateHarvesterQue(colony: Colony): queData[] {
     for (let source of colony.memory.mineralsUsed) {
       const min = Game.getObjectById(source) as Mineral | null;
       if (min && min.mineralAmount > 0 && min.memory.linkID) {
-        const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
+        //if a harvester excist for this source, we ignore it if it will die befeore a new creep reach the spot
+        const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && creep.ticksToLive && creep.ticksToLive > min.memory.pathCost + creep.body.length * 3  });
         let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
         if (nr == 0) {
           const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };

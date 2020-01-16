@@ -51,13 +51,15 @@ export class _PishiMaster {
 
     for (let sourceID in Memory.Resources) {//temporary to fill in information of old memories
       let sourceMem = Memory.Resources[sourceID];
-      let path = findPathToSource(this.colonies[sourceMem.usedByRoom], restorePos(sourceMem.workPos));
-      if (!path.incomplete) {
-        sourceMem.pathCost = path.cost;
-        sourceMem.path = serializePath(path.path);
-      }
-      else {
-        console.log("failed to fill in path information to source")
+      if (!sourceMem.path) {
+        let path = findPathToSource(this.colonies[sourceMem.usedByRoom], restorePos(sourceMem.workPos));
+        if (!path.incomplete) {
+          sourceMem.pathCost = path.cost;
+          sourceMem.path = serializePath(path.path);
+        }
+        else {
+          console.log("failed to fill in path information to source")
+        }
       }
     }
   }
