@@ -68,11 +68,13 @@ type LabStates =
   | BOOSTING
   | UNBOSTING
   | REACTION
+  | REACTREGENT
   ;
 
 type BOOSTING = 1;
 type UNBOSTING = 2;
 type REACTION = 10;
+type REACTREGENT = 11;
 
 interface posData {
   /**

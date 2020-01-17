@@ -38,7 +38,8 @@ const ColonyMemoryDef: ColonyMemory = {
   wallEnergy: 0,
   boosts: [],
   creepBuildQue: [],
-  labMemories: [],
+  labMem: {},
+  labMemories: [],//depr
 }
 
 function refreshArray(array: any[]) {
@@ -118,9 +119,7 @@ export class Colony {
     this.room = iRoom;
     this.name = iRoom.name;
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
-    if (!this.memory.labMemories) {
-      this.memory.labMemories = [];
-    }
+    
     this.creepBuildQueRef = this.memory.creepBuildQue;
     this.closestBoostCol = null;
     if (this.memory.closestBoostCol)
@@ -148,7 +147,7 @@ export class Colony {
     this.energyNeedStruct = [];
     this.energyTransporters = [];
     this.labs = [];
-    for (let mem of this.memory.labMemories) {
+    for (let mem of this.memory.labMemories) {//change this to the labMem instead
       let lab = Game.getObjectById(mem.ID) as StructureLab | null;
       if (lab) {
         this.labs.push(lab);
@@ -158,6 +157,18 @@ export class Colony {
       }
     }
     findAndBuildLab(this, this.labs);
+    if (!this.memory.labMem) {
+      this.memory.labMem = {};
+      if (this.memory.labMemories) {
+        let i = 0;
+        for (let labMemory of this.memory.labMemories) {
+          labMemory.Index = i;
+          this.memory.labMem[labMemory.ID] = labMemory;
+          i++;
+        }
+      }
+    }
+
 
     this.resourceExternal = [];
     this.resourceExternalPerm = [];

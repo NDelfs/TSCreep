@@ -40,3 +40,4 @@ export const REACTION_CHAIN: { [name: string]: IReaction } = {
 export const BOOSTING = 1;
 export const UNBOSTING = 2;
 export const REACTION = 10;
+export const REACTREGENT = 11;

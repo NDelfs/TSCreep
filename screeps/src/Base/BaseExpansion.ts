@@ -352,7 +352,7 @@ export function findAndBuildLab(col: Colony, labs: StructureLab[]) {
         for (let struct of structs) {
           if (struct.structureType == STRUCTURE_LAB) {
             labs.push(struct as StructureLab);
-            col.memory.labMemories.push({ ID: struct.id, state: null, pushedStat: null, resource: "" });
+            col.memory.labMem[struct.id] = { ID: struct.id, state: null, pushedStat: null, resource: "", Index: i };
           }
         }
         if (labs.length < i + 1) {

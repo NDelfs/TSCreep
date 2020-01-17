@@ -29,6 +29,10 @@ interface Mineral {
   memory: SourceMemory;
 }
 
+interface StructureLab {
+  memory: LabMemory;
+}
+
 interface Room {
   my: boolean;
   creepsInRoom: Creep[];

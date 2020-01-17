@@ -33,6 +33,7 @@ interface BoostMemory {
 
 interface LabMemory {
   ID: string;
+  Index: number;
   state: LabStates;
   pushedStat: LabStates;
   resource: string;//or id to boost or reaction if reaction is tracable
@@ -65,7 +66,8 @@ interface ColonyMemory {
   wallEnergy: number;
   boosts: BoostMemory[];
   creepBuildQue: queData[];
-  labMemories: LabMemory[];
+  labMem: { [name: string]: LabMemory };
+  labMemories: LabMemory[];//depr
 }
 
 interface RoomMemory {
