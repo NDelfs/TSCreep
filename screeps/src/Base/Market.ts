@@ -70,11 +70,24 @@ export class Market {
         let keys = Object.keys(terminal.store) as ResourceConstant[];
         for (let key of keys) {
           let res = terminal.store[key] || 0;
+          if (res > 0) {
+            let usedKey = key == RESOURCE_ENERGY;//seen as used if energy
+            if (!usedKey) {
+              for (let lab of this.colonies[roomID].labs) {
+                usedKey = usedKey || lab.memory.resource == key;
+              }
+              for (let ext of this.colonies[roomID].resourceExternal) {
+                usedKey = usedKey || ext == key;
+              }
+            }
 
-          if ((key != RESOURCE_ENERGY && res > OVERFLOW_THRESHOLD) || (key == RESOURCE_ENERGY && res > C.TERMINAL_MIN_STORAGE)) {
-            if (overflow[key] == null)
-              overflow[key] = [];
-            overflow[key].push({ A: res, P: roomID });
+            if (!usedKey || ((key != RESOURCE_ENERGY && res > OVERFLOW_THRESHOLD) || (key == RESOURCE_ENERGY && res > C.TERMINAL_MIN_STORAGE))) {
+              //if (!usedKey)
+                //console.log(roomID, "added", key, "as unused");
+              if (overflow[key] == null)
+                overflow[key] = [];
+              overflow[key].push({ A: res, P: roomID });
+            }
           }
         }
 

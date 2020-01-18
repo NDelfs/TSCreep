@@ -3,7 +3,8 @@ import { ErrorMapper } from "utils/ErrorMapper";
 //const profiler = require('Profiler/screeps-profiler');
 import './ScreepExtends/Room';
 import './ScreepExtends/Creep';
-import './ScreepExtends/Source'
+import './ScreepExtends/Source';
+import 'ScreepExtends/Lab';
 
 
 import { PM, createNewMaster } from "PishiMaster";

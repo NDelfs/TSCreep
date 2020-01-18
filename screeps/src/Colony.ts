@@ -39,7 +39,6 @@ const ColonyMemoryDef: ColonyMemory = {
   boosts: [],
   creepBuildQue: [],
   labMem: {},
-  labMemories: [],//depr
 }
 
 function refreshArray(array: any[]) {
@@ -147,8 +146,8 @@ export class Colony {
     this.energyNeedStruct = [];
     this.energyTransporters = [];
     this.labs = [];
-    for (let mem of this.memory.labMemories) {//change this to the labMem instead
-      let lab = Game.getObjectById(mem.ID) as StructureLab | null;
+    for (let mem in this.memory.labMem) {//change this to the labMem instead
+      let lab = Game.getObjectById(mem) as StructureLab | null;
       if (lab) {
         this.labs.push(lab);
       }
@@ -157,18 +156,6 @@ export class Colony {
       }
     }
     findAndBuildLab(this, this.labs);
-    if (!this.memory.labMem) {
-      this.memory.labMem = {};
-      if (this.memory.labMemories) {
-        let i = 0;
-        for (let labMemory of this.memory.labMemories) {
-          labMemory.Index = i;
-          this.memory.labMem[labMemory.ID] = labMemory;
-          i++;
-        }
-      }
-    }
-
 
     this.resourceExternal = [];
     this.resourceExternalPerm = [];
@@ -505,7 +492,7 @@ export class Colony {
         boostType = RESOURCE_LEMERGIUM_HYDRIDE;
         boostCost = countBodyPart(creepData.body, WORK) * 30;
       }
-
+      
       //create boost que and target
       if (boostType && this.room.terminal.store[boostType] >= boostCost) {
 
@@ -515,11 +502,11 @@ export class Colony {
           booster.boostTime = Game.time;
         }
         else {
-          let labNr = _.findLastIndex(this.memory.labMemories, (val => val.state == null));
+          let labNr = _.findLastIndex(this.labs, (val => val.memory.state == null));
           if (labNr) {
             booster = { boost: boostType, nrCreep: 1, labID: labNr, boostCost: boostCost, boostTime: Game.time };
             this.memory.boosts.push(booster);
-            this.memory.labMemories[labNr].state = BOOSTING;
+            this.labs[labNr].memory.state = BOOSTING;
           }
         }
         let lab = this.labs[booster!.labID];
@@ -565,7 +552,7 @@ export class Colony {
           boostInfo.nrCreep -= 1;
           console.log(this.name, "boosted", err, creep.name, PrettyPrintErr(err));
           if (boostInfo.nrCreep <= 0) {
-            this.memory.labMemories[boostInfo.labID].state = null;
+            this.labs[boostInfo.labID].memory.state = null;
             _.remove(this.memory.boosts, value => value.boost == boostT);
           }
         }

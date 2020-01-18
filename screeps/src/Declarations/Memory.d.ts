@@ -67,7 +67,6 @@ interface ColonyMemory {
   boosts: BoostMemory[];
   creepBuildQue: queData[];
   labMem: { [name: string]: LabMemory };
-  labMemories: LabMemory[];//depr
 }
 
 interface RoomMemory {
