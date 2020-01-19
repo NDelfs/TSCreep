@@ -35,13 +35,15 @@ interface MineralReq {
   r: IReaction;
   reactPerTic: number;
   autoAdded: boolean;
+  masterReq: ResourceConstant|null;
 }
 
 const reactionsWanted: GlobMineralReq[] = [//half global init a restart of prod
-  { r: REACTION_CHAIN["G"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
   { r: REACTION_CHAIN["LH"], perRoom: 2000, global: 5000, perTick: 0.06 },//cheap boost for building
   { r: REACTION_CHAIN["UO"], perRoom: 2000, global: 5000, perTick: 0.1 },
-  { r: REACTION_CHAIN["XGH2O"], perRoom: 2000, global: 5000, perTick: 0.15 },//number is dependent on recycling creep
+  { r: REACTION_CHAIN["XGH2O"], perRoom: 2000, global: 5000, perTick: 0.075 },//number is dependent on recycling creep, should be 15 but decreased to fit until a bottom up approach is used
+  { r: REACTION_CHAIN["G"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
+  { r: REACTION_CHAIN["OH"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
   /*, REACTION_CHAIN["XGH2O"]*/
 ];
 
@@ -191,6 +193,7 @@ export class LabMaster {
         }
       }
     }
+    console.log("Global Res",JSON.stringify(this.resources));
   }
 
   private resourceResetLab(colony: Colony, lab: StructureLab, res: ResourceConstant | null, created: boolean) {
@@ -291,15 +294,16 @@ export class LabMaster {
     if (reaction.needs.length > 0) {//otherwise its an base resource
       nrLabs = Math.ceil(minReq.reactPerTic * REACTION_TIME_TYPED[reaction.r]);
     }
-    if (this.resources[minReq.r.r] > UPDATETIME * 5 && nrLabs > 0 && minReq.autoAdded) {
+    if (this.resources[minReq.r.r] > UPDATETIME * 10 && nrLabs > 0 && minReq.autoAdded) {
       nrLabs = 0;
       console.log(minReq.r.r, "was not added due to big supply", this.resources[minReq.r.r]);
     }
 
     if (nrLabs && (labInfo.nrLabUsed + nrLabs + 2 + reserved) <= labInfo.nrLabs - 1) {
       let master: labGroup = { idxs: this.getFreeLabIndex(labInfo, nrLabs, REACTION, reaction.r, parentIdx), final: parentIdx.length == 0 };
-      let slave1 = this.recuAddReact(master.idxs, { r: REACTION_CHAIN[reaction.needs[0]], reactPerTic: minReq.reactPerTic, autoAdded: true }, labInfo, reactionsToAdd,reserved+1);
-      let slave2 = this.recuAddReact(master.idxs, { r: REACTION_CHAIN[reaction.needs[1]], reactPerTic: minReq.reactPerTic, autoAdded: true }, labInfo, reactionsToAdd, reserved);
+      let masterReq: ResourceConstant = minReq.masterReq ? minReq.masterReq : reaction.r;
+      let slave1 = this.recuAddReact(master.idxs, { r: REACTION_CHAIN[reaction.needs[0]], reactPerTic: minReq.reactPerTic, autoAdded: true, masterReq: masterReq }, labInfo, reactionsToAdd, reserved + 1);
+      let slave2 = this.recuAddReact(master.idxs, { r: REACTION_CHAIN[reaction.needs[1]], reactPerTic: minReq.reactPerTic, autoAdded: true, masterReq: masterReq}, labInfo, reactionsToAdd, reserved);
       labInfo.roomReaction.push({ react: reaction, result: master, res1: slave1, res2: slave2 });
       console.log(labInfo.colony,'pushed reaction', reaction.r, "M", JSON.stringify(master), "S1", JSON.stringify(slave1), "S2", JSON.stringify(slave2));
       return master;
@@ -309,7 +313,7 @@ export class LabMaster {
           let found = reactionsToAdd.find((e) => { return e.r.r == minReq.r.r })
           if (found) {
             found.reactPerTic += minReq.reactPerTic;
-            console.log("found and updated earlier res", found.r.r);
+            //console.log("found and updated earlier res", found.r.r);
           }
           else {
             reactionsToAdd.push(minReq);//because the other room will use the same nr lab calculation as a start
@@ -332,7 +336,7 @@ export class LabMaster {
     }
 
     if (nrLabs + labInfo.nrLabUsed < labInfo.nrLabs) {//if its to big for this room
-      let main = this.recuAddReact([], { r: minReq.r, reactPerTic: nrLabs / REACTION_TIME_TYPED[minReq.r.r], autoAdded: minReq.autoAdded }, labInfo, reactionsToAdd,0);
+      let main = this.recuAddReact([], { r: minReq.r, reactPerTic: nrLabs / REACTION_TIME_TYPED[minReq.r.r], autoAdded: minReq.autoAdded, masterReq: null }, labInfo, reactionsToAdd, 0);
       
       return main.idxs.length / REACTION_TIME_TYPED[minReq.r.r];
     }
@@ -351,14 +355,15 @@ export class LabMaster {
     return availLab;
   }
 
+  
   private distibuteReactions() {
     let minReq: MineralReq[] = [];
     for (let GlobReq of this.reactionsToAdd) {
       let reactT = REACTION_TIME_TYPED[GlobReq.r.r];
       let nrLabs = Math.ceil(GlobReq.perTick * this.colLabs.length * reactT / 5);//even out the reactions to the top level such that they can work full time
-      minReq.push({ r: GlobReq.r, reactPerTic: nrLabs / reactT, autoAdded: false });
+      minReq.push({ r: GlobReq.r, reactPerTic: nrLabs / reactT, autoAdded: false, masterReq : null });
     }
-
+    let labsUsed = 0
     if (this.colLabs.length >= 3) {//this is outdated, for G we needed atleast 3 rooms with 3 labs. But LH are beneficial at one col with 3 labs 
       for (let labInfo of this.colLabs) {
 
@@ -381,12 +386,18 @@ export class LabMaster {
           }
         }
         //minReq = minReq.concat(localReactionToAdd);
-        console.log(labInfo.colony, "total reaction added", labInfo.roomReaction.length, "left to add", minReq.length, JSON.stringify(minReq));
+        labsUsed += labInfo.nrLabUsed;
+        console.log(labInfo.colony, "total reaction added", labInfo.roomReaction.length, "left to add", minReq.length, JSON.stringify(minReq), "used labs", labInfo.nrLabUsed, "of", labInfo.nrLabs);
 
         if (minReq.length == 0)
           return;
       }
     }
+    if (minReq.length > 0) {
+      console.log("Failed to place", JSON.stringify(minReq), "used", labsUsed, "of", this.nrLabs);
+    }
+    else
+      console.log("labs used", labsUsed, "of", this.nrLabs)
   }
 }
 profiler.registerClass(LabMaster, 'LabMaster');

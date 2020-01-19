@@ -76,7 +76,7 @@ export class _PishiMaster {
           this.colonies[colonyID].memory.closestBoostCol = closeC.name;
       }
     }
-
+    this.market.refresh(this.colonies);
     this.attackHand.refresh(this.colonies);
     this.newColHandler.refresh(this.colonies);
   }
@@ -84,11 +84,11 @@ export class _PishiMaster {
   run() {
     for (let colonyID in this.colonies) {
       let colony = this.colonies[colonyID];    
-      Spawner(colony, this.colonies);
-      RefreshQue(colony);
-      spawnFromReq(colony, this.colonies);
+      profiler.registerFN(Spawner)(colony, this.colonies);
+      profiler.registerFN(RefreshQue)(colony);
+      profiler.registerFN(spawnFromReq)(colony, this.colonies);
       colony.runTowers();
-      baseExpansion(colony);
+      profiler.registerFN(baseExpansion)(colony);
     }
     this.newColHandler.run();
     this.attackHand.run();

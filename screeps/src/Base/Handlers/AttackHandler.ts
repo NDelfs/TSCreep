@@ -6,7 +6,8 @@ import { nrCreepInQue } from "../../utils/minorUtils";
 import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_TARGET_ATTACK, getFlagsInRoom } from "../../Types/FlagTypes";
 import { ATTACK_STRUCTURE, POSITION } from "../../Types/TargetTypes";
 import { isEqualPos } from "../../utils/posHelpers";
-
+//@ts-ignore
+import profiler from "Profiler/screeps-profiler";
 const NRATTACKER = 3;
 
 class RoomAttack {
@@ -198,3 +199,4 @@ export class AttackHandler {
     }
   }
 }
+profiler.registerClass(AttackHandler, 'AttackHandler');

@@ -6,6 +6,8 @@ import { calculateBodyFromSet } from "Spawners/Spawner";
 import { findClosestColony } from "utils/ColonyUtils";
 import { isFlagColor, FLAG_ROOM_ATTACK, FLAG_NEW_COLONY, getFlags } from "../../Types/FlagTypes";
 import { isEqualPos } from "../../utils/posHelpers";
+//@ts-ignore
+import profiler from "Profiler/screeps-profiler";
 
 function calculateScoutQue(spawCol: Colony, flag: Flag) {
   const creeps = _.filter(Game.creeps, function (creep) { return creep.memory.type == SCOUT && creep.alreadyTarget(flag.name); });
@@ -150,3 +152,4 @@ export class NewColonyHandler {
     }
   }
 }
+profiler.registerClass(NewColonyHandler, 'NewColonyHandler');

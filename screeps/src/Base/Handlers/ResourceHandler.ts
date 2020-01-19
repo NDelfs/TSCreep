@@ -2,6 +2,7 @@ import { HARVESTER, TRANSPORTER, STARTER, BUILDER } from "Types/CreepType";
 
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { RemoteInfo } from "dgram";
 
 
 export class resourceRequest {
@@ -97,6 +98,19 @@ export class ResourceHandler {
     return undefined;
   }
 
+  public refresh() {
+    if (Game.time % 100 == 0) {
+      for (let id in this._resourceRequests) {
+        let removed = _.remove(this._resourceRequests[id], (e) => { return Game.time - e.createdTime > 500 });
+        for (let rem of removed) {
+          console.log(this.room.name, "Removed request", JSON.stringify(rem));
+        }
+        if (this._resourceRequests[id].length == 0)
+          delete this._resourceRequests[id];
+      }
+    }
+}
+
   public removeTranReq(id: string, res: ResourceConstant, creep: Creep) {
     let req = this.getReq(id, res);
     if (req) {
@@ -150,3 +164,4 @@ export class ResourceHandler {
     }
   }
 }
+profiler.registerClass(ResourceHandler, 'ResourceHandler');

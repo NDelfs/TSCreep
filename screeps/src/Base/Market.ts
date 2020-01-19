@@ -1,6 +1,7 @@
 import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 import { Colony } from "Colony"
 import * as C from "Types/Constants";
+import * as Mem from "Memory";
 import { REACTION_CHAIN, IReaction, Terminal_Min_Trade } from "Types/Constants"
 //import { resourceRequest } from "Base/ResourceHandler"
 //@ts-ignore
@@ -18,6 +19,11 @@ interface underflowBalance {
 
 interface sendTrans {
 
+}
+
+const MarketMemoryDef: MarketMemory = {
+  buyPrices: {},
+  sellPrices: {},
 }
 
 function countResources(colonies: { [name: string]: Colony }): { [name: string]: number } {
@@ -49,9 +55,15 @@ const UNDERFLOW_EXTERNALTRADE = 10000;
 const UNDERFLOW_THRESHOLD = 2000;
 export class Market {
   colonies: { [name: string]: Colony };
-
+  memory: MarketMemory;
   constructor(iColonies: { [name: string]: Colony }) {
     this.colonies = iColonies;
+    this.memory = Mem.wrap(Memory, "MarketMem", MarketMemoryDef);
+  }
+
+  public refresh(iColonies: { [name: string]: Colony }) {
+    this.colonies = iColonies;
+    this.memory = Mem.wrap(Memory, "MarketMem", MarketMemoryDef);
   }
 
   public run(): void {
@@ -79,11 +91,16 @@ export class Market {
               for (let ext of this.colonies[roomID].resourceExternal) {
                 usedKey = usedKey || ext == key;
               }
+              for (let ext of this.colonies[roomID].resourceExternalPerm) {
+                usedKey = usedKey || ext == key;
+              }
             }
 
             if (!usedKey || ((key != RESOURCE_ENERGY && res > OVERFLOW_THRESHOLD) || (key == RESOURCE_ENERGY && res > C.TERMINAL_MIN_STORAGE))) {
               //if (!usedKey)
                 //console.log(roomID, "added", key, "as unused");
+              //if (key == "OH")
+              //  console.log(roomID, "found OH", res)
               if (overflow[key] == null)
                 overflow[key] = [];
               overflow[key].push({ A: res, P: roomID });
@@ -101,8 +118,10 @@ export class Market {
             buyOrder[req] = roomID;
             //console.log("added buy order", req, roomID, this.colonies[roomID].resourceExternal);
           }
-
+          
           let res = terminal.store[req] || 0;
+          //if (roomID == "E48N47")
+          //  console.log(roomID, "need", req, res);
           if (res < UNDERFLOW_THRESHOLD) {
             underflow.push({ R: req, A: UNDERFLOW_THRESHOLD - res, P: roomID });
           }
@@ -114,10 +133,13 @@ export class Market {
         for (let avail of avails) {
           let term = Game.rooms[avail.P].terminal;
           if (term) {
-            let amount = Math.min(avail.A, under.A);
-            avail.A -= amount;
-            under.A -= amount;
-            if (amount > C.Terminal_Min_Trade) {
+            let amount = Math.min(avail.A, under.A);          
+            //if (under.P == "E48N47" && under.R == "OH") {
+            //  console.log("found matching", amount, JSON.stringify(avail), JSON.stringify(under));
+            //}
+            if (amount >= C.Terminal_Min_Trade || (amount == avail.A && avail.A>0)) {
+              avail.A -= amount;
+              under.A -= amount;
               let err = term.send(under.R, amount, under.P, "Balancing resources");
               console.log("Traded", amount, under.R, "from", avail.P, "to", under.P, "with error", PrettyPrintErr(err));
             }
@@ -147,7 +169,7 @@ export class Market {
               if (tradeAmount > C.Terminal_Min_Trade) {
                 let err = Game.market.deal(orders[0].id, tradeAmount, avail.P);
                 console.log("Sold", tradeAmount, overR, "from", avail.P, "at price", orders[0].price, "with error", PrettyPrintErr(err));
-
+                this.memory.sellPrices[orders[0].resourceType] = { price: orders[0].price, lastPriceChange: Game.time };
               }
             }
           }
@@ -165,6 +187,7 @@ export class Market {
             if (tradeAmount > C.Terminal_Min_Trade) {
               let err = Game.market.deal(orders[0].id, tradeAmount, buyOrder[req]);
               console.log("bought", tradeAmount, req, "from", buyOrder[req], "at price", orders[0].price, "with error", PrettyPrintErr(err));
+              this.memory.buyPrices[orders[0].resourceType] = { price: orders[0].price, lastPriceChange: Game.time };
             }
           }
         }

@@ -15,7 +15,7 @@ interface Memory {
   creepIndex: number;
   Resources: { [name: string]: SourceMemory };
   LevelTick: number[];
-
+  MarketMem: MarketMemory;
   PishiMasterMem: PishiMasterMemory;
   ColonyMem: { [name: string]: ColonyMemory };
 }
@@ -45,6 +45,11 @@ interface FightInfo {
   lastT: string|null;
   healMult: number;
   healPower: number;
+}
+
+interface MarketMemory {
+  sellPrices: { [res: string]: { price: number, lastPriceChange: number } };
+  buyPrices: { [res: string]: { price: number, lastPriceChange: number } };
 }
 
 interface ColonyMemory {

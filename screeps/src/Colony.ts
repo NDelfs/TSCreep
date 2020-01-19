@@ -216,7 +216,7 @@ export class Colony {
       this.towers = _.filter(this.room.myStructures, { structureType: STRUCTURE_TOWER }) as StructureTower[];
       this.extensions = _.filter(this.room.myStructures, { structureType: STRUCTURE_EXTENSION }) as StructureExtension[];
     }
-
+    this.resourceHandler.refresh();
     this.computeLists();
     this.refreshEnergyDemand(this.forceUpdateEnergy);
     this.forceUpdateEnergy = false;
@@ -436,11 +436,13 @@ export class Colony {
         }
 
         healingPower = fInfo!.healPower * fInfo!.healMult;
-        if (firePower > healingPower) {
+        if (firePower * 1.1 > healingPower) {
           fInfo!.nrAttack++;
           fInfo!.lastT = fInfo!.target;
         }
-
+        else {
+          fInfo!.nrAttack = 0;
+        }
         console.log(this.name, "are under attack: healing vs firePower", healingPower, firePower, JSON.stringify(fInfo!));
       }
     }
@@ -448,7 +450,7 @@ export class Colony {
     for (let tower of this.towers) {
       try {
         if (hostileTarget) {
-          if (firePower > healingPower) {
+          if (firePower*1.1 > healingPower) {
             tower.attack(hostileTarget);
             continue;
           }

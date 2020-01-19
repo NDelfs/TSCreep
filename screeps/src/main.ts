@@ -103,7 +103,7 @@ function main() {
   //    console.log("Failed spawner update with: ", e);
   //}
   //console.log(`Current game tick is ${Game.time}`);
-  CreepUpdate();
+  profiler.registerFN(CreepUpdate)();
   // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
     if (!(name in Game.creeps)) {
