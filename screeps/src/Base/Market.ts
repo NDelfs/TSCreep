@@ -149,6 +149,8 @@ export class Market {
 
       //let orders: { [Res: string]: Order[] } = {}; 
       for (let overR in overflow) {
+        if (overR == RESOURCE_ENERGY)
+          continue;//we do not sell energy
         let orders: Order[] | null = null;
         let avails = overflow[overR] || [];
 

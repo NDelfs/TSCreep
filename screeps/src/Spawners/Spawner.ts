@@ -158,10 +158,10 @@ function calculateHarvesterQue(colony: Colony): queData[] {
       }
     }
   }
-  if (cRoom.terminal && colony.controller.level >=6 && ret.length == 0 && cRoom.availEnergy > 4e4) {
+  if (cRoom.terminal && colony.controller.level >= 6 && ret.length == 0 && cRoom.availEnergy > 4e4) {
     for (let source of colony.memory.mineralsUsed) {
       const min = Game.getObjectById(source) as Mineral | null;
-      if (min && min.mineralAmount > 0 && min.memory.linkID) {
+      if (min && min.mineralAmount > 0 && min.memory.linkID && cRoom.terminal.store[min.memory.resourceType] < 1e5) {//we do not want to fill up terminal if we cant use or sell resources
         //if a harvester excist for this source, we ignore it if it will die befeore a new creep reach the spot
         const current = _.filter(cRoom.getCreeps(creepT.HARVESTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source && (!creep.ticksToLive || creep.ticksToLive > min.memory.pathCost + creep.body.length * 3) });
         let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);

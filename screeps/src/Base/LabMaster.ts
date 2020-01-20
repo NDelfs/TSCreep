@@ -47,7 +47,7 @@ const reactionsWanted: GlobMineralReq[] = [//half global init a restart of prod
   /*, REACTION_CHAIN["XGH2O"]*/
 ];
 
-const UPDATETIME = 1000;//this also affect the threshould before adding a auto minReq
+const UPDATETIME = 3000;//this also affect the threshould before adding a auto minReq
 
 export class LabMaster {
   colonies: { [name: string]: Colony };
@@ -294,7 +294,7 @@ export class LabMaster {
     if (reaction.needs.length > 0) {//otherwise its an base resource
       nrLabs = Math.ceil(minReq.reactPerTic * REACTION_TIME_TYPED[reaction.r]);
     }
-    if (this.resources[minReq.r.r] > UPDATETIME * 10 && nrLabs > 0 && minReq.autoAdded) {
+    if (this.resources[minReq.r.r] > UPDATETIME * 4 && nrLabs > 0 && minReq.autoAdded) {
       nrLabs = 0;
       console.log(minReq.r.r, "was not added due to big supply", this.resources[minReq.r.r]);
     }
