@@ -2,7 +2,7 @@ import * as targetT from "Types/TargetTypes";
 import { restorePos } from "utils/posHelpers";
 import { PrettyPrintErr, PrettyPrintCreep } from "../../utils/PrettyPrintErr";
 import * as C from "Types/Constants";
-import { getSourceTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
+import { getSourceTarget, getFromStoreTarget } from "Drones/Funcs/PickupEnergy";
 import { PM } from "PishiMaster";
 
 export function resetDeliverTarget(creep: Creep) {

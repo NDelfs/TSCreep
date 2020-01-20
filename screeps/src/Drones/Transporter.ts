@@ -1,4 +1,4 @@
-import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
+import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/PickupEnergy";
 import { useDeliverTarget, getNewDeliverTarget, getStorageDeliverTarget } from "./Funcs/DeliverEnergy";
 import * as targetT from "Types/TargetTypes";
 import { PM } from "PishiMaster";

@@ -121,7 +121,7 @@
     <TypeScriptCompile Include="src\Drones\Funcs\DeliverEnergy.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="src\Drones\Funcs\DroppedEnergy.ts">
+    <TypeScriptCompile Include="src\Drones\Funcs\PickupEnergy.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="src\Drones\Funcs\Walk.ts">

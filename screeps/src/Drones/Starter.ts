@@ -1,6 +1,6 @@
 import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import * as targetT from "Types/TargetTypes";
-import { getSourceTarget, useEnergyTarget } from "./Funcs/DroppedEnergy";
+import { getSourceTarget, useEnergyTarget } from "./Funcs/PickupEnergy";
 import { restorePos } from "../utils/posHelpers";
 import { resetDeliverTarget, getNewDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";

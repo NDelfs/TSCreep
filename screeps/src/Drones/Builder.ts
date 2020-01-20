@@ -2,7 +2,7 @@ import { PrettyPrintErr } from "utils/PrettyPrintErr";
 import { resetDeliverTarget, useDeliverTarget } from "Drones/Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "Drones/Funcs/Build";
 import * as targetT from "Types/TargetTypes";
-import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/DroppedEnergy";
+import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/PickupEnergy";
 import { PM } from "PishiMaster";
 import { DROPPED_RESOURCE } from "Types/TargetTypes";
 
