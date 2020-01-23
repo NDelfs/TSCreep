@@ -48,8 +48,8 @@ interface FightInfo {
 }
 
 interface MarketMemory {
-  sellPrices: { [res: string]: { price: number, lastPriceChange: number } };
-  buyPrices: { [res: string]: { price: number, lastPriceChange: number } };
+  sellPrices: { [res: string]: { price: number, energyCompPrice: number, lastPriceChange: number } };
+  buyPrices: { [res: string]: { price: number, energyCompPrice: number, lastPriceChange: number } };
 }
 
 interface ColonyMemory {
