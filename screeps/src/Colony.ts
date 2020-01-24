@@ -85,6 +85,7 @@ export class Colony {
   spawnEnergyNeed: number;
   energyNeedStruct: targetData[];
   energyTransporters: Creep[];
+  _energyAtSources: number;//just a tmp var
 
   resourceHandler: ResourceHandler
   resourceExternal: ResourceConstant[];
@@ -126,7 +127,7 @@ export class Colony {
 
     this.mRebuild = getRandomInt(2000, 5000); //rebuil about every hour
     this.forceUpdateEnergy = false;
-
+    this._energyAtSources = 0;
     global[this.name] = this;
     global[this.name.toLowerCase()] = this;
     this.outpostIDs = this.memory.outposts;
@@ -183,6 +184,7 @@ export class Colony {
   }
 
   public refresh() {
+    this._energyAtSources = -1;
     this.memory = Mem.wrap(Memory.ColonyMem, this.name, ColonyMemoryDef);
     this.creepBuildQueRef = this.memory.creepBuildQue;
     this.room = Game.rooms[this.name];
@@ -586,6 +588,28 @@ export class Colony {
     let pathObj = findPathToSource(this, start, maxOps);
     let myPath = serializePath(pathObj.path);
     console.log(pathObj.incomplete,"length", myPath.length - 4, "cost", pathObj.cost, myPath);
+  }
+
+  public energyAtSources() : number {
+    if (this._energyAtSources >= 0)
+      return this._energyAtSources;
+    this._energyAtSources = 0;
+    for (let sourceID of this.memory.sourcesUsed) {
+      let mem = Memory.Resources[sourceID];
+      if (mem.lastDropID) {
+        let obj = Game.getObjectById(mem.lastDropID) as Resource | null;
+        if (obj) {
+          this._energyAtSources += obj.amount;
+        }
+      }
+      if (mem.container) {
+        let obj = Game.getObjectById(mem.container) as StructureContainer | null;
+        if (obj) {
+          this._energyAtSources += obj.store[RESOURCE_ENERGY];
+        }
+      }
+    }
+    return this._energyAtSources;
   }
 }
 profiler.registerClass(Colony, 'Colony');

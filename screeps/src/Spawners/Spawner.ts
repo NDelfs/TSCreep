@@ -86,10 +86,7 @@ function calculateTransportQue(colony: Colony): queData[] {
   if (colony.controller.level >= 3) {
     let transportSize = (cRoom.energyCapacityAvailable * 0.8 / 150.0) * 100;
     let limit = 2;
-    let roomEne = 0;
-    for (let sourceID of colony.memory.sourcesUsed) {
-      roomEne += Memory.Resources[sourceID].AvailResource;
-    }
+    let roomEne = colony.energyAtSources();
     let controllerNeed = 0;
 
     if (colony.memory.controllerStoreID) {
@@ -183,10 +180,6 @@ function calculateUpgraderQue(colony: Colony) {
     let store: StructureContainer | null = Game.getObjectById(colony.memory.controllerStoreID);
     if (store) {
       let limit = 1;
-      let roomEne = 0;
-      for (let sourceID of colony.memory.sourcesUsed) {
-        roomEne += Memory.Resources[sourceID].AvailResource;
-      }
       let controllerNeed = 0;
       if (colony.memory.controllerStoreID) {
         let req = colony.resourceHandler.getReq(colony.memory.controllerStoreID, RESOURCE_ENERGY);
@@ -206,7 +199,7 @@ function calculateUpgraderQue(colony: Colony) {
         if (cRoom.storage.store.energy > 3e5 && cRoom.energyCapacityAvailable >= 2000)
           body = Array(15).fill(WORK).concat([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE]);
       }
-      if ((!cRoom.storage && roomEne > 4000 && controllerNeed < 500)) {
+      if ((!cRoom.storage && controllerNeed < 500)) {
         limit = 2;
         range = 1;
       }

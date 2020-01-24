@@ -89,7 +89,7 @@ interface SourceMemory {
   pathCost: number;
   container: string | null;
   linkID: string | null;
-  AvailResource: number;
+  lastDropID: string | null;
   resourceType: ResourceConstant;
 }
 

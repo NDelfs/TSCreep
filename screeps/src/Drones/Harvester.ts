@@ -2,7 +2,6 @@ import * as targetT from "Types/TargetTypes";
 import { PM } from "PishiMaster";
 import { Colony } from "Colony"
 import { sendEnergy } from "Base/LinkOperation"
-import { updateSource } from "../utils/DataUpdate";
 import { resourceRequest } from "Base/Handlers/ResourceHandler";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
