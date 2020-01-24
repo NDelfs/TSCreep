@@ -99,13 +99,13 @@ function buildSourceCon(colony: Colony, memory: SourceMemory) {
   }
 }
 
-function buildBaseLink(colony: Colony, pos?: RoomPosition) {
+function buildBaseLink(colony: Colony, iPos?: RoomPosition) {
   if (colony.baseLink == null && colony.room.storage) {
     let pos = colony.room.storage.pos;
     colony.memory.baseLinkID = getIdInRange(pos, 1, STRUCTURE_LINK);
     if (colony.memory.baseLinkID == null) {
-      if (pos)
-        buildStructAt(colony, pos, STRUCTURE_LINK);
+      if (iPos)
+        buildStructAt(colony, iPos, STRUCTURE_LINK);
       console.log(colony.name, "could not find base link");
     }
   }

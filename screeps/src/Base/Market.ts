@@ -146,7 +146,10 @@ export class Market {
           }
         }
       }
-      if (!this.memory.buyPrices[RESOURCE_ENERGY] || this.memory.buyPrices[RESOURCE_ENERGY].lastPriceChange + 1000 < Game.time) {
+      if (!this.memory.buyPrices[RESOURCE_ENERGY]) {//just create an empty one that we can write to
+        this.memory.buyPrices[RESOURCE_ENERGY] = { price: 0.2, energyCompPrice: 0.2, lastPriceChange: Game.time-10000 }
+      }
+      if (this.memory.buyPrices[RESOURCE_ENERGY].lastPriceChange + 1000 < Game.time) {
         let energyorders = Game.market.getAllOrders({ type: ORDER_SELL, resourceType: RESOURCE_ENERGY });
         if (energyorders.length > 0) {
           let maxV = _.max(energyorders, (a) => { return a.price });
@@ -202,6 +205,7 @@ export class Market {
           }
         }
       }
+      let orders: Order[] | null = null;
       for (let req in buyOrder) {
         let term = Game.rooms[buyOrder[req]].terminal;
         if (term) {
@@ -214,7 +218,7 @@ export class Market {
             if (tradeAmount > C.Terminal_Min_Trade) {
               let err = Game.market.deal(orders[0].id, tradeAmount, buyOrder[req]);
               console.log("bought", tradeAmount, req, "from", buyOrder[req], "at price", orders[0].price, "with error", PrettyPrintErr(err));
-              this.memory.buyPrices[orders[0].resourceType] = { price: orders[0].price, lastPriceChange: Game.time };
+              this.memory.buyPrices[orders[0].resourceType] = { price: orders[0].price, energyCompPrice: 0, lastPriceChange: Game.time };//not energy compensated
             }
           }
         }

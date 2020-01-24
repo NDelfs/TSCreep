@@ -44,6 +44,7 @@ const reactionsWanted: GlobMineralReq[] = [//half global init a restart of prod
   { r: REACTION_CHAIN["XGH2O"], perRoom: 2000, global: 5000, perTick: 0.075 },//number is dependent on recycling creep, should be 15 but decreased to fit until a bottom up approach is used
   { r: REACTION_CHAIN["G"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
   { r: REACTION_CHAIN["OH"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
+  { r: REACTION_CHAIN["XGHO2"], perRoom: 0, global: 5000, perTick: 0.05 },//number is dependent on recycling creep, should be 15 but decreased to fit until a bottom up approach is used
   /*, REACTION_CHAIN["XGH2O"]*/
 ];
 
@@ -118,7 +119,7 @@ export class LabMaster {
               }
             }
             
-            if (this.tickSinceUpdate >= 5) {//if empty we do not want to spam the getReq but still 7 labs can maximum use 175 res in that time
+            //if (this.tickSinceUpdate >= 5) {//if empty we do not want to spam the getReq but still 7 labs can maximum use 175 res in that time
               if (firstAmount < 200 && resHandler.getReq(first.id, react.react.needs[0]) == null) {
                 resHandler.addRequest(new resourceRequest(first.id, react.react.needs[0], 200, 800, colony.room));
                 console.log(colony.name, "request resource to lab", react.react.needs[0], firstAmount);
@@ -127,10 +128,10 @@ export class LabMaster {
                 resHandler.addRequest(new resourceRequest(second.id, react.react.needs[1], 200, 800, colony.room));
                 console.log(colony.name, "request resource to lab", react.react.needs[1], secondAmount);
               }
-              this.tickSinceUpdate = 0;
-            }
-            else
-              this.tickSinceUpdate++;
+              //this.tickSinceUpdate = 0;
+            //}
+            //else
+              //this.tickSinceUpdate++;
           }
         }
       }
