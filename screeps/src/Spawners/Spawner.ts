@@ -155,7 +155,7 @@ function calculateHarvesterQue(colony: Colony): queData[] {
       }
     }
   }
-  if (cRoom.terminal && colony.controller.level >= 6 && ret.length == 0 && cRoom.availEnergy > 4e4) {
+  if (cRoom.terminal && colony.controller.level >= 6 && ret.length == 0 && cRoom.storage!.store[RESOURCE_ENERGY] > 4e4) {
     for (let source of colony.memory.mineralsUsed) {
       const min = Game.getObjectById(source) as Mineral | null;
       if (min && min.mineralAmount > 0 && min.memory.linkID && cRoom.terminal.store[min.memory.resourceType] < 1e5) {//we do not want to fill up terminal if we cant use or sell resources
@@ -165,7 +165,7 @@ function calculateHarvesterQue(colony: Colony): queData[] {
         if (nr == 0) {
           const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
           const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ] };
-          ret.push({ memory: mem, body: Array(16).fill(WORK).concat([MOVE, MOVE, MOVE, MOVE]), prio: 1, eTresh: 0.9});
+          ret.push({ memory: mem, body: Array(16).fill(WORK).concat([CARRY,CARRY,CARRY,MOVE, MOVE, MOVE, MOVE]), prio: 1, eTresh: 0.9});
         }
       }
     }
@@ -225,10 +225,11 @@ function calculateBuilderQue(colony: Colony) {
     for (let str of cRoom.constructionSites) {
       totalB += str.progressTotal - str.progress;
     }
+    let availEnergy = colony.energyAvail();
     let limit = 0;
-    if (cRoom.availEnergy > 2e3 || (cRoom.terminal && cRoom.terminal.store.energy > 10000))
+    if (availEnergy > 2e3 || (cRoom.terminal && cRoom.terminal.store.energy > 10000))
       limit = 1;
-    if (totalB >= 50000 && (cRoom.availEnergy > 2e4 || (cRoom.terminal && cRoom.terminal.store.energy > 20000)))//require that its enough of stuff to build for varrant 2
+    if (totalB >= 50000 && (availEnergy > 2e4 || (cRoom.terminal && cRoom.terminal.store.energy > 20000)))//require that its enough of stuff to build for varrant 2
       limit = 2;
     let current = nrCreepInQue(colony, BUILDER) + cRoom.getCreeps(creepT.BUILDER).length;
     if (current < limit) {
@@ -269,7 +270,8 @@ function spawnCreep(que: queData[], spawner: StructureSpawn, colony: Colony, col
 }
 
 export function spawnFromReq(colony: Colony, colonies: { [name: string]: Colony }) {
-  if (colony.room.availEnergy > 800 && colony.room.creepsAll.length > 2 && (colony.room.energyAvailable >= 1500 || colony.room.energyAvailable > 0.9 * colony.room.energyCapacityAvailable)) {
+  let availEnergy = colony.energyAvail();
+  if (availEnergy > 800 && colony.room.creepsAll.length > 2 && (colony.room.energyAvailable >= 1500 || colony.room.energyAvailable > 0.9 * colony.room.energyCapacityAvailable)) {
     for (let spawn of colony.spawns) {
       spawnCreep(colony.creepBuildQueRef, spawn, colony, colonies);
     }
@@ -288,7 +290,8 @@ function isFailedEconomy(colony: Colony, spawns: StructureSpawn[]): void {
 
     if ((room.getCreeps(HARVESTER).length > 0 && room.getCreeps(TRANSPORTER).length > 0) || room.getCreeps(STARTER).length > 1)
       return;
-    if ((room.getCreeps(TRANSPORTER).length > 0 || room.getCreeps(STARTER).length > 0) && room.availEnergy > 800)
+    let availEnergy = colony.energyAvail();
+    if ((room.getCreeps(TRANSPORTER).length > 0 || room.getCreeps(STARTER).length > 0) && availEnergy > 800)
       return;
     console.log(colony.name, "is in emergency");
     colony.memory.inCreepEmergency = 0;
@@ -315,8 +318,6 @@ export function RefreshQue(colony: Colony) {
 
 export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
   try {
-    let cRoom = colony.room;
-
 
     if (colony.spawns.length > 0) {
       isFailedEconomy(colony, colony.spawns);
@@ -330,36 +331,16 @@ export function Spawner(colony: Colony, colonies: { [name: string]: Colony }) {
       let harvestQue = calculateHarvesterQue(colony);
 
       let TransQue = calculateTransportQue(colony);
-
+      let availEnergy = colony.energyAvail();
       for (let spawnID in colony.spawns) {
         let spawn = colony.spawns[spawnID];
         spawnCreep(harvestQue, spawn, colony, colonies);
-        if (cRoom.availEnergy > 800) {
+        
+        if (availEnergy > 800) {
           spawnCreep(TransQue, spawn, colony, colonies);
         }
       }
     }
-    //if (colony.memory.inCreepEmergency != null /*&& room.name != "E49N51"*/) {
-    //  let starterQue = calculateStarterQue(colony);
-
-    //  for (let room2ID in Game.rooms) {
-    //    if (colony.memory.inCreepEmergency == 0 && starterQue.length > 0) {
-    //      let room2 = Game.rooms[room2ID];
-    //      starterQue[0].body = getStarterBody(room2);
-    //      //if (room2.energyAvailable>)//need to compute cost
-    //      var spawns2 = room2.find(FIND_MY_SPAWNS);
-    //      for (let spawn2ID in spawns2) {
-    //        colony.memory.inCreepEmergency = spawnCreep(starterQue, spawns2[spawn2ID], colony, colonies);
-    //        if (colony.memory.inCreepEmergency > 0) {
-    //          console.log(colony.name, "Emergency build of starter remotely from", room2.name);
-    //        }
-    //      }
-    //    }
-
-    //  }
-    //}
-
-
   }
   catch (e) {
     console.log(colony.name, "failed to spawn", e);

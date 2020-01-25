@@ -103,23 +103,6 @@ Object.defineProperty(Room.prototype, 'myStructures', {
   configurable: true,
 });
 
-// Room properties: resources ===========================================================================================
-Object.defineProperty(Room.prototype, 'availEnergy', {
-  get() {
-    if (!this._availEnergy) {
-      let roomEne = 0;
-      for (let sourceID of global[this.name].memory.sourcesUsed) {
-        roomEne += Memory.Resources[sourceID].AvailResource;
-      }
-      if (this.storage)
-        roomEne += this.storage.store.energy;
-      this._availEnergy = roomEne;
-    }
-    return this._availEnergy;
-  },
-  configurable: true,
-});
-
 
 Object.defineProperty(Room.prototype, 'drops', {
   get() {

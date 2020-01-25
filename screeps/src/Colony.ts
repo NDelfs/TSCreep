@@ -601,6 +601,9 @@ export class Colony {
         if (obj) {
           this._energyAtSources += obj.amount;
         }
+        else {
+          mem.lastDropID = null;
+        }
       }
       if (mem.container) {
         let obj = Game.getObjectById(mem.container) as StructureContainer | null;
@@ -610,6 +613,17 @@ export class Colony {
       }
     }
     return this._energyAtSources;
+  }
+
+  public energyAvail(): number {
+    let availEnergy = 0
+    if (this.room.storage) {
+      availEnergy = this.room.storage.store[RESOURCE_ENERGY];
+    }
+    else {
+      availEnergy = this.energyAtSources();
+    }
+    return availEnergy;
   }
 }
 profiler.registerClass(Colony, 'Colony');
@@ -646,7 +660,7 @@ function addSources(colony: Colony, homeRoomPos: RoomPosition, findType: FIND_MI
         pathCost: pathObj.cost,
         container: null,
         linkID: null,
-        AvailResource: 0,
+        lastDropID: null,
         resourceType: RESOURCE_ENERGY,
       };
 

@@ -7,38 +7,38 @@ import { getRandomInt } from "../../utils/minorUtils";
 
 
 export function getSourceTarget(creep: Creep, resource: ResourceConstant | null): targetData | null {
-  let avail: string[] = [];
+  //let avail: string[] = [];
   try {
-    if (resource == null || resource == RESOURCE_ENERGY) {
-      for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
-        let sourceMem: SourceMemory = Memory.Resources[ID];
-        if (sourceMem.AvailResource > creep.carryCapacity * 0.8) {
-          avail.push(ID);
-        }
-      }
-      //if (creep.room.name == "E47N45") {
-      //  console.log('in getSourceTarget, found avail', avail.length);
-      //}
-      if (avail.length > 0) {
-        const index = getRandomInt(avail.length);
-        let target: targetData = {
-          ID: avail[index], type: targetT.DROPPED_RESOURCE, resType: RESOURCE_ENERGY, pos: Memory.Resources[avail[index]].workPos, range: 1
-        }
-        return target;
-      }
-    }
+    //if (resource == null || resource == RESOURCE_ENERGY) {
+    //  for (let ID of PM.colonies[creep.creationRoom].memory.sourcesUsed) {
+    //    let sourceMem: SourceMemory = Memory.Resources[ID];
+    //    if (sourceMem.AvailResource > creep.carryCapacity * 0.8) {
+    //      avail.push(ID);
+    //    }
+    //  }
+    //  //if (creep.room.name == "E47N45") {
+    //  //  console.log('in getSourceTarget, found avail', avail.length);
+    //  //}
+    //  if (avail.length > 0) {
+    //    const index = getRandomInt(avail.length);
+    //    let target: targetData = {
+    //      ID: avail[index], type: targetT.DROPPED_RESOURCE, resType: RESOURCE_ENERGY, pos: Memory.Resources[avail[index]].workPos, range: 1
+    //    }
+    //    return target;
+    //  }
+    //}
 
-    for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
-      let min = Memory.Resources[ID];
+    //for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
+    //  let min = Memory.Resources[ID];
 
-      if (min.AvailResource > creep.carryCapacity && (min.resourceType == resource || resource == null)) {
-        let target: targetData = {
-          ID: ID, type: targetT.DROPPED_RESOURCE, resType: min.resourceType, pos: min.workPos, range: 1
-        }
-        //console.log(creep.room, "transport mineral");
-        return target;
-      }
-    }
+    //  if (min.AvailResource > creep.carryCapacity && (min.resourceType == resource || resource == null)) {
+    //    let target: targetData = {
+    //      ID: ID, type: targetT.DROPPED_RESOURCE, resType: min.resourceType, pos: min.workPos, range: 1
+    //    }
+    //    //console.log(creep.room, "transport mineral");
+    //    return target;
+    //  }
+    //}
 
     let resHandler = PM.colonies[creep.creationRoom].resourceHandler;
     for (let pushID in resHandler.resourcePush) {
@@ -117,9 +117,18 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
     let resHandler = PM.colonies[creep.memory.creationRoom].resourceHandler;
     let req = resHandler.resourcePush[target.ID];
     if (req) {
-      let storageObj = Game.getObjectById(target.ID) as AnyStoreStructure;
-      structWithdraw(creep, storageObj, target.resType!, freeSpace);
-      if (storageObj.store[target.resType!] - freeSpace <= req.ThreshouldHard) {
+      let storageObj = Game.getObjectById(target.ID) as any;
+      
+      let amount = 0;
+      if (req.hasStore) {
+        structWithdraw(creep, storageObj, target.resType!, freeSpace);
+        amount = storageObj.store[target.resType!];
+      }
+      else {
+        creep.pickup(storageObj);
+        amount = storageObj.amount;
+      }
+      if (amount - freeSpace <= req.ThreshouldHard) {
         delete resHandler.resourcePush[target.ID];
         //console.log("push request deleted");
       }
@@ -133,19 +142,8 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
   }
   //reuse target if two times do not work in same action
   creep.completeTarget();
+  //if (retErr == ERR_NOT_FOUND)
+  //  creep.completeTarget();//hope to complete deliver target
   return retErr;
 }
 
-export function getMineralTarget(creep: Creep): targetData | null {// depricated
-  for (let ID of PM.colonies[creep.creationRoom].memory.mineralsUsed) {
-    let min = Memory.Resources[ID];
-    if (min.AvailResource > creep.carryCapacity) {
-      let target: targetData = {
-        ID: ID, type: targetT.DROPPED_RESOURCE, pos: min.workPos, range: 1
-      }
-      return target;
-    }
-  }
-
-  return null;
-}

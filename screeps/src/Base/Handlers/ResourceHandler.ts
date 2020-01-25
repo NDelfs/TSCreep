@@ -13,13 +13,15 @@ export class resourceRequest {
   creeps: string[];
   resOnWay: number;
   createdTime: number;
+  hasStore: boolean;
 
-  constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax: number, room: Room) {
+  constructor(ID: string, iResource: ResourceConstant, iThreshould: number, iThreshouldMax: number, room: Room, hasNoStore? : boolean) {
     this.id = ID;
     this.createdTime = Game.time;
     this.resource = iResource;
     this.ThreshouldAmount = iThreshould;
-    this.ThreshouldHard = iThreshouldMax
+    this.ThreshouldHard = iThreshouldMax;
+    this.hasStore = !hasNoStore;
     this.resOnWay = 0;
     //this.creeps = [];
     this.creeps = _.filter(room.getCreeps(TRANSPORTER), function (obj) {
@@ -29,15 +31,24 @@ export class resourceRequest {
   }
 
   public amount(): number {
-    let obj = Game.getObjectById(this.id) as AnyStoreStructure;
-    if (obj) {
-      if (this.ThreshouldHard > this.ThreshouldAmount)
-        return obj.store[this.resource] + this.resOnWay;
-      else
-        return obj.store[this.resource] - this.resOnWay;
+    let amount = 0;
+    if (this.hasStore) {
+      let obj = Game.getObjectById(this.id) as AnyStoreStructure;
+      if (obj) {
+        amount = obj.store[this.resource];
+      }
     }
-    else
-      return 0;
+    else {
+      let obj = Game.getObjectById(this.id) as Resource;
+      if (obj) {
+        amount = obj.amount;
+      }
+    }
+
+      if (this.ThreshouldHard > this.ThreshouldAmount)
+        return amount + this.resOnWay;
+      else
+        return amount - this.resOnWay;
   }
 
   public updateCreepD() {

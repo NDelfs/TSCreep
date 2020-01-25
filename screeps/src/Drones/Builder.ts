@@ -4,7 +4,7 @@ import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from
 import * as targetT from "Types/TargetTypes";
 import { getSourceTarget, useEnergyTarget, getFromStoreTarget } from "Drones/Funcs/PickupEnergy";
 import { PM } from "PishiMaster";
-import { DROPPED_RESOURCE } from "Types/TargetTypes";
+import { DROPPED_RESOURCE, TRANSPORT_PICKUP } from "Types/TargetTypes";
 
 export function Builder(creep: Creep) {
   //resetDeliverTarget(creep);
@@ -37,14 +37,18 @@ export function Builder(creep: Creep) {
   if (creep.memory.targetQue.length == 1 && ((!haveEnoughEnergy && !creep.inPlace) || creep.carry.energy == 0)) {//get closest energy
     let target1 = getSourceTarget(creep, RESOURCE_ENERGY);
     let target2 = getFromStoreTarget(creep, RESOURCE_ENERGY);
-
+    let colony = PM.colonies[creep.memory.creationRoom];
     if (target1 && target2) {
       let range1 = creep.pos.getRangeTo(target1.pos.x, target1.pos.y);
       let range2 = creep.pos.getRangeTo(target2.pos.x, target2.pos.y);
       if (range1 < range2) {
         creep.addTargetFirst(target1);
-        if (target1.type == DROPPED_RESOURCE)
-          Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
+        if (target1.type == TRANSPORT_PICKUP) {
+          colony.resourceHandler.resourcePush[target1.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
+        }
+        else {
+          console.log("this should not happen", JSON.stringify(target1));
+        }
       }
       else {
         creep.addTargetFirst(target2);
@@ -52,8 +56,12 @@ export function Builder(creep: Creep) {
     }
     else if (target1) {
       creep.addTargetFirst(target1);
-      if (target1.type == DROPPED_RESOURCE)
-        Memory.Resources[target1.ID].AvailResource -= creep.carryCapacity;
+      if (target1.type == TRANSPORT_PICKUP) {
+        colony.resourceHandler.resourcePush[target1.ID].addTran(creep, creep.carryCapacity);//should be target req amount, but now there is nothing there
+      }
+      else {
+        console.log("this should not happen", JSON.stringify(target1));
+      }
     }
     else if (target2) {
       creep.addTargetFirst(target2);

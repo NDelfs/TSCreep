@@ -5,23 +5,12 @@ import { PM } from "PishiMaster";
 import { TRANSPORT, DROPPED_RESOURCE, TRANSPORT_PICKUP, POWERUSER, POWERSTORAGE, STORAGE_RESOURCE } from "Types/TargetTypes";
 import { Colony } from "../Colony";
 
-function claimResource(creep: Creep, target: targetData | null) {
-  if (target) {
-    Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
-    creep.say("Go to source");
-  }
-
-}
 
 function claimDeliver(creep: Creep, target: targetData) {
   //if (creep.pos.roomName == "E47N45")
   //console.log(creep.name, "claiming dropped", target.pos.x, target.pos.y, target.ID, target.type);
   if (target.type == POWERSTORAGE || target.type == STORAGE_RESOURCE)
     return;
-  if (target.type == DROPPED_RESOURCE) {
-    Memory.Resources[target.ID].AvailResource -= creep.carryCapacity;
-    return;
-  }
   let colony = PM.colonies[creep.memory.creationRoom];
   let resHandler = colony.resourceHandler;
   if (target.type == TRANSPORT_PICKUP) {

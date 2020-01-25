@@ -145,7 +145,7 @@ export function useDeliverTarget(creep: Creep): number {
         err = OK;
       }
       else {
-        console.log(creep.room, "got strange error in useDeliverTarget", target.ID, PrettyPrintErr(err));
+        console.log(creep.room, "got strange error in useDeliverTarget", target.ID, PrettyPrintErr(err), JSON.stringify(target), JSON.stringify(creep.pos));
       }
     }
   }

@@ -5,6 +5,7 @@ import { sendEnergy } from "Base/LinkOperation"
 import { resourceRequest } from "Base/Handlers/ResourceHandler";
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { PrettyPrintErr } from "../utils/PrettyPrintErr";
 
 
 export function Harvester(creep: Creep): void {
@@ -30,23 +31,22 @@ function mineMineral(creep: Creep, res: Mineral) {
       creep.say("Wait");
       return;
     }
-    creep.harvest(res);
-    let cont = Game.getObjectById(res.memory.container!) as StructureContainer;
-    //below is code for requesting resource pickup
-    let totAmount = _.sum(cont.store);
-    if (totAmount > 800) {
-      if (totAmount != cont.store[res.memory.resourceType]) {
-        let colony = PM.colonies[creep.memory.creationRoom];
-        for (let key in cont.store) {
-          if (cont.store[key as ResourceConstant] > 0) {
-            if (!colony.resourceHandler.resourcePush[cont.id]) {
-              colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, RESOURCE_ENERGY, 0, 0, cont.room);
-              console.log("requested special pickup from", JSON.stringify(cont.pos));
-            }
-          }
+    creep.harvest(res);//should att to not harvest if full inventory.
+    if (creep.carry[res.memory.resourceType] >= creep.carryCapacity - 16) {
+      creep.drop(res.memory.resourceType);
+      let cont = Game.getObjectById(res.memory.container!) as StructureContainer;
+      let colony = PM.colonies[creep.memory.creationRoom];
+      //below is code for requesting resource pickup
+      if (cont.store[res.memory.resourceType] >= 800) {//this could use transfer 2, 
+        if (!colony.resourceHandler.resourcePush[cont.id]) {
+          colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, res.memory.resourceType, 0, 0, cont.room);
+          console.log("requested mineral pickup from", JSON.stringify(cont.pos));
         }
       }
-      updateSource(res);
+      else if (cont.store[RESOURCE_ENERGY] != 0 && !colony.resourceHandler.resourcePush[cont.id]) {
+        colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, RESOURCE_ENERGY, 0, 0, cont.room);
+        console.log("requested special pickup from", JSON.stringify(cont.pos));
+      }
     }
     creep.say("Mine");
   }
@@ -54,33 +54,97 @@ function mineMineral(creep: Creep, res: Mineral) {
     console.log(creep.room.name, "Failed to find extractor");
 }
 
+function transfer2(creep: Creep, memory: any, memID: string) {
+  try {
+    if (memory[memID]) {
+      let resT = memory.resourceType as ResourceConstant;
+      let cont = Game.getObjectById(memory[memID]) as AnyStoreStructure;
+      if (cont) {
+        let err = creep.drop(resT);
+        if (err == OK) {//if its full we will drop instead     
+          //below is code for requesting resource pickup
+          if (cont.store[resT] >= 1000) {
+            let colony = PM.colonies[creep.memory.creationRoom];
+            if (!colony.resourceHandler.resourcePush[cont.id]) {
+              colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, resT, 700, 0, cont.room);
+              console.log("requested energy pickup from", memID, JSON.stringify(cont.pos));
+            }
+          }
+          return true;
+        }
+        console.log(JSON.stringify(creep.pos), "harvester failed transfer due to", PrettyPrintErr(err));
+      }
+      else {
+        memory[memID] = null;
+      }
+    }
+  }
+  catch (e) {
+    console.log(JSON.stringify(creep.pos),"transfer2 failed", memID, e);
+  }
+  return false;
+}
+
+function drop(creep: Creep, memory: any, memID: string) {
+  try {
+    if (memory[memID]) {
+      let resT = memory.resourceType as ResourceConstant;
+      let cont = Game.getObjectById(memory[memID]) as Resource;
+      if (cont) {
+        let err = creep.drop(resT);
+        if (err == OK) {//if its full we will drop instead     
+          //below is code for requesting resource pickup
+          if (cont.amount >= 1000) {
+            let colony = PM.colonies[creep.memory.creationRoom];
+            if (!colony.resourceHandler.resourcePush[cont.id]) {
+              colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, resT, 200, 0, creep.room,true);
+              console.log("requested energy pickup from", memID, JSON.stringify(cont.pos));
+            }
+          }
+          return true;
+        }
+        console.log(JSON.stringify(creep.pos), "harvester failed transfer due to", PrettyPrintErr(err));
+      }
+      else {
+        memory[memID] = null;
+      }
+    }
+  }
+  catch (e) {
+    console.log(JSON.stringify(creep.pos), "transfer2 failed", memID, e);
+  }
+  return false;
+}
+
 function mineSource(creep: Creep, res: Source) {
   creep.harvest(res);
   creep.say("Mine");
   let amount = creep.carryAmount;
-  let link: StructureLink | null = null;
-  if (res.memory.linkID) {
-    link = Game.getObjectById(res.memory.linkID) as StructureLink;
-  //  if (link.energy < 400) {
-  //here some code for picking up droped resource and move to link should be. But that should be found colony wise to not waste cpu to much
-  //  }
-  }
-
   if (creep.carryCapacity != 0 && amount >= creep.carryCapacity * 0.6) {
-    if (link) {
+   
+    if (res.memory.linkID) {
+      let link = Game.getObjectById(res.memory.linkID) as StructureLink;
+      if (!link) {
+        console.log("didnt find link", JSON.stringify(creep.pos))
+      }
       if (link.energy < link.energyCapacity) {
         amount = amount - (link.energyCapacity - link.energy);
         creep.transfer(link, RESOURCE_ENERGY);
       }
       let col = PM.colonies[creep.memory.creationRoom];
       sendEnergy(col, link);
-      updateSource(res);//just to be sure it get emptied. could be better with some checks, but the cpu price should be low enough
     }
-    if (amount >= creep.carryCapacity -10) {//current does not get added yet
-      creep.drop(RESOURCE_ENERGY, amount);
-      updateSource(res);
+    if (amount >= creep.carryCapacity - 10) {//current does not get added yet
+      if (!transfer2(creep, res.memory, "container")) {
+        if (!drop(creep, res.memory, "lastDropID")) {
+          creep.drop(res.memory.resourceType);
+          let dropedRes = creep.pos.lookFor("resource");
+          if (dropedRes.length > 0) {
+            res.memory.lastDropID = dropedRes[0].id;
+            console.log("found new dropped resource at", JSON.stringify(res.pos));
+          }
+        }
+      }
     }
   }
-  if (creep.carryCapacity == 0 && Game.time%10 == 0)
-    updateSource(res);
 }
