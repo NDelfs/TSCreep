@@ -15,6 +15,7 @@ import { PrettyPrintErr } from "./utils/PrettyPrintErr";
 import { ResourceHandler, resourceRequest } from "Base/Handlers/ResourceHandler";
 import { BOOSTING } from "Types/Constants";
 import { findPathToSource, serializePath } from "./utils/ColonyUtils";
+import { countBodyPart } from "./utils/minorUtils";
 
 
 function getRandomInt(min: number, max: number) {
@@ -45,14 +46,6 @@ function refreshArray(array: any[]) {
   array = _.compact(_.map(array, obj => Game.getObjectById(obj.id)));
 }
 
-
-export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant): number {
-  let ret = 0;
-  for (let part of body) {
-    ret += part == type ? 1 : 0;
-  }
-  return ret;
-}
 
 function updateObject<type>(id: string | null) {
   if (id) {
@@ -223,7 +216,7 @@ export class Colony {
     this.refreshEnergyDemand(this.forceUpdateEnergy);
     this.forceUpdateEnergy = false;
 
-    this.resourceHandler.postRun();//should be moved to postrun
+    //this.resourceHandler.postRun();//should be moved to postrun
 
     this.lookForHostiles();
   }

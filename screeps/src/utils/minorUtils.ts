@@ -18,3 +18,12 @@ export function nrCreepInQue(colony: Colony, type: CreepConstant, id?:string): n
 export function getRandomInt(max: number) {
   return Math.floor(Math.random() * Math.floor(max));
 }
+
+
+export function countBodyPart(body: BodyPartConstant[], type: BodyPartConstant): number {
+  let ret = 0;
+  for (let part of body) {
+    ret += part == type ? 1 : 0;
+  }
+  return ret;
+}

@@ -5,7 +5,7 @@ import { CONTROLLER } from "Types/TargetTypes";
 import { TRANSPORTER, HARVESTER, STARTER, BUILDER } from "Types/CreepType";
 import { Transporter } from "../Drones/Transporter";
 import { Colony } from "Colony"
-import { nrCreepInQue } from "../utils/minorUtils";
+import { nrCreepInQue, countBodyPart } from "../utils/minorUtils";
 import { getFlagsInRoom, FLAG_NEW_COLONY } from "../Types/FlagTypes";
 
 let names1 = ["Jackson", "Aiden", "Liam", "Lucas", "Noah", "Mason", "Jayden", "Ethan", "Jacob", "Jack", "Caden", "Logan", "Benjamin", "Michael", "Caleb", "Ryan", "Alexander", "Elijah", "James", "William", "Oliver", "Connor", "Matthew", "Daniel", "Luke", "Brayden", "Jayce", "Henry", "Carter", "Dylan", "Gabriel", "Joshua", "Nicholas", "Isaac", "Owen", "Nathan", "Grayson", "Eli", "Landon", "Andrew", "Max", "Samuel", "Gavin", "Wyatt", "Christian", "Hunter", "Cameron", "Evan", "Charlie", "David", "Sebastian", "Joseph", "Dominic", "Anthony", "Colton", "John", "Tyler", "Zachary", "Thomas", "Julian", "Levi", "Adam", "Isaiah", "Alex", "Aaron", "Parker", "Cooper", "Miles", "Chase", "Muhammad", "Christopher", "Blake", "Austin", "Jordan", "Leo", "Jonathan", "Adrian", "Colin", "Hudson", "Ian", "Xavier", "Camden", "Tristan", "Carson", "Jason", "Nolan", "Riley", "Lincoln", "Brody", "Bentley", "Nathaniel", "Josiah", "Declan", "Jake", "Asher", "Jeremiah", "Cole", "Mateo", "Micah", "Elliot"]
@@ -151,7 +151,9 @@ function calculateHarvesterQue(colony: Colony): queData[] {
         const mem: CreepMemory = {
           type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]
         };
-        ret.push({ memory: mem, body: getHarvesterBody(colony), prio: 1, eTresh: 0.9 });
+        let body = getHarvesterBody(colony);
+        mem.targetQue[0].targetVal = countBodyPart(body, WORK);
+        ret.push({ memory: mem, body: body, prio: 1, eTresh: 0.9 });
       }
     }
   }
@@ -164,8 +166,10 @@ function calculateHarvesterQue(colony: Colony): queData[] {
         let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
         if (nr == 0) {
           const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
-          const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ] };
-          ret.push({ memory: mem, body: Array(16).fill(WORK).concat([CARRY,CARRY,CARRY,MOVE, MOVE, MOVE, MOVE]), prio: 1, eTresh: 0.9});
+          const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]};
+          let body = calculateBodyFromSet(cRoom, [WORK, WORK, WORK, WORK, MOVE], 9).concat([CARRY, CARRY, CARRY, CARRY, CARRY]);
+          mem.targetQue[0].targetVal = countBodyPart(body, WORK);
+          ret.push({ memory: mem, body: body, prio: 1, eTresh: 0.9});
         }
       }
     }

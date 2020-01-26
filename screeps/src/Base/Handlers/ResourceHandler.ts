@@ -89,6 +89,10 @@ export class resourceRequest {
     if (this.creeps.length == 0)
       this.resOnWay = 0;
   }
+
+  public postRun() {
+
+  }
 }
 profiler.registerClass(resourceRequest, 'resourceRequest');
 
@@ -167,12 +171,7 @@ export class ResourceHandler {
   }
 
   public postRun() {
-    if (Game.time % 100 == 1) {
-      for (let reqID in this._resourceRequests) {//clean up resource requests
-        let reqs = this._resourceRequests[reqID];
-        _.remove(reqs, (req) => { return req.createdTime > Game.time + 1000 });
-      }
-    }
+   
   }
 }
 profiler.registerClass(ResourceHandler, 'ResourceHandler');

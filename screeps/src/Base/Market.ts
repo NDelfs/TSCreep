@@ -146,13 +146,11 @@ export class Market {
           }
         }
       }
-      if (!this.memory.buyPrices[RESOURCE_ENERGY]) {//just create an empty one that we can write to
-        this.memory.buyPrices[RESOURCE_ENERGY] = { price: 0.2, energyCompPrice: 0.2, lastPriceChange: Game.time-10000 }
-      }
       if (this.memory.buyPrices[RESOURCE_ENERGY].lastPriceChange + 1000 < Game.time) {
         let energyorders = Game.market.getAllOrders({ type: ORDER_SELL, resourceType: RESOURCE_ENERGY });
         if (energyorders.length > 0) {
-          let maxV = _.max(energyorders, (a) => { return a.price });
+          let maxV = _.min(energyorders, (a) => { return a.price });
+          console.log("changed energy pricing", JSON.stringify(maxV));
           this.memory.buyPrices[RESOURCE_ENERGY].price = maxV.price;
           this.memory.buyPrices[RESOURCE_ENERGY].lastPriceChange = Game.time;
         }
@@ -164,22 +162,25 @@ export class Market {
         let order: Order | null = null;
         let energyCompPrice = 0;
         let avails = overflow[overR] || [];
-
         for (let avail of avails) {
           let term = Game.rooms[avail.P].terminal;
           if (term && avail.A > OVERFLOW_EXTERNALTRADE + C.TERMINAL_MIN_EXT_TRADE) {
             if (order == null) {
-              let minPrice = 0.2;
+              let minPrice = 0.02;
               let orders = Game.market.getAllOrders({ type: ORDER_BUY, resourceType: overR as ResourceConstant });
-              orders = orders.filter((e) => { return e.price > 0.3 });
+              orders = orders.filter((e) => { return e.price > 0.03 && e.remainingAmount >500 });
               if (orders.length > 0) {
                 let oldTrade = this.memory.sellPrices[overR as ResourceConstant];
-                if (oldTrade && oldTrade.lastPriceChange + 1000 < Game.time) {
-                  minPrice = Math.min(oldTrade.energyCompPrice * 0.99, minPrice);
-                  oldTrade.energyCompPrice = minPrice;
-                  console.log("reduced price of", overR, "to", minPrice);
+                if (oldTrade) {
+                  minPrice = oldTrade.energyCompPrice;
+                  if (oldTrade.lastPriceChange + 1000 < Game.time) {
+                    minPrice = Math.min(oldTrade.energyCompPrice * 0.99, minPrice);
+                    oldTrade.energyCompPrice = minPrice;
+                    oldTrade.lastPriceChange = Game.time;
+                    console.log("reduced price of", overR, "to", minPrice);
+                  }
                 }
-                let eP = this.memory.buyPrices[RESOURCE_ENERGY].price | 0.2 / 1000;
+                let eP = this.memory.buyPrices[RESOURCE_ENERGY].price / 1000;
                 let maxV = _.max(orders, (a) => { return a.price - eP * Game.market.calcTransactionCost(1000, a.roomName!, term!.room.name) });
                 energyCompPrice = maxV.price - eP * Game.market.calcTransactionCost(1000, maxV.roomName!, term.room.name);
                 console.log("found trade order with price", maxV.price, energyCompPrice, "min price curently", minPrice);
@@ -192,7 +193,7 @@ export class Market {
             if (order != null ) {
               let tradeAmount = Math.min(avail.A - OVERFLOW_EXTERNALTRADE, order.remainingAmount, term.store.energy);
 
-              if (tradeAmount > C.Terminal_Min_Trade) {
+              //if (tradeAmount > C.Terminal_Min_Trade) {
                 let err = Game.market.deal(order!.id, tradeAmount, avail.P);
                 console.log("Sold", tradeAmount, overR, "from", avail.P, "at price", order!.price, energyCompPrice, "with error", PrettyPrintErr(err));
                 this.memory.sellPrices[order!.resourceType] = { price: order!.price, energyCompPrice: energyCompPrice, lastPriceChange: Game.time };
@@ -200,7 +201,7 @@ export class Market {
                   console.log("trade was completly fullfiled");
                   order = null;
                 }
-              }
+              //}
             }
           }
         }

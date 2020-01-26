@@ -32,14 +32,15 @@ function mineMineral(creep: Creep, res: Mineral) {
       return;
     }
     creep.harvest(res);//should att to not harvest if full inventory.
-    if (creep.carry[res.memory.resourceType] >= creep.carryCapacity - 16) {
+
+    if (creep.carry[res.memory.resourceType] >= creep.carryCapacity - creep.memory.targetQue[0].targetVal!) {
       creep.drop(res.memory.resourceType);
       let cont = Game.getObjectById(res.memory.container!) as StructureContainer;
       let colony = PM.colonies[creep.memory.creationRoom];
       //below is code for requesting resource pickup
       if (cont.store[res.memory.resourceType] >= 800) {//this could use transfer 2, 
         if (!colony.resourceHandler.resourcePush[cont.id]) {
-          colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, res.memory.resourceType, 0, 0, cont.room);
+          colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, res.memory.resourceType, 800, 400, cont.room);
           console.log("requested mineral pickup from", JSON.stringify(cont.pos));
         }
       }
@@ -66,7 +67,7 @@ function transfer2(creep: Creep, memory: any, memID: string) {
           if (cont.store[resT] >= 1000) {
             let colony = PM.colonies[creep.memory.creationRoom];
             if (!colony.resourceHandler.resourcePush[cont.id]) {
-              colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, resT, 700, 0, cont.room);
+              colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, resT, 800, 400, cont.room);
               console.log("requested energy pickup from", memID, JSON.stringify(cont.pos));
             }
           }

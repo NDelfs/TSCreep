@@ -206,7 +206,7 @@ export class LabMaster {
     if (key) {
       if (resHandler.resourcePush[lab.id] == null) {
         resHandler.resourcePush[lab.id] = new resourceRequest(lab.id, key as ResourceConstant, 0, 0, resHandler.room);
-        console.log(colony.name, "push wrong resource from lab", key);
+        //console.log(colony.name, "push wrong resource from lab", key);
       }
       return;
     }
@@ -297,7 +297,7 @@ export class LabMaster {
     }
     if (this.resources[minReq.r.r] > UPDATETIME * 4 && nrLabs > 0 && minReq.autoAdded) {
       nrLabs = 0;
-      console.log(minReq.r.r, "was not added due to big supply", this.resources[minReq.r.r]);
+      //console.log(minReq.r.r, "was not added due to big supply", this.resources[minReq.r.r]);
     }
 
     if (nrLabs && (labInfo.nrLabUsed + nrLabs + 2 + reserved) <= labInfo.nrLabs - 1) {
@@ -306,7 +306,7 @@ export class LabMaster {
       let slave1 = this.recuAddReact(master.idxs, { r: REACTION_CHAIN[reaction.needs[0]], reactPerTic: minReq.reactPerTic, autoAdded: true, masterReq: masterReq }, labInfo, reactionsToAdd, reserved + 1);
       let slave2 = this.recuAddReact(master.idxs, { r: REACTION_CHAIN[reaction.needs[1]], reactPerTic: minReq.reactPerTic, autoAdded: true, masterReq: masterReq}, labInfo, reactionsToAdd, reserved);
       labInfo.roomReaction.push({ react: reaction, result: master, res1: slave1, res2: slave2 });
-      console.log(labInfo.colony,'pushed reaction', reaction.r, "M", JSON.stringify(master), "S1", JSON.stringify(slave1), "S2", JSON.stringify(slave2));
+      //console.log(labInfo.colony,'pushed reaction', reaction.r, "M", JSON.stringify(master), "S1", JSON.stringify(slave1), "S2", JSON.stringify(slave2));
       return master;
     }
     else {
@@ -320,7 +320,7 @@ export class LabMaster {
             reactionsToAdd.push(minReq);//because the other room will use the same nr lab calculation as a start
           }
       }
-      console.log(labInfo.colony,'added reagent', reaction.r);
+      //console.log(labInfo.colony,'added reagent', reaction.r);
       return { idxs: this.getFreeLabIndex(labInfo, 1, REACTREGENT, reaction.r, parentIdx), final: false };
       
     }
@@ -377,7 +377,7 @@ export class LabMaster {
             //console.log("added reaction power of", reactAdd, "before", minReq[0].reactPerTic);
             minReq[0].reactPerTic -= reactAdd;
             if (minReq[0].reactPerTic < 0.000001) {
-              console.log("remove,", minReq[0].r.r);
+              //console.log("remove,", minReq[0].r.r);
               minReq.shift();
             }
             else break;
