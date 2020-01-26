@@ -111,7 +111,6 @@ function main() {
         if (Memory.creeps[name].targetQue) {
           for (let targ of Memory.creeps[name].targetQue) {
             if (targ) {
-
               PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
               let creepMis = PM.colonies[Memory.creeps[name].creationRoom].resourceHandler._resourceRequests[targ.ID];
               if (creepMis) {

@@ -173,7 +173,7 @@ export class Market {
                 let oldTrade = this.memory.sellPrices[overR as ResourceConstant];
                 if (oldTrade) {
                   minPrice = oldTrade.energyCompPrice;
-                  if (oldTrade.lastPriceChange + 1000 < Game.time) {
+                  if (oldTrade.lastPriceChange + 5000 < Game.time) {
                     minPrice = Math.min(oldTrade.energyCompPrice * 0.99, minPrice);
                     oldTrade.energyCompPrice = minPrice;
                     oldTrade.lastPriceChange = Game.time;
@@ -183,10 +183,10 @@ export class Market {
                 let eP = this.memory.buyPrices[RESOURCE_ENERGY].price / 1000;
                 let maxV = _.max(orders, (a) => { return a.price - eP * Game.market.calcTransactionCost(1000, a.roomName!, term!.room.name) });
                 energyCompPrice = maxV.price - eP * Game.market.calcTransactionCost(1000, maxV.roomName!, term.room.name);
-                console.log("found trade order with price", maxV.price, energyCompPrice, "min price curently", minPrice);
+                //console.log("found trade order with price", maxV.price, energyCompPrice, "min price curently", minPrice);
                 if (energyCompPrice >= minPrice) {
                   order = maxV;
-                  console.log("found trade order", maxV.price, energyCompPrice, overR, maxV.remainingAmount);
+                  //console.log("found trade order", maxV.price, energyCompPrice, overR, maxV.remainingAmount);
                 }
               }
             }
@@ -215,7 +215,7 @@ export class Market {
           orders = orders.sort(function (a, b) { return a.price - b.price; });
           if (orders.length > 0) {
             let tradeAmount = Math.min(UNDERFLOW_EXTERNALTRADE - (globalRes[req] | 0), orders[0].remainingAmount, term.store.energy);
-            console.log("found trade order", orders[0].price, req, orders[0].remainingAmount, tradeAmount, "last in list", _.last(orders).price);
+            //console.log("found trade order", orders[0].price, req, orders[0].remainingAmount, tradeAmount, "last in list", _.last(orders).price);
             if (tradeAmount > C.Terminal_Min_Trade) {
               let err = Game.market.deal(orders[0].id, tradeAmount, buyOrder[req]);
               console.log("bought", tradeAmount, req, "from", buyOrder[req], "at price", orders[0].price, "with error", PrettyPrintErr(err));

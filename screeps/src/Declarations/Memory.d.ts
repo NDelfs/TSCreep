@@ -6,6 +6,7 @@ interface CreepMemory {
   permTarget: targetData | null;
   targetQue: targetData[];
   //_currentTarget?: targetData | null;
+  curentRoom : string;//used at deletion
 }
 
 interface Memory {
