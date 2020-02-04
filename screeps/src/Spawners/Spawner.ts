@@ -104,7 +104,7 @@ function calculateTransportQue(colony: Colony): queData[] {
 
       //const excist = _.filter(curentHarv, function (creep: Creep) { return creep.memory.mainTarget == source });     
     if (nrcreeps < limit) {
-        const mem: CreepMemory = { type: creepT.TRANSPORTER, creationRoom: colony.name, permTarget: null, moveTarget: null, targetQue: [] };
+        const mem: CreepMemory = { type: creepT.TRANSPORTER, creationRoom: colony.name, curentRoom: colony.name, permTarget: null, moveTarget: null, targetQue: [] };
         ret.push({ memory: mem, body: getTransportBody(cRoom), prio: 1, eTresh:0.9 });
       }
     
@@ -122,7 +122,7 @@ function calculateStarterQue(colony: Colony): queData[] {
     const excist = _.filter(cRoom.getCreeps(creepT.STARTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
     let nrExc = excist.length + nrCreepInQue(colony, creepT.STARTER);
     const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
-    const mem: CreepMemory = { type: creepT.STARTER, creationRoom: colony.name, permTarget: targ, moveTarget: null, targetQue: [] };
+    const mem: CreepMemory = { type: creepT.STARTER, creationRoom: colony.name, curentRoom: colony.name, permTarget: targ, moveTarget: null, targetQue: [] };
     if (cRoom.energyCapacityAvailable < 550) {
       if (nrExc < Memory.Resources[source].maxUser * 2)
         ret.push({ memory: mem, body: getStarterBody(cRoom), prio: 1, eTresh: 0.9});
@@ -149,7 +149,7 @@ function calculateHarvesterQue(colony: Colony): queData[] {
       if (nr == 0) {
         const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
         const mem: CreepMemory = {
-          type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]
+          type: creepT.HARVESTER, creationRoom: colony.name, curentRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]
         };
         let body = getHarvesterBody(colony);
         mem.targetQue[0].targetVal = countBodyPart(body, WORK);
@@ -166,7 +166,7 @@ function calculateHarvesterQue(colony: Colony): queData[] {
         let nr = current.length + nrCreepInQue(colony, creepT.HARVESTER, source);
         if (nr == 0) {
           const targ: targetData = { ID: source, type: targetT.SOURCE, pos: Memory.Resources[source].workPos, range: 0 };
-          const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]};
+          const mem: CreepMemory = { type: creepT.HARVESTER, creationRoom: colony.name, curentRoom: colony.name, permTarget: targ, moveTarget: { pos: Memory.Resources[source].workPos, range: 0 }, targetQue: [targ]};
           let body = calculateBodyFromSet(cRoom, [WORK, WORK, WORK, WORK, MOVE], 9).concat([CARRY, CARRY, CARRY, CARRY, CARRY]);
           mem.targetQue[0].targetVal = countBodyPart(body, WORK);
           ret.push({ memory: mem, body: body, prio: 1, eTresh: 0.9});
@@ -215,7 +215,7 @@ function calculateUpgraderQue(colony: Colony) {
       let current = nrCreepInQue(colony, creepT.UPGRADER) + cRoom.getCreeps(creepT.UPGRADER).length;
       if (current < limit) {
         const targ: targetData = { ID: colony.controller.id, type: targetT.CONTROLLER, pos: store.pos, range: range };
-        const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: colony.name, permTarget: targ, moveTarget: { pos: store.pos, range: range }, targetQue: [targ] };
+        const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: colony.name, curentRoom: colony.name, permTarget: targ, moveTarget: { pos: store.pos, range: range }, targetQue: [targ] };
         colony.queNewCreep(mem, body);
       }
     }

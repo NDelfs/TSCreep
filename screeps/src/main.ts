@@ -18,6 +18,8 @@ import { CreepUpdate } from "Drones/CreepsUpdate";
 //import PishiMaster from "PishiMaster"
 //@ts-ignore
 import profiler from "Profiler/screeps-profiler";
+import { TRANSPORT } from "./Types/TargetTypes";
+import { TRANSPORTER, BUILDER } from "./Types/CreepType";
 
 
 
@@ -107,18 +109,24 @@ function main() {
   // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
     if (!(name in Game.creeps)) {
-      if (PM.colonies[Memory.creeps[name].creationRoom]) {//special case of using creeps before colony is created
-        if (Memory.creeps[name].targetQue) {
-          for (let targ of Memory.creeps[name].targetQue) {
+      let mem = Memory.creeps[name];
+      let colony = PM.colonies[mem.creationRoom];
+      if (colony) {//special case of using creeps before colony is created
+        let room = Game.rooms[mem.curentRoom];
+        if (room && (mem.type == TRANSPORTER || mem.type == BUILDER)) {
+          colony.refreshDropPickup(room);
+        }
+        if (mem.targetQue) {
+          for (let targ of mem.targetQue) {
             if (targ) {
-              PM.colonies[Memory.creeps[name].creationRoom].forceUpdateEnergy = true;
-              let creepMis = PM.colonies[Memory.creeps[name].creationRoom].resourceHandler._resourceRequests[targ.ID];
+              colony.forceUpdateEnergy = true;
+              let creepMis = colony.resourceHandler._resourceRequests[targ.ID];
               if (creepMis) {
                 for (let req of creepMis)
                   req.updateCreepD();
               }
               else {
-                let creepP = PM.colonies[Memory.creeps[name].creationRoom].resourceHandler.resourcePush[targ.ID];
+                let creepP = colony.resourceHandler.resourcePush[targ.ID];
                 if (creepP)
                   creepP.updateCreepD();
               }

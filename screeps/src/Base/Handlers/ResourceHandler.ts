@@ -123,6 +123,12 @@ export class ResourceHandler {
         if (this._resourceRequests[id].length == 0)
           delete this._resourceRequests[id];
       }
+      for (let id in this.resourcePush) {
+        if (Game.time - this.resourcePush[id].createdTime > 500) {
+          console.log(this.room.name, "removed push req", JSON.stringify(this.resourcePush[id]));
+          delete this.resourcePush[id];
+        }
+      }
     }
 }
 

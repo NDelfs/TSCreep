@@ -15,7 +15,7 @@ function calculateScoutQue(spawCol: Colony, flag: Flag) {
   let nrCreep = nrCreepInQue(spawCol, SCOUT) + creeps.length;
   if (nrCreep == 0 && flag.room == null) {
     const targ: targetData = { ID: flag.name, type: CONTROLLER, pos: flag.pos, range: 1 };
-    const mem: CreepMemory = { type: SCOUT, creationRoom: flag.pos.roomName, permTarget: null, moveTarget: { pos: flag.pos, range: 2 }, targetQue: [targ] };
+    const mem: CreepMemory = { type: SCOUT, creationRoom: flag.pos.roomName, curentRoom: flag.pos.roomName, permTarget: null, moveTarget: { pos: flag.pos, range: 2 }, targetQue: [targ] };
     spawCol.queNewCreep(mem, [CLAIM, MOVE]);
     console.log("spawned new scout for the new colony");
   }
@@ -85,7 +85,7 @@ class newColony {
         nrStart += nrCreepInQue(this.closestColony, STARTER);
         if (nrStart < 2) {
           const mem: CreepMemory = {
-            type: STARTER, creationRoom: this.newColony.name, permTarget: null, moveTarget: null, targetQue: [{ ID: "", type: POSITION, pos: this.flag.pos, range: 3 }]
+            type: STARTER, creationRoom: this.newColony.name, curentRoom: this.newColony.name, permTarget: null, moveTarget: null, targetQue: [{ ID: "", type: POSITION, pos: this.flag.pos, range: 3 }]
           };
           this.closestColony.queNewCreep(mem, calculateBodyFromSet(this.closestColony.room, [WORK, CARRY, MOVE], 10));
           console.log("spawned new starter for the new colony");

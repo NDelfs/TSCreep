@@ -16,6 +16,7 @@ import { ResourceHandler, resourceRequest } from "Base/Handlers/ResourceHandler"
 import { BOOSTING } from "Types/Constants";
 import { findPathToSource, serializePath } from "./utils/ColonyUtils";
 import { countBodyPart } from "./utils/minorUtils";
+import { BaseMineral } from "./Base/Market";
 
 
 function getRandomInt(min: number, max: number) {
@@ -174,6 +175,8 @@ export class Colony {
     else if (this.spawns.length > 0) {
       this.memory.startSpawnPos = this.spawns[0].pos;
     }
+
+    this.refreshDropPickup(this.room);
   }
 
   public refresh() {
@@ -274,7 +277,7 @@ export class Colony {
 
   public orderNewCreep(type: CreepConstant) {
     if (type == BUILDER) {
-      const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
+      const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, curentRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
       //this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
       this.queNewCreep(mem, getBuilderBody(this.room));
     }
@@ -333,7 +336,7 @@ export class Colony {
           //let nrBuilders = Math.floor(Math.min(this.memory.wallEnergy / 1e4, this.room.storage.store.energy / 1e4));
           //console.log(this.name, "nr builders =", nrBuilders, this.memory.wallEnergy / 1e4, this.room.storage.store.energy / 1e4);
           //for (let i = 0; i < nrBuilders; i++) {
-          const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
+          const mem: CreepMemory = { type: creepT.BUILDER, creationRoom: this.name, curentRoom: this.name, permTarget: null, moveTarget: null, targetQue: [] };
           //this.creepRequest.push({ memory: mem, body: getBuilderBody(this.room) });
           this.queNewCreep(mem, getBuilderBody(this.room));
           //}
@@ -617,6 +620,24 @@ export class Colony {
       availEnergy = this.energyAtSources();
     }
     return availEnergy;
+  }
+
+  public refreshDropPickup(room: Room) {
+    let drops = room.find(FIND_DROPPED_RESOURCES);
+    for (let drop of drops) {
+      if (!this.resourceHandler.resourcePush[drop.id]) {
+        if ((drop.resourceType == RESOURCE_ENERGY || drop.resourceType in BaseMineral)) {
+          if (drop.amount >= 600) {
+            this.resourceHandler.resourcePush[drop.id] = new resourceRequest(drop.id, drop.resourceType, 400, 0, room);
+            console.log("found and added a newly found droped resource", JSON.stringify(drop.pos));
+          }
+        }
+        else {
+          this.resourceHandler.resourcePush[drop.id] = new resourceRequest(drop.id, drop.resourceType, 0, 0, room);
+          console.log("found and added a newly found droped resource", JSON.stringify(drop.pos));
+        }
+      }
+    }
   }
 }
 profiler.registerClass(Colony, 'Colony');
