@@ -32,18 +32,15 @@ export class resourceRequest {
 
   public amount(): number {
     let amount = 0;
-    if (this.hasStore) {
-      let obj = Game.getObjectById(this.id) as AnyStoreStructure;
-      if (obj) {
-        amount = obj.store[this.resource];
+    let obj = Game.getObjectById(this.id) as AnyStoreStructure;
+      try {
+        if (obj) {
+          amount = obj.store[this.resource];
+        }
       }
-    }
-    else {
-      let obj = Game.getObjectById(this.id) as Resource;
-      if (obj) {
-        amount = obj.amount;
+      catch (e) {
+        console.log("amount with store failed", obj, e);
       }
-    }
 
       if (this.ThreshouldHard > this.ThreshouldAmount)
         return amount + this.resOnWay;

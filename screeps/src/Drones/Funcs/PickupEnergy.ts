@@ -59,7 +59,7 @@ export function getSourceTarget(creep: Creep, resource: ResourceConstant | null)
     }
   }
   catch (e) {
-    console.log("find dropped failed", e);
+    console.log("find dropped failed", JSON.stringify(creep.pos), e);
   }
   return null;
 }
@@ -79,10 +79,14 @@ export function getFromStoreTarget(creep: Creep, resource: ResourceConstant, iAm
   return null;
 }
 
-function structWithdraw(creep: Creep, struct: AnyStoreStructure, resType: ResourceConstant, freeSpace: number): number {
-  let amount = struct.store[resType] || 0;
+function structWithdraw(creep: Creep, struct: AnyStoreStructure | Resource, resType: ResourceConstant, freeSpace: number): number {
+  let amount = (struct as any).store[resType] || 0;
   amount = Math.min(freeSpace, amount);
-  let retErr = creep.withdraw(struct, resType, amount);//required to handle droped and container
+  let retErr: number = OK;
+  if (struct instanceof Structure)
+    retErr = creep.withdraw(struct, resType, amount);//required to handle droped and container
+  else
+    retErr = creep.pickup(struct);//required to handle droped and container
   if (retErr == OK)
     freeSpace -= amount;
   else
@@ -117,17 +121,10 @@ export function useEnergyTarget(creep: Creep, target: targetData): number {
     let resHandler = PM.colonies[creep.memory.creationRoom].resourceHandler;
     let req = resHandler.resourcePush[target.ID];
     if (req) {
-      let storageObj = Game.getObjectById(target.ID) as any;
-      
+      let storageObj = Game.getObjectById(target.ID) as AnyStoreStructure | Resource;     
       let amount = 0;
-      if (req.hasStore) {
-        structWithdraw(creep, storageObj, target.resType!, freeSpace);
-        amount = storageObj.store[target.resType!];
-      }
-      else {
-        creep.pickup(storageObj);
-        amount = storageObj.amount;
-      }
+      structWithdraw(creep, storageObj, target.resType!, freeSpace);
+      amount = (storageObj as any).store[target.resType!];     
       if (amount - freeSpace <= req.ThreshouldHard) {
         delete resHandler.resourcePush[target.ID];
         //console.log("push request deleted");

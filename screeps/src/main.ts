@@ -5,6 +5,7 @@ import './ScreepExtends/Room';
 import './ScreepExtends/Creep';
 import './ScreepExtends/Source';
 import 'ScreepExtends/Lab';
+import 'ScreepExtends/Resource';
 
 
 import { PM, createNewMaster } from "PishiMaster";

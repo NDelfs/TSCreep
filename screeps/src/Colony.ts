@@ -10,10 +10,10 @@ import { findAndBuildLab } from "Base/BaseExpansion"
 import profiler from "Profiler/screeps-profiler";
 import { restorePos } from "./utils/posHelpers";
 import { getBuilderBody } from "./Spawners/Spawner";
-import { BOOST } from "Types/TargetTypes";
+import { BOOST, UNBOOST } from "Types/TargetTypes";
 import { PrettyPrintErr } from "./utils/PrettyPrintErr";
 import { ResourceHandler, resourceRequest } from "Base/Handlers/ResourceHandler";
-import { BOOSTING } from "Types/Constants";
+import { BOOSTING, REACTREGENT } from "Types/Constants";
 import { findPathToSource, serializePath } from "./utils/ColonyUtils";
 import { countBodyPart } from "./utils/minorUtils";
 import { BaseMineral } from "./Base/Market";
@@ -492,7 +492,10 @@ export class Colony {
         boostType = RESOURCE_LEMERGIUM_HYDRIDE;
         boostCost = countBodyPart(creepData.body, WORK) * 30;
       }
-      
+      if (creepData.memory.type == creepT.UPGRADER && this.name == "E46N47") {//should find what room to boost in depending on avail amount and current level of colony
+        boostType = RESOURCE_CATALYZED_GHODIUM_ACID;
+        boostCost = countBodyPart(creepData.body, WORK) * 30;
+      }
       //create boost que and target
       if (boostType && this.room.terminal.store[boostType] >= boostCost) {
 
@@ -578,6 +581,17 @@ export class Colony {
     return OK;
   }
 
+  GetUnboostCreepTarget(creep: Creep): void {
+    for (let lab of this.labs) {
+      if (lab.memory.state == REACTREGENT && lab.cooldown == 0) {
+        creep.addTargetFirst({ ID: lab.id, pos: lab.pos, range: 1, type: UNBOOST })
+        console.log(this.name, "unboost target added to creep", JSON.stringify( lab.pos));
+        return;
+      }
+    }
+    console.log(this.name, "unboost target failed to find unboost lab");
+  }
+
   public testPath(x2: number, y2: number, roomName?: string, maxOps?: number) {
     let start = new RoomPosition(x2, y2, roomName|| this.name);
 
@@ -628,12 +642,12 @@ export class Colony {
       if (!this.resourceHandler.resourcePush[drop.id]) {
         if ((drop.resourceType == RESOURCE_ENERGY || drop.resourceType in BaseMineral)) {
           if (drop.amount >= 600) {
-            this.resourceHandler.resourcePush[drop.id] = new resourceRequest(drop.id, drop.resourceType, 400, 0, room);
+            this.resourceHandler.resourcePush[drop.id] = new resourceRequest(drop.id, drop.resourceType, 400, 0, room,true);
             console.log("found and added a newly found droped resource", JSON.stringify(drop.pos));
           }
         }
         else {
-          this.resourceHandler.resourcePush[drop.id] = new resourceRequest(drop.id, drop.resourceType, 0, 0, room);
+          this.resourceHandler.resourcePush[drop.id] = new resourceRequest(drop.id, drop.resourceType, 0, 0, room,true);
           console.log("found and added a newly found droped resource", JSON.stringify(drop.pos));
         }
       }

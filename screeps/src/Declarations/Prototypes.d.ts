@@ -33,6 +33,10 @@ interface StructureLab {
   memory: LabMemory;
 }
 
+interface Resource {
+  store: { [resource: string]: number};
+}
+
 interface Room {
   my: boolean;
   creepsInRoom: Creep[];

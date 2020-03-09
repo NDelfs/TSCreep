@@ -177,6 +177,9 @@
     <TypeScriptCompile Include="src\Types\FlagTypes.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
+    <TypeScriptCompile Include="src\ScreepExtends\Resource.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="src\Types\TargetTypes.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

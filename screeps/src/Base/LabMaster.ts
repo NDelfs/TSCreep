@@ -44,8 +44,7 @@ const reactionsWanted: GlobMineralReq[] = [//half global init a restart of prod
   { r: REACTION_CHAIN["XGH2O"], perRoom: 2000, global: 5000, perTick: 0.075 },//number is dependent on recycling creep, should be 15 but decreased to fit until a bottom up approach is used
   { r: REACTION_CHAIN["G"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
   { r: REACTION_CHAIN["OH"], perRoom: 0, global: 2e4, perTick: 0.1 },//keep some for nukes and GH
-  { r: REACTION_CHAIN["XGHO2"], perRoom: 0, global: 5000, perTick: 0.05 },//number is dependent on recycling creep, should be 15 but decreased to fit until a bottom up approach is used
-  /*, REACTION_CHAIN["XGH2O"]*/
+  { r: REACTION_CHAIN["XGHO2"], perRoom: 0, global: 5000, perTick: 0.05 },
 ];
 
 const UPDATETIME = 3000;//this also affect the threshould before adding a auto minReq
