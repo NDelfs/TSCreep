@@ -4,7 +4,7 @@ import { getSourceTarget, useEnergyTarget } from "./Funcs/PickupEnergy";
 import { restorePos } from "../utils/posHelpers";
 import { resetDeliverTarget, getNewDeliverTarget, useDeliverTarget } from "./Funcs/DeliverEnergy";
 import { getBuildTarget, useBuildTarget, getRepairTarget, useRepairTarget } from "./Funcs/Build";
-import { HARVESTER, STARTER } from "Types/CreepType";
+import { HARVESTER, STARTER, BUILDER } from "Types/CreepType";
 import { getTransportTarget } from "./Transporter";
 import { getRandomInt } from "../utils/minorUtils";
 
@@ -21,13 +21,19 @@ export function Starter(creep: Creep) {
   //got no energy, find where
   if (creep.getTarget() == null && !creep.memory.moveTarget) {
     getTransportTarget(creep, false);
+    if (creep.room.name == "E47N46")
+      console.log("find transport target", creep.getTarget());
     if (creep.getTarget() == null && creep.store.energy > 0) {
       let controller = creep.room.controller;
       if (controller) {//if safe tick run external construction target getter, same used for builder
         if (controller.ticksToDowngrade > 5000) {
           getRepairTarget(creep);
+          if (creep.room.name == "E47N46")
+          console.log("find repair target", creep.getTarget());
           if (creep.getTarget() == null) {
             getBuildTarget(creep);
+            if (creep.room.name == "E47N46")
+            console.log("find build target", creep.getTarget());
           }
         }
         if (creep.getTarget() == null)
@@ -55,7 +61,11 @@ export function Starter(creep: Creep) {
       }
     }
     if (creep.getTarget() == null) {
-      console.log("Starter could not find a target");
+      console.log(creep.room.name,"Starter could not find a target");
+      if (creep.room.controller!.level > 5 && creep.room.storage && creep.room.storage.store.energy > 10000) {
+        console.log("starter converted to builder")
+        creep.memory.type = BUILDER;
+      }
       return;
     }
   }
@@ -80,7 +90,8 @@ export function Starter(creep: Creep) {
   if (target && creep.inPlace) {
     switch (target.type) {
       case targetT.STORAGE_RESOURCE:
-      case targetT.DROPPED_RESOURCE: {
+      case targetT.DROPPED_RESOURCE:
+      case targetT.TRANSPORT_PICKUP:{
         const err = useEnergyTarget(creep, target);
         printRes(creep, err, "transf");
         return;

@@ -105,6 +105,7 @@ export function Builder(creep: Creep) {
       }
       case targetT.STORAGE_RESOURCE:
       case targetT.DROPPED_RESOURCE:
+      case targetT.TRANSPORT_PICKUP:
         useEnergyTarget(creep, target);
         creep.say("withdraw");
         break;

@@ -118,6 +118,16 @@ function calculateStarterQue(colony: Colony): queData[] {
   let newColFlag = getFlagsInRoom(FLAG_NEW_COLONY, cRoom.name);
   if (newColFlag.length > 0)
     return [];
+  if ((cRoom.controller && cRoom.controller.my) && cRoom.controller.level > 5) {
+    const excist = cRoom.getCreeps(creepT.STARTER).length;
+    const buildExcist = cRoom.getCreeps(creepT.BUILDER).length;
+    if (excist + buildExcist == 0) {
+      const targ: targetData = { ID: colony.memory.sourcesUsed[0], type: targetT.SOURCE, pos: Memory.Resources[colony.memory.sourcesUsed[0]].workPos, range: 0 };
+      const mem: CreepMemory = { type: creepT.STARTER, creationRoom: colony.name, curentRoom: colony.name, permTarget: targ, moveTarget: null, targetQue: [] };
+      ret.push({ memory: mem, body: getStarterBody(cRoom), prio: 1, eTresh: 0.9 });
+    }
+    return ret;
+  }
   for (const source of colony.memory.sourcesUsed) {
     const excist = _.filter(cRoom.getCreeps(creepT.STARTER), function (creep: Creep) { return creep.memory.permTarget != null && creep.memory.permTarget.ID == source });
     let nrExc = excist.length + nrCreepInQue(colony, creepT.STARTER);
@@ -180,9 +190,11 @@ function calculateHarvesterQue(colony: Colony): queData[] {
 
 function calculateUpgraderQue(colony: Colony) {
   let cRoom = colony.room;
+  //console.log(colony.name, "in calculate upgrader que", colony.memory.controllerStoreID);
   if (colony.memory.controllerStoreID) {
     let store: StructureContainer | null = Game.getObjectById(colony.memory.controllerStoreID);
     if (store) {
+      //console.log(colony.name, "in calculate upgrader que, has store");
       let limit = 1;
       let controllerNeed = 0;
       if (colony.memory.controllerStoreID) {
@@ -194,9 +206,9 @@ function calculateUpgraderQue(colony: Colony) {
 
       let range = 0
       let body: BodyPartConstant[] = Array(6).fill(WORK).concat([CARRY, MOVE, MOVE]);
-      if (cRoom.storage && cRoom.energyCapacityAvailable >=1050) {
+      if (cRoom.storage && cRoom.energyCapacityAvailable >= 1050) {
         body = Array(8).fill(WORK).concat([CARRY, CARRY, CARRY, MOVE, MOVE]);
-        if (cRoom.storage.store.energy > 1e5 && cRoom.energyCapacityAvailable >=1250)
+        if (cRoom.storage.store.energy > 1e5 && cRoom.energyCapacityAvailable >= 1250)
           body = Array(10).fill(WORK).concat([CARRY, CARRY, CARRY, MOVE, MOVE]);
         if (cRoom.storage.store.energy > 2e5 && cRoom.energyCapacityAvailable >= 1600)
           body = Array(12).fill(WORK).concat([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE]);
@@ -213,11 +225,16 @@ function calculateUpgraderQue(colony: Colony) {
       }
 
       let current = nrCreepInQue(colony, creepT.UPGRADER) + cRoom.getCreeps(creepT.UPGRADER).length;
+      //console.log(colony.name, "before upgrader quing: limit, current", limit , current);
       if (current < limit) {
         const targ: targetData = { ID: colony.controller.id, type: targetT.CONTROLLER, pos: store.pos, range: range };
         const mem: CreepMemory = { type: creepT.UPGRADER, creationRoom: colony.name, curentRoom: colony.name, permTarget: targ, moveTarget: { pos: store.pos, range: range }, targetQue: [targ] };
         colony.queNewCreep(mem, body);
       }
+    }
+    else {
+      console.log(colony.name, "Could not find controller container, reseting")
+      colony.memory.controllerStoreID = null;
     }
   }
 }

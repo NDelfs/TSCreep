@@ -99,7 +99,10 @@ export class _PishiMaster {
         NukeResourceReq(this.colonies[colonyID]);
       }
     }
-
+    if (Game.cpu.bucket > 9900) {//10k is max limit
+      Game.cpu.generatePixel();
+      console.log("Generated a new pixel, current cpu bucket is now", Game.cpu.bucket);
+    }
   }
 
 

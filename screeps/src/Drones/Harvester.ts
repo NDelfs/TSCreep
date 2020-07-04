@@ -32,24 +32,33 @@ function mineMineral(creep: Creep, res: Mineral) {
       return;
     }
     creep.harvest(res);//should att to not harvest if full inventory.
-
-    if (creep.carry[res.memory.resourceType] >= creep.carryCapacity - creep.memory.targetQue[0].targetVal!) {
-      creep.drop(res.memory.resourceType);
-      let cont = Game.getObjectById(res.memory.container!) as StructureContainer;
-      let colony = PM.colonies[creep.memory.creationRoom];
-      //below is code for requesting resource pickup
-      if (cont.store[res.memory.resourceType] >= 800) {//this could use transfer 2, 
-        if (!colony.resourceHandler.resourcePush[cont.id]) {
-          colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, res.memory.resourceType, 800, 400, cont.room);
-          console.log("requested mineral pickup from", JSON.stringify(cont.pos));
+    creep.say("Mine");
+    if (res.memory.container) {
+      if (creep.carry[res.memory.resourceType] >= creep.carryCapacity - creep.memory.targetQue[0].targetVal!) {
+        creep.drop(res.memory.resourceType);
+        let cont = Game.getObjectById(res.memory.container!) as StructureContainer;
+        let colony = PM.colonies[creep.memory.creationRoom];
+        if (cont) {
+          
+          //below is code for requesting resource pickup
+          if (cont.store[res.memory.resourceType] >= 800) {//this could use transfer 2, 
+            if (!colony.resourceHandler.resourcePush[cont.id]) {
+              colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, res.memory.resourceType, 800, 400, cont.room);
+              console.log("requested mineral pickup from", JSON.stringify(cont.pos));
+            }
+          }
+          else if (cont.store[RESOURCE_ENERGY] != 0 && !colony.resourceHandler.resourcePush[cont.id]) {
+            colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, RESOURCE_ENERGY, 0, 0, cont.room);
+            console.log("requested special pickup from", JSON.stringify(cont.pos));
+          }
+        }
+        else {
+          console.log(colony.name, "Could not find mineral container, reseting");
+          res.memory.container = null;
         }
       }
-      else if (cont.store[RESOURCE_ENERGY] != 0 && !colony.resourceHandler.resourcePush[cont.id]) {
-        colony.resourceHandler.resourcePush[cont.id] = new resourceRequest(cont.id, RESOURCE_ENERGY, 0, 0, cont.room);
-        console.log("requested special pickup from", JSON.stringify(cont.pos));
-      }
     }
-    creep.say("Mine");
+    
   }
   else
     console.log(creep.room.name, "Failed to find extractor");
